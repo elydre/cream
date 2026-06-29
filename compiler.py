@@ -171,9 +171,14 @@ ofile = open("output.bin", "wb")
 if not ofile:
     exit("Could not open output file")
 
+global PC
+PC = 0
+
 def output(opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
+    global PC
+    
     print(end = "\033[34m")
-    print(end = f"{opcode} ")
+    print(end = f"{hex(PC)[2:].upper().zfill(4)} {opcode} ")
     if sr1 != None:
         if sr1 == 0: # val1 is a memory address
             print(end = f"[{hex(val1)[2:]}] ")
@@ -196,8 +201,12 @@ def output(opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
     b = bytearray()
     b.append(op.opcode)
     b.append(((sr1 or 0) << 4) | (sr2 or 0))
-    b += (val1 or 0).to_bytes(2, byteorder='little')
-    b += (val2 or 0).to_bytes(2, byteorder='little')
+    if sr1 != None:
+        b += (val1 or 0).to_bytes(2, byteorder='little')
+    if sr2 != None:
+        b += (val2 or 0).to_bytes(2, byteorder='little')
+    print(f"Writing bytes: {b.hex()}")
+    PC += len(b) // 2
     ofile.write(b)
 
 
