@@ -4,8 +4,7 @@ opcode (8 bit)  sources (2 * 2bit)  4bit padding  val1/mem1 (16 bit)  val2/mem2 
 
 
 opcodes:
-ssp   [arg] // set stack pointer to arg
-
+nop
 
 mov   [arg] [arg]
 
@@ -34,6 +33,11 @@ in  [port] [mem] // input from port to mem
 
 sleep [arg] // sleep for arg ticks
 
+ssp   [arg] // set stack pointer to arg
+
+dump  [arg] // print arg
+
+hlt
 """
 
 class opcode:
@@ -43,7 +47,7 @@ class opcode:
         self.argc = argc
 
 OPCODES = [
-    opcode("ssp",   0x00, 1),
+    opcode("nop",   0x00, 0),
     opcode("mov",   0x01, 2),
     opcode("push",  0x02, 1),
     opcode("pop",   0x03, 1),
@@ -63,6 +67,9 @@ OPCODES = [
     opcode("out",   0x11, 2),
     opcode("in",    0x12, 2),
     opcode("sleep", 0x13, 1),
+    opcode("ssp",   0x14, 1),
+    opcode("dump",  0x15, 1),
+    opcode("hlt",   0xFF, 0),
 ]
 
 MEMORY_SIZE = 65536 - (80 * 25)
@@ -91,6 +98,7 @@ ASM_FUNCS = [
     func("out", [0, 0], None, True),
     func("in", [0, 1], None, True),
     func("sleep", [0], None, True),
+    func("dump", [0], None, True)
 ]
 
 global CURRENT_LNO
@@ -205,7 +213,6 @@ def output(opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
         b += (val1 or 0).to_bytes(2, byteorder='little')
     if sr2 != None:
         b += (val2 or 0).to_bytes(2, byteorder='little')
-    print(f"Writing bytes: {b.hex()}")
     PC += len(b) // 2
     ofile.write(b)
 
@@ -273,24 +280,25 @@ def op_calculate_rpn(rpn: list):
 
     STACK_SIZE += 1
 
-def op_init_stack():
+def op_init():
     output("ssp",
             1, STACK_PTR)
     output("mov",
             0, STACK_PTR,
             1, STACK_DEBUT)
 
+def op_fini():
+    output("hlt")
+
 prog = """
 $ var
-$ coucou
 var = 1 6 +
-coucou = var
-out(0, var)
+dump(var)
 """.strip()
 
 local_vars = {"main": []}
 
-op_init_stack()
+op_init()
 
 for lno, line in enumerate(prog.splitlines(), start=1):
     CURRENT_LNO = lno
@@ -300,6 +308,7 @@ for lno, line in enumerate(prog.splitlines(), start=1):
     if not tokens:
         continue
     print(f"Tokens: {tokens}")
+
 
     if tokens[0] == NEW_VAR:
         ptrlvl = 0
@@ -317,6 +326,7 @@ for lno, line in enumerate(prog.splitlines(), start=1):
 
         op_grow_stack()
 
+
     elif is_variable(tokens[0]):
         if len(tokens) < 3 or tokens[1] != '=':
             say_error(f"Bad variable assignment\nSyntax example: var_name = 123")
@@ -329,6 +339,7 @@ for lno, line in enumerate(prog.splitlines(), start=1):
         # move the result from the stack to the variable's memory location
         output("pop",
                2, STACK_SIZE - v.offset)
+        STACK_SIZE -= 1
 
 
     elif tokens[0] in [e.name for e in ASM_FUNCS]:
@@ -337,5 +348,44 @@ for lno, line in enumerate(prog.splitlines(), start=1):
         if count_args(tokens[1:]) != len(f.args):
             say_error(f"Bad function call\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
 
+        variables = []
+        for i, arg in enumerate(tokens[1:], start=1):
+            if arg in [',', '(', ')']:
+                continue
+            if tokens[i + 1] not in [',', ')']:
+                say_error(f"Only variables are allowed as arguments\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
+
+            v = get_variable(arg)
+            variables.append(v)
+
+        if len(variables) != len(f.args):
+            say_error(f"Wrong number of arguments for function {f.name}\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
+
+        if f.name == "out":
+            output("out",
+                   2, STACK_SIZE - variables[0].offset,
+                   2, STACK_SIZE - variables[1].offset)
+            STACK_SIZE -= 2
+
+        elif f.name == "in":
+            output("in",
+                   2, STACK_SIZE - variables[0].offset,
+                   2, STACK_SIZE - variables[1].offset)
+            STACK_SIZE -= 1
+
+        elif f.name == "sleep":
+            output("sleep",
+                   2, STACK_SIZE - variables[0].offset)
+            STACK_SIZE -= 1
+
+        elif f.name == "dump":
+            output("dump",
+                   2, STACK_SIZE - variables[0].offset)
+            STACK_SIZE -= 1
+
     else:
         say_error(f"Bad syntax\nUnknown command or variable: {tokens[0]}")
+
+
+op_fini()
+ofile.close()

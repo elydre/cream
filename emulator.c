@@ -4,6 +4,9 @@
 
 #define RWMEMORY_SIZE 65536
 
+#undef min
+#define min(a, b) ((a) < (b) ? (a) : (b))
+
 uint16_t *xmemory, *rwmemory;
 uint16_t pc; // program counter
 uint16_t sp; // stack pointer
@@ -12,16 +15,17 @@ static inline uint16_t RVAL(uint8_t source) {
     switch (source) {
         case 0: return rwmemory[xmemory[pc++]];
         case 1: return xmemory[pc++];
-        case 2: return rwmemory[sp - xmemory[pc++]];
+        case 2: return rwmemory[rwmemory[sp] + xmemory[pc++]];
         default: exit(1);
     }
 }
 
 static inline void WVAL(uint16_t old_pc, uint8_t source, uint16_t value) {
+    printf("WVAL: old_pc=%04X, source=%d, value=%04X\n", old_pc, source, value);
     switch (source) {
         case 0: rwmemory[xmemory[old_pc]] = value; break;
         case 1: exit(1); break;
-        case 2: rwmemory[sp - xmemory[old_pc]] = value; break;
+        case 2: rwmemory[rwmemory[sp] + xmemory[old_pc]] = value; break;
         default: exit(1);
     }
 }
@@ -46,47 +50,84 @@ void execute_program() {
         printf("PC: %04X, Opcode: %02X, Source1: %d, Source2: %d\n", pc - 1, opcode, source1, source2);
 
         switch (opcode) {
-            /*
-            OPCODES = [
-                opcode("ssp",   0x00, 1),
-                opcode("mov",   0x01, 2),
-                opcode("push",  0x02, 1),
-                opcode("pop",   0x03, 1),
-                opcode("sub",   0x04, 2),
-                opcode("add",   0x05, 2),
-                opcode("mul",   0x06, 2),
-                opcode("div",   0x07, 2),
-                opcode("mod",   0x08, 2),
-                opcode("eq",    0x09, 2),
-                opcode("neq",   0x0A, 2),
-                opcode("lt",    0x0B, 2),
-                opcode("gt",    0x0C, 2),
-                opcode("and",   0x0D, 2),
-                opcode("or",    0x0E, 2),
-                opcode("not",   0x0F, 1),
-                opcode("jmp",   0x10, 2),
-                opcode("out",   0x11, 2),
-                opcode("in",    0x12, 2),
-                opcode("sleep", 0x13, 1),
-            ]
-            */
-            case 0x00: // ssp
-                sp = RVAL(source1);
+            case 0x00: // nop
                 break;
             case 0x01: // mov
                 WVAL(pc++, source1, RVAL(source2));
                 break;
             case 0x02: // push
-                rwmemory[sp++] = RVAL(source1);
+                rwmemory[rwmemory[sp]] = RVAL(source1);
+                rwmemory[sp]--;
                 break;
+            case 0x03: // pop
+                rwmemory[sp]++;
+                WVAL(pc++, source1, rwmemory[rwmemory[sp]]);
+                break;
+            case 0x04: // sub
+                WVAL(pc++, source1, RVAL(source1) - RVAL(source2));
+                break;
+            case 0x05: // add
+                WVAL(pc++, source1, RVAL(source1) + RVAL(source2));
+                break;
+            case 0x06: // mul
+                WVAL(pc++, source1, RVAL(source1) * RVAL(source2));
+                break;
+            case 0x07: // div
+                WVAL(pc++, source1, RVAL(source1) / RVAL(source2));
+                break;
+            case 0x08: // mod
+                WVAL(pc++, source1, RVAL(source1) % RVAL(source2));
+                break;
+            case 0x09: // eq
+                WVAL(pc++, source1, RVAL(source1) == RVAL(source2));
+                break;
+            case 0x0A: // neq
+                WVAL(pc++, source1, RVAL(source1) != RVAL(source2));
+                break;
+            case 0x0B: // lt
+                WVAL(pc++, source1, RVAL(source1) < RVAL(source2));
+                break;
+            case 0x0C: // gt
+                WVAL(pc++, source1, RVAL(source1) > RVAL(source2));
+                break;
+            case 0x0D: // and
+                WVAL(pc++, source1, RVAL(source1) & RVAL(source2));
+                break;
+            case 0x0E: // or
+                WVAL(pc++, source1, RVAL(source1) | RVAL(source2));
+                break;
+            case 0x0F: // not
+                WVAL(pc++, source1, ~RVAL(source1));
+                break;
+            case 0x10: // jmp
+                pc = RVAL(source1);
+                break;
+            case 0x11: // out
+                printf("emulator does not support ports yet\n");
+                break;
+            case 0x12: // in
+                printf("emulator does not support ports yet\n");
+                break;
+            case 0x13: // sleep
+                printf("emulator does not support sleep yet\n");
+                break;
+            case 0x14: // ssp
+                sp = RVAL(source1);
+                break;
+            case 0x15: // dump
+                printf("%x\n", RVAL(source1));
+                break;
+            case 0xFF: // halt
+                return;
             default:
                 printf("Unknown opcode: %02X\n", opcode);
                 return;
         }
+
+        if (pc >= RWMEMORY_SIZE - 10)
+            return;
     }
 
-    if (pc >= RWMEMORY_SIZE - 10)
-        return;
 }
             
 
@@ -103,7 +144,8 @@ int main(void) {
     long size = ftell(bytecode);
     fseek(bytecode, 0, SEEK_SET);
 
-    xmemory = malloc(size);
+
+    xmemory = calloc(RWMEMORY_SIZE, sizeof(uint16_t));
     rwmemory = calloc(RWMEMORY_SIZE, sizeof(uint16_t));
 
     if (xmemory == NULL || rwmemory == NULL) {
@@ -112,6 +154,7 @@ int main(void) {
         return 1;
     }
 
+    size = min(size, (long)(RWMEMORY_SIZE * sizeof(uint16_t)));
     if ((long) fread(xmemory, 1, size, bytecode) != size) {
         perror("Failed to read bytecode");
         free(xmemory);
