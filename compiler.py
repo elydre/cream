@@ -457,6 +457,7 @@ def op_fini():
 
     return output
 
+
 prog = """
 $ [p]
 $ var
@@ -468,7 +469,63 @@ p = &var
 dump(var)
 """.strip()
 
+# prog = """
+# $ to_test
+# $ div
+# $ is_prime
+# 
+# to_test = 1
+# 
+# while to_test 100 < {
+#     div = 2
+#     is_prime = 1
+#     while div to_test < {
+#         if to_test div % 0 == {
+#             is_prime = 0
+#         }
+#         div = div 1 +
+#     }
+#     if is_prime 1 == {
+#         dump(to_test)
+#     }
+#     to_test = to_test 1 +
+# }
+# """
+
 local_vars = {"main": []}
+
+def locate_braces(lines: list, current_line: int):
+     # find the opening brace '{'
+    if current_line + 1 >= len(lines) or lines[current_line + 1][1] != ['{']:
+        say_error("Bad syntax\nExpected '{' after 'if' statement")
+
+    # find the closing brace '}'
+    closing_line = current_line + 2
+    
+    opening_braces = 1
+    while closing_line < len(lines) :
+        if lines[closing_line][1] == ['}']:
+            opening_braces -= 1
+            if opening_braces == 0:
+                break
+        elif lines[closing_line][1] == ['{']:
+            opening_braces += 1
+        closing_line += 1
+    else:
+        say_error("Bad syntax\nExpected '}' after 'if' block")
+
+    return closing_line
+
+def compile_lines(lines: list, size: int):
+    current_line = 0
+    output = output_code()
+
+    while current_line < size:
+        sub_output, to_skip = compile_line(lines, current_line)
+        output.push(sub_output)
+        current_line += to_skip
+
+    return output
 
 def compile_line(lines: list, current_line: int):
     global CURRENT_LNO, STACK_SIZE
@@ -539,32 +596,9 @@ def compile_line(lines: list, current_line: int):
             0, COND_RES)
         STACK_SIZE -= 1
 
-        # find the opening brace '{'
-        if current_line + 1 >= len(lines) or lines[current_line + 1][1] != ['{']:
-            say_error("Bad syntax\nExpected '{' after 'if' statement")
-
-        # find the closing brace '}'
-        closing_line = current_line + 2
-        
-        opening_braces = 1
-        while closing_line < len(lines) :
-            if lines[closing_line][1] == ['}']:
-                opening_braces -= 1
-                if opening_braces == 0:
-                    break
-            elif lines[closing_line][1] == ['{']:
-                opening_braces += 1
-            closing_line += 1
-        else:
-            say_error("Bad syntax\nExpected '}' after 'if' block")
-
         # compile the lines inside the if block
-        inner_output = output_code()
-        inner_line = current_line + 2
-        while inner_line < closing_line:
-            sub_output, to_skip = compile_line(lines, inner_line)
-            inner_output.push(sub_output)
-            inner_line += to_skip
+        closing_line = locate_braces(lines, current_line)       
+        inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2)
 
         fin_label = get_new_label()
 
@@ -574,7 +608,6 @@ def compile_line(lines: list, current_line: int):
             0, COND_RES) # jump if the condition is false
 
         output.push(inner_output)
-
         output.add_label(fin_label)
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
@@ -594,31 +627,9 @@ def compile_line(lines: list, current_line: int):
             0, COND_RES)
         STACK_SIZE -= 1
 
-        # find the opening brace '{'
-        if current_line + 1 >= len(lines) or lines[current_line + 1][1] != ['{']:
-            say_error("Bad syntax\nExpected '{' after 'while' statement")
-
-        # find the closing brace '}'
-        closing_line = current_line + 2
-
-        opening_braces = 1
-        while closing_line < len(lines) :
-            if lines[closing_line][1] == ['}']:
-                opening_braces -= 1
-                if opening_braces == 0:
-                    break
-            elif lines[closing_line][1] == ['{']:
-                opening_braces += 1
-            closing_line += 1
-        else:
-            say_error("Bad syntax\nExpected '}' after 'while' block")
-
-        inner_output = output_code()
-        inner_line = current_line + 2
-        while inner_line < closing_line:
-            sub_output, to_skip = compile_line(lines, inner_line)
-            inner_output.push(sub_output)
-            inner_line += to_skip
+        # compile the lines inside the while block
+        closing_line = locate_braces(lines, current_line)
+        inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2)
 
         inner_output.add_goto(
             debut_label,
@@ -643,8 +654,6 @@ def compile_line(lines: list, current_line: int):
 def compile(lines: str):
     global CURRENT_LNO
 
-    output = op_init()
-
     tokens_lines = []
 
     for lno, line in enumerate(lines.splitlines(), start=1):
@@ -654,13 +663,7 @@ def compile(lines: str):
         for t in tokenize_line(line):
             tokens_lines.append((lno, t))
 
-    current_line = 0
-    while current_line < len(tokens_lines):
-        sub_output, to_skip = compile_line(tokens_lines, current_line)
-
-        output.push(sub_output)
-        current_line += to_skip
-
+    output = compile_lines(tokens_lines, len(tokens_lines))
     output.push(op_fini())
 
     return output
