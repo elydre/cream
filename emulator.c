@@ -117,7 +117,10 @@ void execute_program() {
                 pc++;
                 break;
             case 0x10: // jmp
-                pc = RVAL(source1, pc);
+                if (RVAL(source2, pc + 1) == 0)
+                    pc = RVAL(source1, pc);
+                else
+                    pc += 2;
                 break;
             case 0x11: // out
                 printf("emulator does not support ports yet\n");
