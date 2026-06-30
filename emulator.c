@@ -23,7 +23,13 @@ static inline uint16_t RVAL(uint8_t source, uint16_t pc) {
 }
 
 static inline void WVAL(uint16_t pc, uint8_t source, uint16_t value) {
-    printf("WVAL: mem=%04X, source=%d, value=%04X\n", xmemory[pc], source, value);
+    if (source == 0)
+        printf("WVAL: [%04X] = %04X\n", xmemory[pc], value);
+    else if (source == 1)
+        printf("WVAL: %04X = %04X pass\n", xmemory[pc], value);
+    else if (source == 2)
+        printf("WVAL: [sp+%X] = %04X\n", xmemory[pc], value);
+
     switch (source) {
         case 0: rwmemory[xmemory[pc]] = value; break;
         case 1: break; // cannot write to immediate value
@@ -35,6 +41,37 @@ static inline void WVAL(uint16_t pc, uint8_t source, uint16_t value) {
     }
 }
 
+char *opcode_to_string(uint8_t opcode) {
+    switch (opcode) {
+        case 0x00: return "nop";
+        case 0x01: return "mov";
+        case 0x02: return "push";
+        case 0x03: return "pop";
+        case 0x04: return "sub";
+        case 0x05: return "add";
+        case 0x06: return "mul";
+        case 0x07: return "div";
+        case 0x08: return "mod";
+        case 0x09: return "eq";
+        case 0x0A: return "neq";
+        case 0x0B: return "lt";
+        case 0x0C: return "gt";
+        case 0x0D: return "and";
+        case 0x0E: return "or";
+        case 0x0F: return "not";
+        case 0x10: return "jmp";
+        case 0x11: return "jmpr";
+        case 0x12: return "out";
+        case 0x13: return "in";
+        case 0x14: return "sleep";
+        case 0x15: return "ssp";
+        case 0x16: return "dump";
+        case 0xFF: return "halt";
+        default:
+            fprintf(stderr, "Error: Unknown opcode %02X\n", opcode);
+            exit(1);
+    }
+}
 
 void execute_program() {
     uint16_t pc; // program counter
@@ -48,7 +85,7 @@ void execute_program() {
         uint8_t source1 = instruction >> 12 & 0x03;
         uint8_t source2 = instruction >> 8 & 0x03;
 
-        printf("PC: %04X, Opcode: %02X, Source1: %d, Source2: %d\n", pc - 1, opcode, source1, source2);
+        printf("PC: %04X \033[34m%s\033[0m\n", pc - 1, opcode_to_string(opcode));
 
         switch (opcode) {
             case 0x00: // nop
@@ -122,23 +159,29 @@ void execute_program() {
                 else
                     pc += 2;
                 break;
-            case 0x11: // out
+            case 0x11: // jmpr
+                if (RVAL(source2, pc + 1) == 0)
+                    pc += RVAL(source1, pc);
+                else
+                    pc += 2;
+                break;
+            case 0x12: // out
                 printf("emulator does not support ports yet\n");
                 pc += 2;
                 break;
-            case 0x12: // in
+            case 0x13: // in
                 printf("emulator does not support ports yet\n");
                 pc += 2;
                 break;
-            case 0x13: // sleep
+            case 0x14: // sleep
                 printf("emulator does not support sleep yet\n");
                 pc++;
                 break;
-            case 0x14: // ssp
+            case 0x15: // ssp
                 sp = RVAL(source1, pc);
                 pc++;
                 break;
-            case 0x15: // dump
+            case 0x16: // dump
                 printf("%x\n", RVAL(source1, pc));
                 pc++;
                 break;
@@ -148,6 +191,13 @@ void execute_program() {
                 printf("Unknown opcode: %02X\n", opcode);
                 return;
         }
+
+        // print the beginning of the stack
+        printf("\033[90m[ ");
+        for (int i = 0; i < 5; i++) {
+            printf("%04X ", rwmemory[rwmemory[sp] + i]);
+        }
+        printf("]\033[0m\n");
 
         if (pc >= RWMEMORY_SIZE - 10)
             return;

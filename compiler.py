@@ -26,7 +26,8 @@ and [arg] [arg]
 or  [arg] [arg]
 not [arg]
 
-jmp [code addr] [arg] // jump to code addr if arg == 0
+jmp  [code addr] [arg] // jump to (code addr) if arg == 0
+jmpr [code addr] [arg] // jump +(code addr) if arg == 0
 
 out [port] [arg] // output arg to port
 in  [port] [mem] // input from port to mem
@@ -64,11 +65,12 @@ OPCODES = [
     opcode("or",    0x0E, 2),
     opcode("not",   0x0F, 1),
     opcode("jmp",   0x10, 2),
-    opcode("out",   0x11, 2),
-    opcode("in",    0x12, 2),
-    opcode("sleep", 0x13, 1),
-    opcode("ssp",   0x14, 1),
-    opcode("dump",  0x15, 1),
+    opcode("jmpr",  0x11, 2),
+    opcode("out",   0x12, 2),
+    opcode("in",    0x13, 2),
+    opcode("sleep", 0x14, 1),
+    opcode("ssp",   0x15, 1),
+    opcode("dump",  0x16, 1),
     opcode("hlt",   0xFF, 0),
 ]
 
@@ -76,7 +78,7 @@ MEMORY_SIZE = 65536 - (80 * 25)
 
 NEW_VAR = "$"
 
-SPE = (',', '(', ')', ':', '=', '+', '-', '*', '/', '%', '<', '>', '~~')
+SPE = (',', '(', ')', ':', '=', '+', '-', '*', '/', '%', '<', '>', '{', '}')
 
 class variable:
     def __init__(self, name, ptrlvl, offset):
@@ -106,6 +108,8 @@ CURRENT_LNO = 0
 
 def tokenize_line(line):
     tokens = []
+    lines = []
+
     current_token = ""
     for char in line:
         if char.isspace():
@@ -114,22 +118,34 @@ def tokenize_line(line):
             tokens.append(current_token)
             current_token = ""
 
+
+
         elif char == "=" and not current_token and tokens and tokens[-1] in SPE:
             tokens[-1] += char
-        
+
         elif char in SPE:
             if current_token:
                 tokens.append(current_token)
                 current_token = ""
-            tokens.append(char)
-        
+            if char == "{" or char == "}":
+                if tokens:
+                    lines.append(tokens.copy())
+                tokens = [char]
+                lines.append(tokens.copy())
+                tokens = []
+            else:
+                tokens.append(char)
+
         else:
             current_token += char
 
     if current_token:
         tokens.append(current_token)
 
-    return tokens
+    if tokens:
+        lines.append(tokens.copy())
+
+    return lines
 
 def say_error(message):
     print(f"Error line {CURRENT_LNO}: {message}")
@@ -154,7 +170,7 @@ def is_variable(s, scope = "main"):
 def get_variable(s, scope = "main"):
     if not is_variable(s, scope):
         say_error(f"Unknown variable: {s}")
-    
+
     return next(e for e in local_vars[scope] if e.name == s)
 
 global STACK_PTR, STACK_SIZE
@@ -248,9 +264,9 @@ class output_code:
 
 
 def op_calculate_rpn(rpn: list):
-    output = output_code()
-
     global STACK_SIZE
+
+    output = output_code()
 
     if not rpn:
         say_error("Empty RPN expression")
@@ -262,7 +278,7 @@ def op_calculate_rpn(rpn: list):
             output.add("push",
                    1, to_number(token))
             stack_size += 1
-        
+
         elif is_variable(token):
             v = get_variable(token)
             output.add("push",
@@ -302,8 +318,11 @@ def op_calculate_rpn(rpn: list):
             output.add("pop",
                    1, 0)
 
-    if stack_size != 1:
-        say_error("Invalid RPN expression: stack size is not 1 after evaluation")
+        if stack_size < 1:
+            say_error("Invalid RPN expression: not enough values on the stack")
+
+    if stack_size > 1:
+        say_error("Invalid RPN expression: too many values on the stack after evaluation")
 
     STACK_SIZE += 1
 
@@ -322,7 +341,7 @@ def op_call_asmfunc(f, variables):
     elif len(f.args) == 1:
         output.add(f.name,
                 2, STACK_SIZE - variables[0].offset)
-        
+
     elif len(f.args) == 2:
         output.add(f.name,
                 2, STACK_SIZE - variables[0].offset,
@@ -330,7 +349,7 @@ def op_call_asmfunc(f, variables):
 
     else:
         say_error(f"(Internal) Function {f.name} has more than 2 arguments")
-    
+
     return output
 
 def op_init():
@@ -342,7 +361,7 @@ def op_init():
     output.add("mov",
             0, STACK_PTR,
             1, STACK_DEBUT)
-    
+
     return output
 
 def op_fini():
@@ -355,19 +374,21 @@ def op_fini():
 
 prog = """
 $ var
-var = 7
+var = 5
+
+if var 4 == {
+    var = var 2 *
+}
 
 dump(var)
 """.strip()
 
 local_vars = {"main": []}
 
-def compile_line(lines, current_line):
-    global CURRENT_LNO
+def compile_line(lines: list, current_line: int):
+    global CURRENT_LNO, STACK_SIZE
 
     CURRENT_LNO, tokens = lines[current_line]
-
-    global STACK_SIZE
 
     print(f"Tokens: {tokens}")
     output = output_code()
@@ -380,7 +401,7 @@ def compile_line(lines, current_line):
 
         if len(tokens) < 2 + ptrlvl:
             say_error(f"Bad variable declaration\nSyntax example: {NEW_VAR} var_name")
-        
+
         var_name = tokens[1 + ptrlvl]
 
         old_offset = local_vars["main"][-1].offset if local_vars["main"] else 0
@@ -433,32 +454,59 @@ def compile_line(lines, current_line):
             0, COND_RES)
         STACK_SIZE -= 1
 
+        # find the opening brace '{'
+        if current_line + 1 >= len(lines) or lines[current_line + 1][1] != ['{']:
+            say_error("Bad syntax\nExpected '{' after 'if' statement")
+
+        # find the closing brace '}'
+        closing_line = current_line + 1
+
+        while closing_line < len(lines) :
+            if lines[closing_line][1] == ['}']:
+                break
+            closing_line += 1
+        else:
+            say_error("Bad syntax\nExpected '}' after 'if' block")
+
+        # compile the lines inside the if block
+        inner_output = output_code()
+        inner_line = current_line + 2
+        while inner_line < closing_line:
+            sub_output, to_skip = compile_line(lines, inner_line)
+            inner_output.push(sub_output)
+            inner_line += to_skip
+
+        # add a jump instruction to skip the if block if the condition is false
+        output.add("jmpr",
+            1, inner_output.psize + 2, # jump to the instruction after the if block
+            0, COND_RES) # jump if the condition is false
+
+        output.push(inner_output)
+
+        return (output, closing_line - current_line + 1) # return the number of lines to skip
+
+
     else:
         say_error(f"Bad syntax\nUnknown command or variable: {tokens[0]}")
 
     return (output, 1)
 
-def compile(lines):
+def compile(lines: str):
     global CURRENT_LNO
 
     output = op_init()
 
     tokens_lines = []
 
-    for lno, line in enumerate(prog.splitlines(), start=1):
+    for lno, line in enumerate(lines.splitlines(), start=1):
         CURRENT_LNO = lno
 
         line = line.strip()
-        tokens = tokenize_line(line)
-
-        if not tokens:
-            continue
-
-        tokens_lines.append((lno, tokens))
-
+        for t in tokenize_line(line):
+            tokens_lines.append((lno, t))
 
     current_line = 0
-    while current_line < len(tokens_lines):        
+    while current_line < len(tokens_lines):
         sub_output, to_skip = compile_line(tokens_lines, current_line)
 
         output.push(sub_output)
