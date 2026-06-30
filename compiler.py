@@ -458,12 +458,25 @@ def op_fini():
     return output
 
 prog = """
-$ var
-var = 0
+$ to_test
+$ div
+$ is_prime
 
-while var 10 < {
-    dump(var)
-    var = var 1 +
+to_test = 1
+
+while to_test 100 < {
+    div = 2
+    is_prime = 1
+    while div to_test < {
+        if to_test div % 0 == {
+            is_prime = 0
+        }
+        div = div 1 +
+    }
+    if is_prime 1 == {
+        dump(to_test)
+    }
+    to_test = to_test 1 +
 }
 """.strip()
 
@@ -543,11 +556,16 @@ def compile_line(lines: list, current_line: int):
             say_error("Bad syntax\nExpected '{' after 'if' statement")
 
         # find the closing brace '}'
-        closing_line = current_line + 1
-
+        closing_line = current_line + 2
+        
+        opening_braces = 1
         while closing_line < len(lines) :
             if lines[closing_line][1] == ['}']:
-                break
+                opening_braces -= 1
+                if opening_braces == 0:
+                    break
+            elif lines[closing_line][1] == ['{']:
+                opening_braces += 1
             closing_line += 1
         else:
             say_error("Bad syntax\nExpected '}' after 'if' block")
@@ -593,12 +611,19 @@ def compile_line(lines: list, current_line: int):
             say_error("Bad syntax\nExpected '{' after 'while' statement")
 
         # find the closing brace '}'
-        closing_line = current_line + 1
+        closing_line = current_line + 2
 
+        opening_braces = 1
         while closing_line < len(lines) :
             if lines[closing_line][1] == ['}']:
-                break
+                opening_braces -= 1
+                if opening_braces == 0:
+                    break
+            elif lines[closing_line][1] == ['{']:
+                opening_braces += 1
             closing_line += 1
+        else:
+            say_error("Bad syntax\nExpected '}' after 'while' block")
 
         inner_output = output_code()
         inner_line = current_line + 2
@@ -662,9 +687,9 @@ if not ofile:
 
 main_output = compile(prog)
 
-main_output.dump()
+# main_output.dump()
 main_output.resolve_gotos()
-# main_output.dump(hide_labels = True)
+main_output.dump(hide_labels = True)
 main_output.write(ofile)
 
 ofile.close()
