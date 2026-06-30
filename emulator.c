@@ -182,7 +182,7 @@ void execute_program() {
                 pc++;
                 break;
             case 0x16: // dump
-                printf("%x\n", RVAL(source1, pc));
+                fprintf(stderr, "%d\n", RVAL(source1, pc));
                 pc++;
                 break;
             case 0xFF: // halt
