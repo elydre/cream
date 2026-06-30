@@ -8,41 +8,42 @@
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 uint16_t *xmemory, *rwmemory;
-uint16_t pc; // program counter
 uint16_t sp; // stack pointer
 
-static inline uint16_t RVAL(uint8_t source) {
+static inline uint16_t RVAL(uint8_t source, uint16_t pc) {
     switch (source) {
-        case 0: return rwmemory[xmemory[pc++]];
-        case 1: return xmemory[pc++];
-        case 2: return rwmemory[rwmemory[sp] + xmemory[pc++]];
-        default: exit(1);
+        case 0: return rwmemory[xmemory[pc]];
+        case 1: return xmemory[pc];
+        case 2: return rwmemory[rwmemory[sp] + xmemory[pc]];
+        default: {
+            fprintf(stderr, "Error: Invalid source type %d at PC=%04X\n", source, pc);
+            exit(1);
+        }
     }
 }
 
-static inline void WVAL(uint16_t old_pc, uint8_t source, uint16_t value) {
-    printf("WVAL: old_pc=%04X, source=%d, value=%04X\n", old_pc, source, value);
+static inline void WVAL(uint16_t pc, uint8_t source, uint16_t value) {
+    printf("WVAL: pc=%04X, source=%d, value=%04X\n", pc, source, value);
     switch (source) {
-        case 0: rwmemory[xmemory[old_pc]] = value; break;
-        case 1: exit(1); break;
-        case 2: rwmemory[rwmemory[sp] + xmemory[old_pc]] = value; break;
-        default: exit(1);
+        case 0: rwmemory[xmemory[pc]] = value; break;
+        case 1: break; // cannot write to immediate value
+        case 2: rwmemory[rwmemory[sp] + xmemory[pc]] = value; break;
+        default: {
+            fprintf(stderr, "Error: Invalid source type %d at PC=%04X\n", source, pc);
+            exit(1);
+        }
     }
 }
 
 
 void execute_program() {
+    uint16_t pc; // program counter
     pc = sp = 0;
 
     while (1) {
         uint16_t instruction = xmemory[pc++];
 
         uint8_t opcode = instruction & 0xFF00 >> 8;
-
-/*
-        opcode (8 bit)  sources (2 * 2bit)  4bit padding  val1/mem1 (16 bit)  val2/mem2 (16 bit)
-        000000          0000                0000          0000000000000000    0000000000000000
-*/
 
         uint8_t source1 = instruction >> 12 & 0x03;
         uint8_t source2 = instruction >> 8 & 0x03;
@@ -53,69 +54,89 @@ void execute_program() {
             case 0x00: // nop
                 break;
             case 0x01: // mov
-                WVAL(pc++, source1, RVAL(source2));
+                WVAL(pc, source1, RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x02: // push
-                rwmemory[rwmemory[sp]] = RVAL(source1);
                 rwmemory[sp]--;
+                rwmemory[rwmemory[sp]] = RVAL(source1, pc);
+                pc++;
                 break;
             case 0x03: // pop
+                WVAL(pc, source1, rwmemory[rwmemory[sp]]);
                 rwmemory[sp]++;
-                WVAL(pc++, source1, rwmemory[rwmemory[sp]]);
+                pc++;
                 break;
             case 0x04: // sub
-                WVAL(pc++, source1, RVAL(source1) - RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) - RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x05: // add
-                WVAL(pc++, source1, RVAL(source1) + RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) + RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x06: // mul
-                WVAL(pc++, source1, RVAL(source1) * RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) * RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x07: // div
-                WVAL(pc++, source1, RVAL(source1) / RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) / RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x08: // mod
-                WVAL(pc++, source1, RVAL(source1) % RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) % RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x09: // eq
-                WVAL(pc++, source1, RVAL(source1) == RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) == RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x0A: // neq
-                WVAL(pc++, source1, RVAL(source1) != RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) != RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x0B: // lt
-                WVAL(pc++, source1, RVAL(source1) < RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) < RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x0C: // gt
-                WVAL(pc++, source1, RVAL(source1) > RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) > RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x0D: // and
-                WVAL(pc++, source1, RVAL(source1) & RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) & RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x0E: // or
-                WVAL(pc++, source1, RVAL(source1) | RVAL(source2));
+                WVAL(pc, source1, RVAL(source1, pc) | RVAL(source2, pc + 1));
+                pc += 2;
                 break;
             case 0x0F: // not
-                WVAL(pc++, source1, ~RVAL(source1));
+                WVAL(pc, source1, ~RVAL(source1, pc));
+                pc++;
                 break;
             case 0x10: // jmp
-                pc = RVAL(source1);
+                pc = RVAL(source1, pc);
                 break;
             case 0x11: // out
                 printf("emulator does not support ports yet\n");
+                pc += 2;
                 break;
             case 0x12: // in
                 printf("emulator does not support ports yet\n");
+                pc += 2;
                 break;
             case 0x13: // sleep
                 printf("emulator does not support sleep yet\n");
+                pc++;
                 break;
             case 0x14: // ssp
-                sp = RVAL(source1);
+                sp = RVAL(source1, pc);
+                pc++;
                 break;
             case 0x15: // dump
-                printf("%x\n", RVAL(source1));
+                printf("%x\n", RVAL(source1, pc));
+                pc++;
                 break;
             case 0xFF: // halt
                 return;

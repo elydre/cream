@@ -187,6 +187,8 @@ def output(opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
     
     print(end = "\033[34m")
     print(end = f"{hex(PC)[2:].upper().zfill(4)} {opcode} ")
+    argc = 0
+
     if sr1 != None:
         if sr1 == 0: # val1 is a memory address
             print(end = f"[{hex(val1)[2:]}] ")
@@ -194,6 +196,7 @@ def output(opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
             print(end = f"{hex(val1)[2:]} ")
         if sr1 == 2: # val1 is a stack pointer offset
             print(end = f"[sp+{hex(val1)[2:]}] ")
+        argc += 1
 
     if sr2 != None:
         if sr2 == 0: # val2 is a memory address
@@ -202,10 +205,15 @@ def output(opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
             print(end = f"{hex(val2)[2:]} ")
         if sr2 == 2: # val2 is a stack pointer offset
             print(end = f"[sp+{hex(val2)[2:]}] ")
+        argc += 1
 
     print("\033[0m")
 
     op = next(e for e in OPCODES if e.name == opcode)
+
+    if argc != op.argc:
+        say_error(f"Bad number of arguments for opcode {opcode}\nExpected {op.argc}, got {argc}")
+
     b = bytearray()
     b.append(op.opcode)
     b.append(((sr1 or 0) << 4) | (sr2 or 0))
@@ -273,7 +281,8 @@ def op_calculate_rpn(rpn: list):
                 output("gt",
                         2, 1, 2, 0)
 
-            output("pop")
+            output("pop",
+                   1, 0)
 
     if stack_size != 1:
         say_error("Invalid RPN expression: stack size is not 1 after evaluation")
