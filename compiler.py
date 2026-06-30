@@ -461,7 +461,7 @@ prog = """
 $ var
 var = 0
 
-if var 10 < {
+while var 10 < {
     dump(var)
     var = var 1 +
 }
@@ -560,19 +560,67 @@ def compile_line(lines: list, current_line: int):
             inner_output.push(sub_output)
             inner_line += to_skip
 
-        label_name = get_new_label()
+        fin_label = get_new_label()
 
         # add a jump instruction to skip the if block if the condition is false
         output.add_goto(
-            label_name,            
+            fin_label,            
             0, COND_RES) # jump if the condition is false
 
         output.push(inner_output)
 
-        output.add_label(label_name)
+        output.add_label(fin_label)
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
+    
+    elif tokens[0] == "while":
+        if len(tokens) < 2:
+            say_error(f"Bad syntax\nSyntax example: while var < 10")
 
+        debut_label = get_new_label()
+
+        # reverse polish notation (RPN) expression
+        output.add_label(debut_label)
+        output.push(op_calculate_rpn(tokens[1:]))
+
+        # pop the result from the stack to the conditional result memory location
+        output.add("pop",
+            0, COND_RES)
+        STACK_SIZE -= 1
+
+        # find the opening brace '{'
+        if current_line + 1 >= len(lines) or lines[current_line + 1][1] != ['{']:
+            say_error("Bad syntax\nExpected '{' after 'while' statement")
+
+        # find the closing brace '}'
+        closing_line = current_line + 1
+
+        while closing_line < len(lines) :
+            if lines[closing_line][1] == ['}']:
+                break
+            closing_line += 1
+
+        inner_output = output_code()
+        inner_line = current_line + 2
+        while inner_line < closing_line:
+            sub_output, to_skip = compile_line(lines, inner_line)
+            inner_output.push(sub_output)
+            inner_line += to_skip
+
+        inner_output.add_goto(
+            debut_label,
+            1, 0) # unconditional jump to the beginning of the while loop
+        
+        fin_label = get_new_label()
+
+        output.add_goto(
+            fin_label,
+            0, COND_RES) # jump if the condition is false
+        
+        output.push(inner_output)
+        output.add_label(fin_label)
+
+        return (output, closing_line - current_line + 1) # return the number of lines to skip
 
     else:
         say_error(f"Bad syntax\nUnknown command or variable: {tokens[0]}")
@@ -616,7 +664,7 @@ main_output = compile(prog)
 
 main_output.dump()
 main_output.resolve_gotos()
-main_output.dump(hide_labels = True)
+# main_output.dump(hide_labels = True)
 main_output.write(ofile)
 
 ofile.close()
