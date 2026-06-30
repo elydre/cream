@@ -78,7 +78,7 @@ MEMORY_SIZE = 65536 - (80 * 25)
 
 NEW_VAR = "$"
 
-SPE = (',', '(', ')', ':', '=', '+', '-', '*', '/', '%', '<', '>', '{', '}')
+SPE = (',', '(', ')', ':', '=', '+', '-', '*', '/', '%', '<', '>', '{', '}', '[', ']')
 
 class variable:
     def __init__(self, name, ptrlvl, offset):
@@ -458,26 +458,14 @@ def op_fini():
     return output
 
 prog = """
-$ to_test
-$ div
-$ is_prime
+$ [p]
+$ var
 
-to_test = 1
+p = &var
 
-while to_test 100 < {
-    div = 2
-    is_prime = 1
-    while div to_test < {
-        if to_test div % 0 == {
-            is_prime = 0
-        }
-        div = div 1 +
-    }
-    if is_prime 1 == {
-        dump(to_test)
-    }
-    to_test = to_test 1 +
-}
+[p] = 123
+
+dump(var)
 """.strip()
 
 local_vars = {"main": []}
@@ -590,7 +578,7 @@ def compile_line(lines: list, current_line: int):
         output.add_label(fin_label)
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
-    
+
     elif tokens[0] == "while":
         if len(tokens) < 2:
             say_error(f"Bad syntax\nSyntax example: while var < 10")
