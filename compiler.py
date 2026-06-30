@@ -362,7 +362,11 @@ dump(var)
 
 local_vars = {"main": []}
 
-def compile_line(tokens):
+def compile_line(lines, current_line):
+    global CURRENT_LNO
+
+    CURRENT_LNO, tokens = lines[current_line]
+
     global STACK_SIZE
 
     print(f"Tokens: {tokens}")
@@ -398,7 +402,7 @@ def compile_line(tokens):
 
         # move the result from the stack to the variable's memory location
         output.add("pop",
-               2, STACK_SIZE - v.offset)
+            2, STACK_SIZE - v.offset)
         STACK_SIZE -= 1
 
 
@@ -426,43 +430,53 @@ def compile_line(tokens):
 
         # pop the result from the stack to the conditional result memory location
         output.add("pop",
-               0, COND_RES)
+            0, COND_RES)
         STACK_SIZE -= 1
 
     else:
         say_error(f"Bad syntax\nUnknown command or variable: {tokens[0]}")
 
-    return output
+    return (output, 1)
 
+def compile(lines):
+    global CURRENT_LNO
+
+    output = op_init()
+
+    tokens_lines = []
+
+    for lno, line in enumerate(prog.splitlines(), start=1):
+        CURRENT_LNO = lno
+
+        line = line.strip()
+        tokens = tokenize_line(line)
+
+        if not tokens:
+            continue
+
+        tokens_lines.append((lno, tokens))
+
+
+    current_line = 0
+    while current_line < len(tokens_lines):        
+        sub_output, to_skip = compile_line(tokens_lines, current_line)
+
+        output.push(sub_output)
+        current_line += to_skip
+
+    output.push(op_fini())
+
+    return output
 
 #=======================================
 
-main_output = op_init()
-
-tokens_lines = []
-
-for lno, line in enumerate(prog.splitlines(), start=1):
-    CURRENT_LNO = lno
-
-    line = line.strip()
-    tokens = tokenize_line(line)
-
-    if not tokens:
-        continue
-
-    tokens_lines.append((lno, tokens))
-
-
-for lno, tokens in tokens_lines:
-    CURRENT_LNO = lno
-    main_output.push(compile_line(tokens))
-
-main_output.push(op_fini())
 
 ofile = open("output.bin", "wb")
 
 if not ofile:
     exit("Could not open output file")
+
+main_output = compile(prog)
 
 main_output.dump()
 main_output.write(ofile)
