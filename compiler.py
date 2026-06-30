@@ -165,7 +165,15 @@ STACK_SIZE = 0
 
 class output_code:
     class instruction:
-        def __init__(self, opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
+        def __init__(self, opcode, sr1, val1, sr2, val2, iscomment):
+            self.iscomment = iscomment
+
+            if iscomment:
+                self.string = opcode
+                self.psize = 0
+                self.bytes = bytearray()
+                return
+
             if not any(e.name == opcode for e in OPCODES):
                 say_error(f"(Internal) Unknown opcode: {opcode}")
 
@@ -213,21 +221,26 @@ class output_code:
         self.psize = 0
 
     def add(self, opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
-        instr = self.instruction(opcode, sr1, val1, sr2, val2)
+        instr = self.instruction(opcode, sr1, val1, sr2, val2, iscomment = False)
         self.instructions.append(instr)
         self.psize += instr.psize
+
+    def comment(self, comment):
+        instr = self.instruction(comment, None, None, None, None, iscomment = True)
+        self.instructions.append(instr)
 
     def push(self, other):
         self.instructions += other.instructions
         self.psize += other.psize
 
     def dump(self):
-        print(end = "\033[34m")
         pc = 0
         for instr in self.instructions:
-            print(f"{hex(pc)[2:].zfill(4)}: {instr.string}")
+            if instr.iscomment:
+                print(f"\033[32m{instr.string}\033[0m")
+            else:
+                print(f"\033[34m{hex(pc)[2:].zfill(4)}: {instr.string}\033[0m")
             pc += instr.psize
-        print(end = "\033[0m")
 
     def write(self, file):
         for instr in self.instructions:
@@ -322,6 +335,7 @@ def op_call_asmfunc(f, variables):
 
 def op_init():
     output = output_code()
+    output.comment("\nProgram initialization")
 
     output.add("ssp",
             1, STACK_PTR)
@@ -333,6 +347,7 @@ def op_init():
 
 def op_fini():
     output = output_code()
+    output.comment("\nProgram finalization")
 
     output.add("hlt")
 
@@ -347,17 +362,12 @@ dump(var)
 
 local_vars = {"main": []}
 
-output = op_init()
+def compile_line(tokens):
+    global STACK_SIZE
 
-for lno, line in enumerate(prog.splitlines(), start=1):
-    CURRENT_LNO = lno
-
-    line = line.strip()
-    tokens = tokenize_line(line)
-    if not tokens:
-        continue
     print(f"Tokens: {tokens}")
-
+    output = output_code()
+    output.comment(f"\nl{CURRENT_LNO:03}  {' '.join(tokens)}")
 
     if tokens[0] == NEW_VAR:
         ptrlvl = 0
@@ -419,22 +429,42 @@ for lno, line in enumerate(prog.splitlines(), start=1):
                0, COND_RES)
         STACK_SIZE -= 1
 
-
-
-
-
     else:
         say_error(f"Bad syntax\nUnknown command or variable: {tokens[0]}")
 
+    return output
 
-output.push(op_fini())
+
+#=======================================
+
+main_output = op_init()
+
+tokens_lines = []
+
+for lno, line in enumerate(prog.splitlines(), start=1):
+    CURRENT_LNO = lno
+
+    line = line.strip()
+    tokens = tokenize_line(line)
+
+    if not tokens:
+        continue
+
+    tokens_lines.append((lno, tokens))
+
+
+for lno, tokens in tokens_lines:
+    CURRENT_LNO = lno
+    main_output.push(compile_line(tokens))
+
+main_output.push(op_fini())
 
 ofile = open("output.bin", "wb")
 
 if not ofile:
     exit("Could not open output file")
 
-output.dump()
-output.write(ofile)
+main_output.dump()
+main_output.write(ofile)
 
 ofile.close()
