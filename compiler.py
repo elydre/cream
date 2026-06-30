@@ -241,15 +241,15 @@ def op_calculate_rpn(rpn: list):
 
     for token in rpn:
         if is_number(token):
-            stack_size += 1
             output("push",
                    1, to_number(token))
+            stack_size += 1
         
         elif is_variable(token):
-            stack_size += 1
             v = get_variable(token)
             output("push",
-                   2, STACK_SIZE - v.offset)
+                   2, (STACK_SIZE + stack_size) - v.offset)
+            stack_size += 1
 
         elif token in ['+', '-', '*', '/', '%', '==', '!=', '<', '>']:
             stack_size -= 1
@@ -301,8 +301,14 @@ def op_fini():
 
 prog = """
 $ var
+$ coucou
+
 var = 1 6 +
+coucou = 2 var 6 * +
+var = 7
+
 dump(var)
+dump(coucou)
 """.strip()
 
 local_vars = {"main": []}
@@ -374,23 +380,19 @@ for lno, line in enumerate(prog.splitlines(), start=1):
             output("out",
                    2, STACK_SIZE - variables[0].offset,
                    2, STACK_SIZE - variables[1].offset)
-            STACK_SIZE -= 2
 
         elif f.name == "in":
             output("in",
                    2, STACK_SIZE - variables[0].offset,
                    2, STACK_SIZE - variables[1].offset)
-            STACK_SIZE -= 1
 
         elif f.name == "sleep":
             output("sleep",
                    2, STACK_SIZE - variables[0].offset)
-            STACK_SIZE -= 1
 
         elif f.name == "dump":
             output("dump",
                    2, STACK_SIZE - variables[0].offset)
-            STACK_SIZE -= 1
 
     else:
         say_error(f"Bad syntax\nUnknown command or variable: {tokens[0]}")

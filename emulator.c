@@ -23,7 +23,7 @@ static inline uint16_t RVAL(uint8_t source, uint16_t pc) {
 }
 
 static inline void WVAL(uint16_t pc, uint8_t source, uint16_t value) {
-    printf("WVAL: pc=%04X, source=%d, value=%04X\n", pc, source, value);
+    printf("WVAL: mem=%04X, source=%d, value=%04X\n", xmemory[pc], source, value);
     switch (source) {
         case 0: rwmemory[xmemory[pc]] = value; break;
         case 1: break; // cannot write to immediate value
@@ -58,8 +58,9 @@ void execute_program() {
                 pc += 2;
                 break;
             case 0x02: // push
+                uint16_t v = RVAL(source1, pc);
                 rwmemory[sp]--;
-                rwmemory[rwmemory[sp]] = RVAL(source1, pc);
+                rwmemory[rwmemory[sp]] = v;
                 pc++;
                 break;
             case 0x03: // pop
