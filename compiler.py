@@ -179,16 +179,67 @@ STACK_PTR = MEMORY_SIZE - 2
 STACK_DEBUT = STACK_PTR
 STACK_SIZE = 0
 
+CURRENT_LABEL = 0
+
+def get_new_label():
+    global CURRENT_LABEL
+    label = f"label_{CURRENT_LABEL}"
+    CURRENT_LABEL += 1
+    return label
+
 class output_code:
     class instruction:
-        def __init__(self, opcode, sr1, val1, sr2, val2, iscomment):
-            self.iscomment = iscomment
+        TYPE_COMMENT = 0
+        TYPE_LABEL = 1
+        TYPE_OPCODE = 2
+        TYPE_GOTO = 3
+        TYPE_NOTSET = 4
 
-            if iscomment:
-                self.string = opcode
-                self.psize = 0
-                self.bytes = bytearray()
-                return
+        def __init__(self):
+            self.string = ""
+            self.bytes = bytearray()
+            self.psize = 0
+            self.type = self.TYPE_NOTSET
+
+            self.goto_label = None
+            self.goto_sr = None
+            self.goto_val = None
+
+        def setcomment(self, comment):
+            self.type = self.TYPE_COMMENT
+            self.string = comment
+            self.psize = 0
+            self.bytes = bytearray()
+
+        def setlabel(self, label):
+            self.type = self.TYPE_LABEL
+            self.string = label
+            self.psize = 0
+            self.bytes = bytearray()
+
+        def setgoto(self, label, sr = None, val = None):
+            self.type = self.TYPE_GOTO
+
+            self.string = f"goto {label} if "
+
+            if sr == 0: # val1 is a memory address
+                self.string += f"[{hex(val)[2:]}]"
+            if sr == 1: # val1 is a value
+                self.string += f"{hex(val)[2:]}"
+            if sr == 2: # val1 is a stack pointer offset
+                self.string += f"[sp+{hex(val)[2:]}]"
+
+            self.string += f" == 0"            
+
+            self.psize = 3
+            self.bytes = bytearray()
+
+            self.goto_label = label
+            self.goto_sr = sr
+            self.goto_val = val
+
+        def setopcode(self, opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
+            self.type = self.TYPE_OPCODE
 
             if not any(e.name == opcode for e in OPCODES):
                 say_error(f"(Internal) Unknown opcode: {opcode}")
@@ -234,34 +285,68 @@ class output_code:
 
     def __init__(self):
         self.instructions = []
-        self.psize = 0
 
     def add(self, opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
-        instr = self.instruction(opcode, sr1, val1, sr2, val2, iscomment = False)
+        instr = self.instruction()
+        instr.setopcode(opcode, sr1, val1, sr2, val2)
         self.instructions.append(instr)
-        self.psize += instr.psize
 
-    def comment(self, comment):
-        instr = self.instruction(comment, None, None, None, None, iscomment = True)
+    def add_comment(self, comment):
+        instr = self.instruction()
+        instr.setcomment(comment)
+        self.instructions.append(instr)
+
+    def add_label(self, label):
+        instr = self.instruction()
+        instr.setlabel(label)
+        self.instructions.append(instr)
+
+    def add_goto(self, label, sr = None, val = None):
+        instr = self.instruction()
+        instr.setgoto(label, sr, val)
         self.instructions.append(instr)
 
     def push(self, other):
         self.instructions += other.instructions
-        self.psize += other.psize
 
-    def dump(self):
+    def dump(self, hide_labels = False):
         pc = 0
         for instr in self.instructions:
-            if instr.iscomment:
+            if instr.type == self.instruction.TYPE_COMMENT:
                 print(f"\033[32m{instr.string}\033[0m")
-            else:
+            elif instr.type == self.instruction.TYPE_LABEL:
+                if not hide_labels: print(f"\033[33m{instr.string}::\033[0m")
+            elif instr.type == self.instruction.TYPE_GOTO:
+                print(f"\033[33m{hex(pc)[2:].zfill(4)}: {instr.string}\033[0m")
+            elif instr.type == self.instruction.TYPE_OPCODE:
                 print(f"\033[34m{hex(pc)[2:].zfill(4)}: {instr.string}\033[0m")
+            else:
+                say_error(f"(Internal) Unknown instruction type: {instr.type}") 
             pc += instr.psize
+
+    def resolve_gotos(self):
+        pc = 0
+        label_addresses = {}
+
+        # First pass: record label addresses
+        for instr in self.instructions:
+            if instr.type == self.instruction.TYPE_LABEL:
+                label_addresses[instr.string] = pc
+            pc += instr.psize
+
+        # Second pass: resolve goto instructions
+        for instr in self.instructions:
+            if instr.type != self.instruction.TYPE_GOTO:
+                continue
+            resolved_address = label_addresses.get(instr.goto_label)
+            if resolved_address is None:
+                say_error(f"(Internal) Unknown label: {instr.goto_label}")
+            # Replace the goto instruction with a jmp instruction
+            instr.setopcode("jmp", 1, resolved_address, instr.goto_sr, instr.goto_val)
 
     def write(self, file):
         for instr in self.instructions:
             file.write(instr.bytes)
-
 
 def op_calculate_rpn(rpn: list):
     global STACK_SIZE
@@ -354,7 +439,7 @@ def op_call_asmfunc(f, variables):
 
 def op_init():
     output = output_code()
-    output.comment("\nProgram initialization")
+    output.add_comment("\nProgram initialization")
 
     output.add("ssp",
             1, STACK_PTR)
@@ -366,7 +451,7 @@ def op_init():
 
 def op_fini():
     output = output_code()
-    output.comment("\nProgram finalization")
+    output.add_comment("\nProgram finalization")
 
     output.add("hlt")
 
@@ -374,13 +459,12 @@ def op_fini():
 
 prog = """
 $ var
-var = 5
+var = 0
 
-if var 4 == {
-    var = var 2 *
+if var 10 < {
+    dump(var)
+    var = var 1 +
 }
-
-dump(var)
 """.strip()
 
 local_vars = {"main": []}
@@ -392,7 +476,7 @@ def compile_line(lines: list, current_line: int):
 
     print(f"Tokens: {tokens}")
     output = output_code()
-    output.comment(f"\nl{CURRENT_LNO:03}  {' '.join(tokens)}")
+    output.add_comment(f"\nl{CURRENT_LNO:03}  {' '.join(tokens)}")
 
     if tokens[0] == NEW_VAR:
         ptrlvl = 0
@@ -476,12 +560,16 @@ def compile_line(lines: list, current_line: int):
             inner_output.push(sub_output)
             inner_line += to_skip
 
+        label_name = get_new_label()
+
         # add a jump instruction to skip the if block if the condition is false
-        output.add("jmpr",
-            1, inner_output.psize + 2, # jump to the instruction after the if block
+        output.add_goto(
+            label_name,            
             0, COND_RES) # jump if the condition is false
 
         output.push(inner_output)
+
+        output.add_label(label_name)
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
 
@@ -527,6 +615,8 @@ if not ofile:
 main_output = compile(prog)
 
 main_output.dump()
+main_output.resolve_gotos()
+main_output.dump(hide_labels = True)
 main_output.write(ofile)
 
 ofile.close()
