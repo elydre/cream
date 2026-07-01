@@ -609,9 +609,6 @@ def op_load_ptraddr(tokens: list):
     
     return (output, end + 1)
 
-def op_alloca():
-    ...
-
 def op_init():
     output = output_code()
     output.add_comment("\nProgram initialization")
@@ -692,8 +689,6 @@ ALL_FUNCS = [
     func("in",    2, False, func.TYPE_ASM),
     func("sleep", 1, False, func.TYPE_ASM),
     func("dump",  1, False, func.TYPE_ASM),
-
-    func("alloca", 1, True, func.TYPE_BLT, op_alloca)
 ]
 
 def locate_braces(lines: list, current_line: int):
