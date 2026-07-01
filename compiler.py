@@ -39,7 +39,10 @@ sleep [arg] // sleep for arg ticks
 ssp   [arg] // set stack pointer to arg
 
 dump  [arg] // print arg
-mss   [arg] [offset] [arg] [offset]
+
+mss   [arg1] [offset1] [arg2] [offset2] // [arg1 + offset1] = [arg2 + offset2]
+pushs [arg] [offset] // push [arg + offset] to stack
+pops  [arg] [offset] // pop from stack to [arg + offset]
 
 hlt
 """
@@ -75,6 +78,8 @@ OPCODES = [
     opcode("ssp",   0x15, 1),
     opcode("dump",  0x16, 1),
     opcode("mss",   0x17, 4),
+    opcode("pushs", 0x18, 2),
+    opcode("pops",  0x19, 2),
     opcode("hlt",   0xFF, 0),
 ]
 
@@ -178,12 +183,12 @@ def get_variable(s, scope = "main"):
 
     return next(e for e in local_vars[scope] if e.name == s)
 
-global STACK_PTR, STACK_SIZE
+global STACK_PTR
 COND_RES = MEMORY_SIZE - 1
 STACK_DEBUT_PTR = MEMORY_SIZE - 2
 STACK_PTR = MEMORY_SIZE - 3
+
 STACK_DEBUT = STACK_PTR
-STACK_SIZE = 0
 
 CURRENT_LABEL = 0
 
@@ -360,8 +365,6 @@ class output_code:
             file.write(instr.bytes)
 
 def op_calculate_rpn(rpn: list):
-    global STACK_SIZE
-
     output = output_code()
 
     if not rpn:
@@ -378,14 +381,15 @@ def op_calculate_rpn(rpn: list):
                        (1, STACK_DEBUT - v.offset))
                 have_ampersand = False
             else:
-                output.add("push",
-                       (2, (STACK_SIZE + stack_size) - v.offset))
                 # output.add("push", (1, 0))
                 # output.add("mss",
-                #         (2, 0),
+                #         (0, STACK_PTR),
                 #         (1, 0),
-                #         (3, STACK_DEBUT_PTR),
+                #         (0, STACK_DEBUT_PTR),
                 #         (1, ctypes.c_ushort(-v.offset).value))
+                output.add("pushs",
+                       (0, STACK_DEBUT_PTR),
+                       (1, ctypes.c_ushort(-v.offset).value))
             stack_size += 1
 
         elif token == '&':
@@ -439,8 +443,6 @@ def op_calculate_rpn(rpn: list):
     if stack_size > 1:
         say_error("Invalid RPN expression: too many values on the stack after evaluation")
 
-    STACK_SIZE += 1
-
     return output
 
 
@@ -450,20 +452,29 @@ def op_call_asmfunc(f, variables):
     if len(variables) != len(f.args):
         say_error(f"Wrong number of arguments for function {f.name}\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
 
+    # push arguments to the stack in reverse order
+    for v in reversed(variables):
+        output.add("pushs",
+                (0, STACK_DEBUT_PTR),
+                (1, ctypes.c_ushort(-v.offset).value))
+
     if len(f.args) == 0:
         output.add(f.name)
 
     elif len(f.args) == 1:
         output.add(f.name,
-                (2, STACK_SIZE - variables[0].offset))
+                (2, 0))
 
     elif len(f.args) == 2:
         output.add(f.name,
-                (2, STACK_SIZE - variables[0].offset),
-                (2, STACK_SIZE - variables[1].offset))
+                (2, 1), (2, 0))
 
     else:
         say_error(f"(Internal) Function {f.name} has more than 2 arguments")
+
+    for v in variables:
+        output.add("pop",
+                (1, 0))
 
     return output
 
@@ -472,10 +483,13 @@ def op_init():
     output.add_comment("\nProgram initialization")
 
     output.add("ssp",
-            1, STACK_PTR)
+            (1, STACK_PTR))
     output.add("mov",
-            0, STACK_PTR,
-            1, STACK_DEBUT)
+            (0, STACK_PTR),
+            (1, STACK_DEBUT))
+    output.add("mov",
+            (0, STACK_DEBUT_PTR),
+            (1, STACK_DEBUT))
 
     return output
 
@@ -490,14 +504,12 @@ def op_fini():
 
 prog1 = """
 $ var
-$ [ptr]
+$ coucou
 
-ptr = &var
-
-[ptr] = 123
+coucou = 123
+var = coucou
 
 dump(var)
-dump(ptr)
 """.strip()
 
 prog2 = """
@@ -523,7 +535,7 @@ while to_test 100 < {
 }
 """.strip()
 
-prog = prog2
+prog = prog1
 
 local_vars = {"main": []}
 
@@ -561,7 +573,7 @@ def compile_lines(lines: list, size: int):
     return output
 
 def compile_line(lines: list, current_line: int):
-    global CURRENT_LNO, STACK_SIZE
+    global CURRENT_LNO
 
     CURRENT_LNO, tokens = lines[current_line]
 
@@ -590,7 +602,6 @@ def compile_line(lines: list, current_line: int):
         v = variable(var_name, ptrlvl, old_offset + 1)
         v.add_to_local_vars()
 
-        STACK_SIZE += 1
         output.add("push",
             (1, 0))
 
@@ -604,9 +615,19 @@ def compile_line(lines: list, current_line: int):
         output.push(op_calculate_rpn(tokens[2:]))
 
         # move the result from the stack to the variable's memory location
-        output.add("pop",
-            (2, STACK_SIZE - v.offset))
-        STACK_SIZE -= 1
+
+        # output.add("mss",
+        #         (0, STACK_DEBUT_PTR),
+        #         (1, ctypes.c_ushort(-v.offset).value),
+        #         (0, STACK_PTR),
+        #         (1, 0))
+
+        # output.add("pop",
+        #     (1, 0))
+
+        output.add("pops",
+                (0, STACK_DEBUT_PTR),
+                (1, ctypes.c_ushort(-v.offset).value))
 
     elif tokens[0] == "[":
         ptrlvl = 1
@@ -651,10 +672,7 @@ def compile_line(lines: list, current_line: int):
         output.push(op_calculate_rpn(tokens[end + 1:]))
 
         # move the result from the stack to the pointer's memory location
-        output.add("pop",
-            (3, STACK_SIZE - ptr.offset))
-
-        STACK_SIZE -= 1
+        
 
     elif tokens[0] in [e.name for e in ASM_FUNCS]:
         f = next(e for e in ASM_FUNCS if e.name == tokens[0])
@@ -681,7 +699,6 @@ def compile_line(lines: list, current_line: int):
         # pop the result from the stack to the conditional result memory location
         output.add("pop",
             (0, COND_RES))
-        STACK_SIZE -= 1
 
         # compile the lines inside the if block
         closing_line = locate_braces(lines, current_line)
@@ -712,7 +729,6 @@ def compile_line(lines: list, current_line: int):
         # pop the result from the stack to the conditional result memory location
         output.add("pop",
             (0, COND_RES))
-        STACK_SIZE -= 1
 
         # compile the lines inside the while block
         closing_line = locate_braces(lines, current_line)
@@ -748,7 +764,9 @@ def compile(lines: str):
         for t in tokenize_line(line):
             tokens_lines.append((lno, t))
 
-    output = compile_lines(tokens_lines, len(tokens_lines))
+    output = output_code()
+    output.push(op_init())
+    output.push(compile_lines(tokens_lines, len(tokens_lines)))
     output.push(op_fini())
 
     return output

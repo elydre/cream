@@ -7,10 +7,25 @@
 #undef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
+#ifdef DEBUG
+#define DEBUGF(fmt, ...) printf(fmt, ##__VA_ARGS__)
+#else
+#define DEBUGF(fmt, ...) do {} while (0)
+#endif
+
 uint16_t *xmem, *rwmem;
 uint16_t sp; // stack pointer
 
 static inline uint16_t RVAL(uint8_t source, uint16_t val) {
+    if (source == 0)
+        DEBUGF("RVAL: [%04X] = %04X\n", val, rwmem[val]);
+    else if (source == 1)
+        DEBUGF("RVAL: %04X = %04X pass\n", val, val);
+    else if (source == 2)
+        DEBUGF("RVAL: [sp+%X] = %04X\n", val, rwmem[rwmem[sp] + val]);
+    else if (source == 3)
+        DEBUGF("RVAL: [[%04X]] = %04X\n", val, rwmem[rwmem[val]]);
+
     switch (source) {
         case 0: return rwmem[val];
         case 1: return val;
@@ -25,13 +40,13 @@ static inline uint16_t RVAL(uint8_t source, uint16_t val) {
 
 static inline void WVAL(uint16_t addr, uint8_t source, uint16_t value) {
     if (source == 0)
-        printf("WVAL: [%04X] = %04X\n", addr, value);
+        DEBUGF("WVAL: [%04X] = %04X\n", addr, value);
     else if (source == 1)
-        printf("WVAL: %04X = %04X pass\n", addr, value);
+        DEBUGF("WVAL: %04X = %04X pass\n", addr, value);
     else if (source == 2)
-        printf("WVAL: [sp+%X] = %04X\n", addr, value);
+        DEBUGF("WVAL: [sp+%X] = %04X\n", addr, value);
     else if (source == 3)
-        printf("WVAL: [[%04X]] = %04X\n", addr, value);
+        DEBUGF("WVAL: [[%04X]] = %04X\n", addr, value);
 
     switch (source) {
         case 0: rwmem[addr] = value; break;
@@ -70,9 +85,12 @@ char *opcode_to_string(uint8_t opcode) {
         case 0x14: return "sleep";
         case 0x15: return "ssp";
         case 0x16: return "dump";
+        case 0x17: return "mss";
+        case 0x18: return "pushs";
+        case 0x19: return "pops";
         case 0xFF: return "halt";
         default:
-            fprintf(stderr, "Error: Unknown opcode %02X\n", opcode);
+            fprintf(stderr, "Error: Unknown opcode 0x%02X\n", opcode);
             exit(1);
     }
 }
@@ -91,7 +109,7 @@ void execute_program() {
         uint8_t source2 = instruction >> 10 & 0x03;
         uint8_t source3 = instruction >> 8 & 0x03;
 
-        printf("PC: %04X \033[34m%s\033[0m\n", pc - 1, opcode_to_string(opcode));
+        DEBUGF("PC: %04X \033[34m%s\033[0m\n", pc - 1, opcode_to_string(opcode));
 
         switch (opcode) {
             case 0x00: // nop
@@ -172,15 +190,15 @@ void execute_program() {
                     pc += 2;
                 break;
             case 0x12: // out
-                printf("emulator does not support ports yet\n");
+                DEBUGF("emulator does not support ports yet\n");
                 pc += 2;
                 break;
             case 0x13: // in
-                printf("emulator does not support ports yet\n");
+                DEBUGF("emulator does not support ports yet\n");
                 pc += 2;
                 break;
             case 0x14: // sleep
-                printf("emulator does not support sleep yet\n");
+                DEBUGF("emulator does not support sleep yet\n");
                 pc++;
                 break;
             case 0x15: // ssp
@@ -192,20 +210,40 @@ void execute_program() {
                 pc++;
                 break;
             case 0x17: // mss
-                WVAL(xmem[pc] + RVAL(source1, xmem[pc + 1]), source0, RVAL(source2, xmem[pc + 2] + RVAL(source3, xmem[pc + 3])));
+            {
+                uint16_t dest = RVAL(source0, xmem[pc])     + RVAL(source1, xmem[pc + 1]);
+                uint16_t src  = RVAL(source2, xmem[pc + 2]) + RVAL(source3, xmem[pc + 3]);
+
+                DEBUGF("mss: [%04X] = [%04X] = %04X\n", dest, src, rwmem[src]);
+                rwmem[dest] = rwmem[src];
+                pc += 4;
+                break;
+            }
+            case 0x18: // pushs
+                // push but like mss
+                rwmem[sp]--;
+                rwmem[rwmem[sp]] = rwmem[(uint16_t)(RVAL(source0, xmem[pc]) + RVAL(source1, xmem[pc + 1]))];
+                pc += 2;
+                break;
+            case 0x19: // pops
+                // pop but like mss
+                rwmem[(uint16_t)(RVAL(source0, xmem[pc]) + RVAL(source1, xmem[pc + 1]))] = rwmem[rwmem[sp]];
+                rwmem[sp]++;
+                pc += 2;
+                break;
             case 0xFF: // halt
                 return;
             default:
-                printf("Unknown opcode: %02X\n", opcode);
+                DEBUGF("Unknown opcode: 0x%02X\n", opcode);
                 return;
         }
 
         // print the beginning of the stack
-        printf("\033[90m[ ");
+        DEBUGF("\033[90m[ ");
         for (int i = 0; i < 5; i++) {
-            printf("%04X ", rwmem[rwmem[sp] + i]);
+            DEBUGF("%04X ", rwmem[rwmem[sp] + i]);
         }
-        printf("]\033[0m\n");
+        DEBUGF("]\033[0m\n");
 
         if (pc >= RWMEMORY_SIZE - 10)
             return;
