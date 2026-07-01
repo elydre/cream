@@ -27,7 +27,7 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] C emulator
 - [x] basic command line interface for compiler
 - [ ] langage documentation
-- [ ] add text mode screen to emulator
+- [ ] add text mode screen to the emulator
 - [ ] create a basic operating system
 
 ## opcode (may be subject to change)
