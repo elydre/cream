@@ -95,22 +95,21 @@ class variable:
         self.ptrlvl = ptrlvl
         self.offset = offset
 
-    def add_to_local_vars(self):
-        local_vars["main"].append(self)
+    def add_to_local_variables(self):
+        LOCAL_VARS["main"].append(self)
+
 
 class func:
-    def __init__(self, name, args, return_type, isasm = False):
-        self.name = name
-        self.args = args
-        self.return_type = return_type
-        self.isasm = isasm
+    TYPE_ASM  = 0   # opcode handler (ports, sleep...)
+    TYPE_BLT  = 1   # builtin function (alloca)
+    TYPE_USER = 2   # user-defined function
 
-ASM_FUNCS = [
-    func("out", [0, 0], None, True),
-    func("in", [0, 1], None, True),
-    func("sleep", [0], None, True),
-    func("dump", [0], None, True)
-]
+    def __init__(self, name, argc, does_return, ftype, blt_handler = None):
+        self.name = name
+        self.argc = argc
+        self.does_return = does_return
+        self.ftype = ftype
+        self.blt_handler = blt_handler
 
 global CURRENT_LNO
 CURRENT_LNO = 0
@@ -175,13 +174,22 @@ def to_number(s):
         say_error(f"Bad number: {s}")
 
 def is_variable(s, scope = "main"):
-    return s in [e.name for e in local_vars[scope]]
+    return s in [e.name for e in LOCAL_VARS[scope]]
 
 def get_variable(s, scope = "main"):
     if not is_variable(s, scope):
         say_error(f"Unknown variable: {s}")
 
-    return next(e for e in local_vars[scope] if e.name == s)
+    return next(e for e in LOCAL_VARS[scope] if e.name == s)
+
+def is_func(s):
+    return s in [e.name for e in ALL_FUNCS]
+
+def get_func(s):
+    if not is_func(s):
+        say_error(f"Unknown function: {s}")
+
+    return next(e for e in ALL_FUNCS if e.name == s)
 
 global STACK_PTR
 COND_RES = MEMORY_SIZE - 1
@@ -403,6 +411,9 @@ def op_calculate_rpn(rpn: list):
                        (1, ctypes.c_ushort(-v.offset).value))
             stack_size += 1
             continue
+
+        if is_func(token):
+            say_error(f"Function calls not supported in RPN expressions yet: {token}")
         
         elif have_ampersand:
             say_error(f"Unexpected '&' before token: {token}\nCorrect syntax example: ptr = &var")
@@ -494,25 +505,22 @@ def split_func_args(tokens: list):
 
     return args
 
-def op_call_asmfunc(f, tokens: list):
-    output = output_code()
-    args = split_func_args(tokens)
 
-    if len(args) != len(f.args):
-        say_error(f"Wrong number of arguments for function {f.name}\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
+def op_call_asmfunc(f, args: list):
+    output = output_code()
 
     # push arguments to the stack in reverse order
     for v in reversed(args):
         output.push(op_calculate_rpn(v))
 
-    if len(f.args) == 0:
+    if f.argc == 0:
         output.add(f.name)
 
-    elif len(f.args) == 1:
+    elif f.argc == 1:
         output.add(f.name,
                 (2, 0))
 
-    elif len(f.args) == 2:
+    elif f.argc == 2:
         output.add(f.name,
                 (2, 1), (2, 0))
 
@@ -524,6 +532,23 @@ def op_call_asmfunc(f, tokens: list):
                 (1, 0))
 
     return output
+
+
+def call_func(f: func, tokens: list):
+    args = split_func_args(tokens)
+
+    print(f"Calling function {f.name} with arguments: {args}")
+
+    if len(args) != f.argc:
+        say_error(f"Wrong number of arguments for function {f.name}\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
+
+    if f.ftype == func.TYPE_ASM:
+        return op_call_asmfunc(f, args)
+    elif f.ftype == func.TYPE_BLT:
+        return f.blt_handler(args)
+    else:
+        say_error(f"(Internal) User-defined functions not implemented yet: {f.name}")
+
 
 def op_load_ptraddr(tokens: list):
     output = output_code()
@@ -583,6 +608,9 @@ def op_load_ptraddr(tokens: list):
                 (1, ctypes.c_ushort(-ptr.offset).value))
     
     return (output, end + 1)
+
+def op_alloca():
+    ...
 
 def op_init():
     output = output_code()
@@ -657,7 +685,16 @@ while to_test 100 < {
 
 prog = prog1.strip()
 
-local_vars = {"main": []}
+LOCAL_VARS = {"main": []}
+
+ALL_FUNCS = [
+    func("out",   2, False, func.TYPE_ASM),
+    func("in",    2, False, func.TYPE_ASM),
+    func("sleep", 1, False, func.TYPE_ASM),
+    func("dump",  1, False, func.TYPE_ASM),
+
+    func("alloca", 1, True, func.TYPE_BLT, op_alloca)
+]
 
 def locate_braces(lines: list, current_line: int):
      # find the opening brace '{'
@@ -722,9 +759,9 @@ def compile_line(lines: list, current_line: int):
         if is_variable(var_name):
             say_error(f"Variable already exists: {tokens[1 + ptrlvl]}")
 
-        old_offset = local_vars["main"][-1].offset if local_vars["main"] else 0
+        old_offset = LOCAL_VARS["main"][-1].offset if LOCAL_VARS["main"] else 0
         v = variable(var_name, ptrlvl, old_offset + 1)
-        v.add_to_local_vars()
+        v.add_to_local_variables()
 
         output.add("push",
             (1, 0))
@@ -772,11 +809,12 @@ def compile_line(lines: list, current_line: int):
         output.add("pop",
                 (1, 0))
 
-    elif tokens[0] in [e.name for e in ASM_FUNCS]:
-        f = next(e for e in ASM_FUNCS if e.name == tokens[0])
+    elif is_func(tokens[0]):
+        f = get_func(tokens[0])
         if len(tokens) < 4 or tokens[1] != '(' or tokens[-1] != ')':
             say_error(f"Bad syntax\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
-        output.push(op_call_asmfunc(f, tokens[2:-1]))
+
+        output.push(call_func(f, tokens[2:-1]))
 
     elif tokens[0] == "if":
         if len(tokens) < 2:
