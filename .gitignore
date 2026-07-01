@@ -1,2 +1,3 @@
 *.bin
 *.out
+/compiler/__pycache__
