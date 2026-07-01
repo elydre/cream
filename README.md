@@ -4,22 +4,28 @@ custom instruction set, esoteric programming language, compiler, and emulator
 
 ## Todo
 
-- [x] C emulator
+### Compiler
+
 - [x] variable on stack
 - [x] RPN calculator
 - [x] if statements
 - [x] while loops
 - [x] pointers operations
-- [x] basic command line interface for compiler
 - [x] built-in functions
 - [x] alloca
 - [x] break and continue
 - [x] for loops
-- [ ] else statements
+- [ ] heap arrays and variables
+- [ ] heap strings
+- [ ] elif/else statements
+- [ ] sub stack scope
 - [ ] functions
-- [ ] static variables
-- [ ] strings
 - [ ] some optimizations
+
+### Extra
+
+- [x] C emulator
+- [x] basic command line interface for compiler
 - [ ] langage documentation
 - [ ] add text mode screen to emulator
 - [ ] create a basic operating system
