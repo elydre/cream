@@ -21,3 +21,63 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [ ] basic command line interface for compiler
 - [ ] add text mode screen to emulator
 - [ ] create a basic operating system
+
+## opcode (may be subject to change)
+
+```
+opcode (8 bit)  sources (4 * 2bit)  [  arg0 (16 bit)   ] ... [ arg3 (16 bit)    ]
+000000          00000000            [ 0000000000000000 ] ... [ 0000000000000000 ]
+
+(arguments quantity is determined by the opcode)
+```
+
+| opcode | arguments   | description               |
+| ------ | ----------- | ------------------------- |
+|  nop   |             | no operation              |
+|        |             |                           |
+|  mov   | `a` `b`     | `a <= b`                  |
+|        |             |                           |
+|  push  | `a`         | `sp--`, `[sp] <= a`       |
+|  pop   | `a`         | `a <= [sp]`, `sp++`       |
+|        |             |                           |
+|  sub   | `a` `b`     | `a <= a - b`              |
+|  add   | `a` `b`     | `a <= a + b`              |
+|  mul   | `a` `b`     | `a <= a * b`              |
+|  div   | `a` `b`     | `a <= a / b`              |
+|  mod   | `a` `b`     | `a <= a % b`              |
+|        |             |                           |
+|  eq    | `a` `b`     | `a <= a == b`             |
+|  neq   | `a` `b`     | `a <= a != b`             |
+|  lt    | `a` `b`     | `a <= a < b`              |
+|  gt    | `a` `b`     | `a <= a > b`              |
+|        |             |                           |
+|  and   | `a` `b`     | `a <= a & b`              |
+|  or    | `a` `b`     | `a <= a | b`              |
+|  not   | `a`         |                           |
+|        |             |                           |
+|  jmp   | `a` `b`     | `pc  = a if b == 0`       |
+|  jmpr  | `a` `b`     | `pc += a if b == 0`       |
+|        |             |                           |
+|  out   | `port` `a`  | output `a` to `port`      |
+|  in    | `port` `a`  | input from `port` to `a`  |
+|        |             |                           |
+|  sleep | `a`         | sleep for `a` ticks       |
+|        |             |                           |
+|  ssp   | `a`         | `sp <= a`                 |
+|        |             |                           |
+|  dump  | `a`         | print `a` to stdout       |
+|        |             |                           |
+|  mss   | `A` `a` `B` `b` | `[A + a] <= [B + b]`  |
+|  pushs | `A` `a`     | `sp--`, `[sp] <= [A + a]` |
+|  pops  | `A` `a`     | `[A + a] <= [sp]`, `sp++` |
+|        |             |                           |
+|  hlt   |             | halt the computer         |
+
+each argument can be one of the following:
+
+| source | description | explanation     |
+| ------ | ----------- | --------------- |
+|  0     | `[a]`       | memory address  |
+|  1     | `a`         | value           |
+|  2     | `sp+a`      | stack address   |
+|  3     | `?`         | unused          |
