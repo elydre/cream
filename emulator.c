@@ -86,8 +86,10 @@ void execute_program() {
 
         uint8_t opcode = instruction & 0xFF00 >> 8;
 
-        uint8_t source1 = instruction >> 12 & 0x03;
-        uint8_t source2 = instruction >> 8 & 0x03;
+        uint8_t source1 = instruction >> 14 & 0x03;
+        uint8_t source2 = instruction >> 12 & 0x03;
+        uint8_t source3 = instruction >> 10 & 0x03;
+        uint8_t source4 = instruction >> 8 & 0x03;
 
         printf("PC: %04X \033[34m%s\033[0m\n", pc - 1, opcode_to_string(opcode));
 

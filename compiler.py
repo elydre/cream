@@ -1,3 +1,5 @@
+import ctypes
+
 """
 opcode (8 bit)  sources (2 * 2bit)  4bit padding  val1/mem1 (16 bit)  val2/mem2 (16 bit)
 000000          0000                0000          0000000000000000    0000000000000000
@@ -178,7 +180,8 @@ def get_variable(s, scope = "main"):
 
 global STACK_PTR, STACK_SIZE
 COND_RES = MEMORY_SIZE - 1
-STACK_PTR = MEMORY_SIZE - 2
+STACK_DEBUT_PTR = MEMORY_SIZE - 2
+STACK_PTR = MEMORY_SIZE - 3
 STACK_DEBUT = STACK_PTR
 STACK_SIZE = 0
 
@@ -205,7 +208,6 @@ class output_code:
             self.type = self.TYPE_NOTSET
 
             self.goto_label = None
-            self.goto_sr = None
             self.goto_val = None
 
         def setcomment(self, comment):
@@ -220,17 +222,19 @@ class output_code:
             self.psize = 0
             self.bytes = bytearray()
 
-        def setgoto(self, label, sr = None, val = None):
+        def setgoto(self, label, val):
             self.type = self.TYPE_GOTO
 
             self.string = f"goto {label} if "
 
-            if sr == 0: # val1 is a memory address
-                self.string += f"[{hex(val)[2:]}]"
-            if sr == 1: # val1 is a value
-                self.string += f"{hex(val)[2:]}"
-            if sr == 2: # val1 is a stack pointer offset
-                self.string += f"[sp+{hex(val)[2:]}]"
+            if val[0] == 0: # val1 is a memory address
+                self.string += f"[{hex(val[1])[2:]}]"
+            elif val[0] == 1: # val1 is a value
+                self.string += f"{hex(val[1])[2:]}"
+            elif val[0] == 2: # val1 is a stack pointer offset
+                self.string += f"[sp+{hex(val[1])[2:]}]"
+            elif val[0] == 3: # val1 is a pointer
+                self.string += f"[[{hex(val[1])[2:]}]]"
 
             self.string += f" == 0"
 
@@ -238,7 +242,6 @@ class output_code:
             self.bytes = bytearray()
 
             self.goto_label = label
-            self.goto_sr = sr
             self.goto_val = val
 
         def setopcode(self, opcode, v1, v2, v3, v4):
@@ -257,6 +260,8 @@ class output_code:
             b.append(0) # placeholder for sources and padding
 
             for i, v in enumerate([v1, v2, v3, v4]):
+                if type(v) != tuple and v != None:
+                    say_error(f"(Internal) Invalid argument type for opcode {opcode}\nExpected tuple, got {type(v)}")
                 s = (v[0] if v else 0)
                 if s not in [0, 1, 2, 3]:
                     say_error(f"(Internal) Invalid source type for opcode {opcode}\nExpected 0, 1, 2 or 3, got {s}")
@@ -307,9 +312,9 @@ class output_code:
         instr.setlabel(label)
         self.instructions.append(instr)
 
-    def add_goto(self, label, sr = None, val = None):
+    def add_goto(self, label, val = None):
         instr = self.instruction()
-        instr.setgoto(label, sr, val)
+        instr.setgoto(label, val)
         self.instructions.append(instr)
 
     def push(self, other):
@@ -348,7 +353,7 @@ class output_code:
             if resolved_address is None:
                 say_error(f"(Internal) Unknown label: {instr.goto_label}")
             # Replace the goto instruction with a jmp instruction
-            instr.setopcode("jmp", (1, resolved_address), (instr.goto_sr, instr.goto_val), None, None)
+            instr.setopcode("jmp", (1, resolved_address), instr.goto_val, None, None)
 
     def write(self, file):
         for instr in self.instructions:
@@ -375,6 +380,12 @@ def op_calculate_rpn(rpn: list):
             else:
                 output.add("push",
                        (2, (STACK_SIZE + stack_size) - v.offset))
+                # output.add("push", (1, 0))
+                # output.add("mss",
+                #         (2, 0),
+                #         (1, 0),
+                #         (3, STACK_DEBUT_PTR),
+                #         (1, ctypes.c_ushort(-v.offset).value))
             stack_size += 1
 
         elif token == '&':
@@ -417,7 +428,7 @@ def op_calculate_rpn(rpn: list):
                         (2, 1), (2, 0))
 
             output.add("pop",
-                   1, 0)
+                   (1, 0))
 
         else:
             say_error(f"Unknown token in RPN expression: {token}")
@@ -477,7 +488,7 @@ def op_fini():
     return output
 
 
-prog = """
+prog1 = """
 $ var
 $ [ptr]
 
@@ -489,28 +500,30 @@ dump(var)
 dump(ptr)
 """.strip()
 
-# prog = """
-# $ to_test
-# $ div
-# $ is_prime
-#
-# to_test = 1
-#
-# while to_test 100 < {
-#     div = 2
-#     is_prime = 1
-#     while div to_test < {
-#         if to_test div % 0 == {
-#             is_prime = 0
-#         }
-#         div = div 1 +
-#     }
-#     if is_prime 1 == {
-#         dump(to_test)
-#     }
-#     to_test = to_test 1 +
-# }
-# """
+prog2 = """
+$ to_test
+$ div
+$ is_prime
+
+to_test = 1
+
+while to_test 100 < {
+    div = 2
+    is_prime = 1
+    while div to_test < {
+        if to_test div % 0 == {
+            is_prime = 0
+        }
+        div = div 1 +
+    }
+    if is_prime 1 == {
+        dump(to_test)
+    }
+    to_test = to_test 1 +
+}
+""".strip()
+
+prog = prog2
 
 local_vars = {"main": []}
 
@@ -706,14 +719,12 @@ def compile_line(lines: list, current_line: int):
         inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2)
 
         inner_output.add_goto(
-            debut_label,
-            1, 0) # unconditional jump to the beginning of the while loop
+            debut_label, (1, 0)) # unconditional jump to the beginning of the while loop
 
         fin_label = get_new_label()
 
         output.add_goto(
-            fin_label,
-            (0, COND_RES)) # jump if the condition is false
+            fin_label, (0, COND_RES)) # jump if the condition is false
 
         output.push(inner_output)
         output.add_label(fin_label)
