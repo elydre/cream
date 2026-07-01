@@ -15,6 +15,7 @@ static inline uint16_t RVAL(uint8_t source, uint16_t pc) {
         case 0: return rwmemory[xmemory[pc]];
         case 1: return xmemory[pc];
         case 2: return rwmemory[rwmemory[sp] + xmemory[pc]];
+        case 3: return rwmemory[rwmemory[xmemory[pc]]];
         default: {
             fprintf(stderr, "Error: Invalid source type %d at PC=%04X\n", source, pc);
             exit(1);
@@ -29,11 +30,14 @@ static inline void WVAL(uint16_t pc, uint8_t source, uint16_t value) {
         printf("WVAL: %04X = %04X pass\n", xmemory[pc], value);
     else if (source == 2)
         printf("WVAL: [sp+%X] = %04X\n", xmemory[pc], value);
+    else if (source == 3)
+        printf("WVAL: [[%04X]] = %04X\n", xmemory[pc], value);
 
     switch (source) {
         case 0: rwmemory[xmemory[pc]] = value; break;
         case 1: break; // cannot write to immediate value
         case 2: rwmemory[rwmemory[sp] + xmemory[pc]] = value; break;
+        case 3: rwmemory[rwmemory[xmemory[pc]]] = value; break;
         default: {
             fprintf(stderr, "Error: Invalid source type %d at PC=%04X\n", source, pc);
             exit(1);

@@ -37,6 +37,7 @@ sleep [arg] // sleep for arg ticks
 ssp   [arg] // set stack pointer to arg
 
 dump  [arg] // print arg
+mss   [arg] [offset] [arg] [offset]
 
 hlt
 """
@@ -71,6 +72,7 @@ OPCODES = [
     opcode("sleep", 0x14, 1),
     opcode("ssp",   0x15, 1),
     opcode("dump",  0x16, 1),
+    opcode("mss",   0x17, 4),
     opcode("hlt",   0xFF, 0),
 ]
 
@@ -78,7 +80,7 @@ MEMORY_SIZE = 65536 - (80 * 25)
 
 NEW_VAR = "$"
 
-SPE = (',', '(', ')', ':', '=', '+', '-', '*', '/', '%', '<', '>', '{', '}', '[', ']')
+SPE = (',', '(', ')', ':', '=', '+', '-', '*', '/', '%', '<', '>', '{', '}', '[', ']', '&')
 
 class variable:
     def __init__(self, name, ptrlvl, offset):
@@ -113,20 +115,15 @@ def tokenize_line(line):
     current_token = ""
     for char in line:
         if char.isspace():
-            if not current_token:
-                continue
             tokens.append(current_token)
             current_token = ""
-
-
 
         elif char == "=" and not current_token and tokens and tokens[-1] in SPE:
             tokens[-1] += char
 
         elif char in SPE:
-            if current_token:
-                tokens.append(current_token)
-                current_token = ""
+            tokens.append(current_token)
+            current_token = ""
             if char == "{" or char == "}":
                 if tokens:
                     lines.append(tokens.copy())
@@ -139,11 +136,17 @@ def tokenize_line(line):
         else:
             current_token += char
 
-    if current_token:
-        tokens.append(current_token)
+    tokens.append(current_token)
 
     if tokens:
         lines.append(tokens.copy())
+
+    for line in lines:
+        while "" in line:
+            line.remove("")
+
+    while [] in lines:
+        lines.remove([])
 
     return lines
 
@@ -229,7 +232,7 @@ class output_code:
             if sr == 2: # val1 is a stack pointer offset
                 self.string += f"[sp+{hex(val)[2:]}]"
 
-            self.string += f" == 0"            
+            self.string += f" == 0"
 
             self.psize = 3
             self.bytes = bytearray()
@@ -238,7 +241,7 @@ class output_code:
             self.goto_sr = sr
             self.goto_val = val
 
-        def setopcode(self, opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
+        def setopcode(self, opcode, v1, v2, v3, v4):
             self.type = self.TYPE_OPCODE
 
             if not any(e.name == opcode for e in OPCODES):
@@ -247,38 +250,41 @@ class output_code:
             self.string = f"{opcode} "
             argc = 0
 
-            if sr1 != None:
-                if sr1 == 0: # val1 is a memory address
-                    self.string += f"[{hex(val1)[2:]}] "
-                if sr1 == 1: # val1 is a value
-                    self.string += f"{hex(val1)[2:]} "
-                if sr1 == 2: # val1 is a stack pointer offset
-                    self.string += f"[sp+{hex(val1)[2:]}] "
+            op = next(e for e in OPCODES if e.name == opcode)
+
+            b = bytearray()
+            b.append(op.opcode)
+            b.append(0) # placeholder for sources and padding
+
+            for i, v in enumerate([v1, v2, v3, v4]):
+                s = (v[0] if v else 0)
+                if s not in [0, 1, 2, 3]:
+                    say_error(f"(Internal) Invalid source type for opcode {opcode}\nExpected 0, 1, 2 or 3, got {s}")
+                b[1] |= (s << (2 * -(i - 3)))
+
+                if v == None:
+                    break
+                if v[0] == 0: # val1 is a memory address
+                    self.string += f"[{hex(v[1])[2:]}] "
+                elif v[0] == 1: # val1 is a value
+                    self.string += f"{hex(v[1])[2:]} "
+                elif v[0] == 2: # val1 is a stack pointer offset
+                    self.string += f"[sp+{hex(v[1])[2:]}] "
+                elif v[0] == 3: # val1 is a pointer
+                    self.string += f"[[{hex(v[1])[2:]}]] "
+
                 argc += 1
 
-            if sr2 != None:
-                if sr2 == 0: # val2 is a memory address
-                    self.string += f"[{hex(val2)[2:]}] "
-                if sr2 == 1: # val2 is a value
-                    self.string += f"{hex(val2)[2:]} "
-                if sr2 == 2: # val2 is a stack pointer offset
-                    self.string += f"[sp+{hex(val2)[2:]}] "
-                argc += 1
+            for v in [v1, v2, v3, v4]:
+                if v == None:
+                    break
+                b += v[1].to_bytes(2, byteorder='little')
 
             self.string = self.string.strip()
-
-            op = next(e for e in OPCODES if e.name == opcode)
 
             if argc != op.argc:
                 say_error(f"(Internal) Bad number of arguments for opcode {opcode}\nExpected {op.argc}, got {argc}")
 
-            b = bytearray()
-            b.append(op.opcode)
-            b.append(((sr1 or 0) << 4) | (sr2 or 0))
-            if sr1 != None:
-                b += (val1 or 0).to_bytes(2, byteorder='little')
-            if sr2 != None:
-                b += (val2 or 0).to_bytes(2, byteorder='little')
 
             self.psize = len(b) // 2
             self.bytes = b
@@ -286,9 +292,9 @@ class output_code:
     def __init__(self):
         self.instructions = []
 
-    def add(self, opcode, sr1 = None, val1 = None, sr2 = None, val2 = None):
+    def add(self, opcode, v1 = None, v2 = None, v3 = None, v4 = None):
         instr = self.instruction()
-        instr.setopcode(opcode, sr1, val1, sr2, val2)
+        instr.setopcode(opcode, v1, v2, v3, v4)
         self.instructions.append(instr)
 
     def add_comment(self, comment):
@@ -321,7 +327,7 @@ class output_code:
             elif instr.type == self.instruction.TYPE_OPCODE:
                 print(f"\033[34m{hex(pc)[2:].zfill(4)}: {instr.string}\033[0m")
             else:
-                say_error(f"(Internal) Unknown instruction type: {instr.type}") 
+                say_error(f"(Internal) Unknown instruction type: {instr.type}")
             pc += instr.psize
 
     def resolve_gotos(self):
@@ -342,7 +348,7 @@ class output_code:
             if resolved_address is None:
                 say_error(f"(Internal) Unknown label: {instr.goto_label}")
             # Replace the goto instruction with a jmp instruction
-            instr.setopcode("jmp", 1, resolved_address, instr.goto_sr, instr.goto_val)
+            instr.setopcode("jmp", (1, resolved_address), (instr.goto_sr, instr.goto_val), None, None)
 
     def write(self, file):
         for instr in self.instructions:
@@ -357,51 +363,64 @@ def op_calculate_rpn(rpn: list):
         say_error("Empty RPN expression")
 
     stack_size = 0
+    have_ampersand = False
 
     for token in rpn:
-        if is_number(token):
-            output.add("push",
-                   1, to_number(token))
+        if is_variable(token):
+            v = get_variable(token)
+            if have_ampersand:
+                output.add("push",
+                       (1, STACK_DEBUT - v.offset))
+                have_ampersand = False
+            else:
+                output.add("push",
+                       (2, (STACK_SIZE + stack_size) - v.offset))
             stack_size += 1
 
-        elif is_variable(token):
-            v = get_variable(token)
+        elif token == '&':
+            have_ampersand = True
+            continue
+
+        elif is_number(token):
             output.add("push",
-                   2, (STACK_SIZE + stack_size) - v.offset)
+                   (1, to_number(token)))
             stack_size += 1
 
         elif token in ['+', '-', '*', '/', '%', '==', '!=', '<', '>']:
             stack_size -= 1
             if token == '+':
                 output.add("add",
-                        2, 1, 2, 0)
+                        (2, 1), (2, 0))
             elif token == '-':
                 output.add("sub",
-                        2, 1, 2, 0)
+                        (2, 1), (2, 0))
             elif token == '*':
                 output.add("mul",
-                        2, 1, 2, 0)
+                        (2, 1), (2, 0))
             elif token == '/':
                 output.add("div",
-                        2, 1, 2, 0)
+                        (2, 1), (2, 0))
             elif token == '%':
                 output.add("mod",
-                        2, 1, 2, 0)
+                        (2, 1), (2, 0))
             elif token == '==':
                 output.add("eq",
-                        2, 1, 2, 0)
+                        (2, 1), (2, 0))
             elif token == '!=':
                 output.add("neq",
-                        2, 1, 2, 0)
+                        (2, 1), (2, 0))
             elif token == '<':
                 output.add("lt",
-                        2, 1, 2, 0)
+                        (2, 1), (2, 0))
             elif token == '>':
                 output.add("gt",
-                        2, 1, 2, 0)
+                        (2, 1), (2, 0))
 
             output.add("pop",
                    1, 0)
+
+        else:
+            say_error(f"Unknown token in RPN expression: {token}")
 
         if stack_size < 1:
             say_error("Invalid RPN expression: not enough values on the stack")
@@ -425,12 +444,12 @@ def op_call_asmfunc(f, variables):
 
     elif len(f.args) == 1:
         output.add(f.name,
-                2, STACK_SIZE - variables[0].offset)
+                (2, STACK_SIZE - variables[0].offset))
 
     elif len(f.args) == 2:
         output.add(f.name,
-                2, STACK_SIZE - variables[0].offset,
-                2, STACK_SIZE - variables[1].offset)
+                (2, STACK_SIZE - variables[0].offset),
+                (2, STACK_SIZE - variables[1].offset))
 
     else:
         say_error(f"(Internal) Function {f.name} has more than 2 arguments")
@@ -459,23 +478,24 @@ def op_fini():
 
 
 prog = """
-$ [p]
 $ var
+$ [ptr]
 
-p = &var
+ptr = &var
 
-[p] = 123
+[ptr] = 123
 
 dump(var)
+dump(ptr)
 """.strip()
 
 # prog = """
 # $ to_test
 # $ div
 # $ is_prime
-# 
+#
 # to_test = 1
-# 
+#
 # while to_test 100 < {
 #     div = 2
 #     is_prime = 1
@@ -501,7 +521,7 @@ def locate_braces(lines: list, current_line: int):
 
     # find the closing brace '}'
     closing_line = current_line + 2
-    
+
     opening_braces = 1
     while closing_line < len(lines) :
         if lines[closing_line][1] == ['}']:
@@ -538,11 +558,18 @@ def compile_line(lines: list, current_line: int):
 
     if tokens[0] == NEW_VAR:
         ptrlvl = 0
-        while tokens[ptrlvl + 1] == '*':
+        while tokens[ptrlvl + 1] == '[':
             ptrlvl += 1
 
-        if len(tokens) < 2 + ptrlvl:
-            say_error(f"Bad variable declaration\nSyntax example: {NEW_VAR} var_name")
+        for i in range(ptrlvl):
+            if tokens[i + 3] != ']':
+                say_error(f"Bad pointer declaration\nSyntax example: {NEW_VAR} [ptr_name]")
+
+        if len(tokens) != 2 + ptrlvl * 2:
+            if ptrlvl:
+                say_error(f"Bad pointer declaration\nSyntax example: {NEW_VAR} [ptr_name]")
+            else:
+                say_error(f"Bad variable declaration\nSyntax example: {NEW_VAR} var_name")
 
         var_name = tokens[1 + ptrlvl]
 
@@ -552,7 +579,7 @@ def compile_line(lines: list, current_line: int):
 
         STACK_SIZE += 1
         output.add("push",
-            1, 0)
+            (1, 0))
 
     elif is_variable(tokens[0]):
         if len(tokens) < 3 or tokens[1] != '=':
@@ -565,9 +592,56 @@ def compile_line(lines: list, current_line: int):
 
         # move the result from the stack to the variable's memory location
         output.add("pop",
-            2, STACK_SIZE - v.offset)
+            (2, STACK_SIZE - v.offset))
         STACK_SIZE -= 1
 
+    elif tokens[0] == "[":
+        ptrlvl = 1
+        while tokens[ptrlvl] == '[':
+            ptrlvl += 1
+
+        offset = None
+
+        if not is_variable(tokens[ptrlvl]):
+            say_error(f"Undefined pointer during assignment\nSyntax example: [ptr_name] = 123")
+
+        ptr = get_variable(tokens[ptrlvl])
+
+        if tokens[ptrlvl + 1] == ':':
+            offset = []
+            opening_brackets = 0
+            for i in range(ptrlvl + 2, len(tokens)):
+                if tokens[i] == '[':
+                    opening_brackets += 1
+                elif tokens[i] == ']':
+                    opening_brackets -= 1
+                    if opening_brackets < 0:
+                        break
+                offset.append(tokens[i])
+            else:
+                say_error(f"Bad syntax\nExpected ']' after offset expression")
+
+        if offset is not None:
+            say_error(f"(Internal) Pointer offset assignment not implemented yet")
+
+        # check closing brackets
+        begin = ptrlvl + 1 + (len(offset) if offset else 0)
+        end = begin + ptrlvl
+
+        if len(tokens) < end + 2 or tokens[end] != '=':
+            say_error(f"Bad pointer assignment\nSyntax example: [ptr_name] = 123")
+
+        if tokens[begin:end] != [']'] * ptrlvl:
+            say_error(f"Wrong number of closing brackets in pointer assignment\nSyntax example: [ptr_name] = 123")
+
+        # reverse polish notation (RPN) expression
+        output.push(op_calculate_rpn(tokens[end + 1:]))
+
+        # move the result from the stack to the pointer's memory location
+        output.add("pop",
+            (3, STACK_SIZE - ptr.offset))
+
+        STACK_SIZE -= 1
 
     elif tokens[0] in [e.name for e in ASM_FUNCS]:
         f = next(e for e in ASM_FUNCS if e.name == tokens[0])
@@ -593,19 +667,19 @@ def compile_line(lines: list, current_line: int):
 
         # pop the result from the stack to the conditional result memory location
         output.add("pop",
-            0, COND_RES)
+            (0, COND_RES))
         STACK_SIZE -= 1
 
         # compile the lines inside the if block
-        closing_line = locate_braces(lines, current_line)       
+        closing_line = locate_braces(lines, current_line)
         inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2)
 
         fin_label = get_new_label()
 
         # add a jump instruction to skip the if block if the condition is false
         output.add_goto(
-            fin_label,            
-            0, COND_RES) # jump if the condition is false
+            fin_label,
+            (0, COND_RES)) # jump if the condition is false
 
         output.push(inner_output)
         output.add_label(fin_label)
@@ -624,7 +698,7 @@ def compile_line(lines: list, current_line: int):
 
         # pop the result from the stack to the conditional result memory location
         output.add("pop",
-            0, COND_RES)
+            (0, COND_RES))
         STACK_SIZE -= 1
 
         # compile the lines inside the while block
@@ -634,13 +708,13 @@ def compile_line(lines: list, current_line: int):
         inner_output.add_goto(
             debut_label,
             1, 0) # unconditional jump to the beginning of the while loop
-        
+
         fin_label = get_new_label()
 
         output.add_goto(
             fin_label,
-            0, COND_RES) # jump if the condition is false
-        
+            (0, COND_RES)) # jump if the condition is false
+
         output.push(inner_output)
         output.add_label(fin_label)
 
