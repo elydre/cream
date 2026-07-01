@@ -4,62 +4,7 @@ import compiler.utils as utl
 import compiler.defs as defs
 import compiler.op as op
 
-"""
-
-"""
-
-
-
-prog1 = """
-$ var
-$ [ptr]
-$ [[ptr_ptr]]
-$ [[[ptr_ptr_ptr]]]
-$ test
-
-var = 4
-ptr = &var
-ptr_ptr = &ptr
-ptr_ptr_ptr = &ptr_ptr
-
-[[[ptr_ptr_ptr]]] = 5
-
-dump(var)
-dump([[[ptr_ptr_ptr]]])
-dump([[ptr_ptr_ptr]])
-dump([ptr_ptr_ptr])
-dump(ptr_ptr_ptr)
-
-dump(8 8 * var +)
-
-"""
-
-prog2 = """
-$ to_test
-$ div
-$ is_prime
-
-to_test = 1
-
-while to_test 100 < {
-    div = 2
-    is_prime = 1
-    while div to_test < {
-        if to_test div % 0 == {
-            is_prime = 0
-        }
-        div = div 1 +
-    }
-    if is_prime 1 == {
-        dump(to_test)
-    }
-    to_test = to_test 1 +
-}
-"""
-
-prog = prog1.strip()
-
-
+import argparse
 
 def compile_lines(lines: list, size: int):
     current_line = 0
@@ -119,16 +64,6 @@ def compile_line(lines: list, current_line: int):
         output.push(op.calculate_rpn(tokens[2:]))
 
         # move the result from the stack to the variable's memory location
-
-        # output.add("mss",
-        #         (0, STACK_DEBUT_PTR),
-        #         (1, ctypes.c_ushort(-v.offset).value),
-        #         (0, STACK_PTR),
-        #         (1, 0))
-
-        # output.add("pop",
-        #     (1, 0))
-
         output.add("pops",
                 (0, defs.STACK_DEBUT_PTR),
                 (1, utl.to_u16(-v.offset)))
@@ -222,6 +157,7 @@ def compile_line(lines: list, current_line: int):
 
     return (output, 1)
 
+
 def compile(lines: str):
     global CURRENT_LNO
 
@@ -243,16 +179,29 @@ def compile(lines: str):
 
 #=======================================
 
-ofile = open("output.bin", "wb")
+parser = argparse.ArgumentParser(description="Cream Compiler")
+parser.add_argument("input_file", help="Input file to compile")
+parser.add_argument("-o", "--output", help="Output file name", default="output.bin", dest="output_file")
+parser.add_argument("-a", "--dump-asm", help="Dump assembly code to stdout", action="store_true", dest="dump_asm")
+args = parser.parse_args()
+
+with open(args.input_file, "r") as ifile:
+    if not ifile:
+        exit("Could not open input file")
+    lines = ifile.read()
+
+main_output = compile(lines)
+
+ofile = open(args.output_file, "wb")
 
 if not ofile:
     exit("Could not open output file")
 
-main_output = compile(prog)
+if args.dump_asm:
+    main_output.dump()
 
-# main_output.dump()
 main_output.resolve_gotos()
-main_output.dump(hide_labels = True)
+# main_output.dump(hide_labels = True)
 main_output.write(ofile)
 
 ofile.close()

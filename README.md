@@ -10,6 +10,7 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] if statements
 - [x] while loops
 - [x] pointers
+- [x] basic command line interface for compiler
 - [ ] else statements
 - [ ] break and continue
 - [ ] functions
@@ -18,7 +19,6 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [ ] strings
 - [ ] for loops
 - [ ] some optimizations
-- [ ] basic command line interface for compiler
 - [ ] add text mode screen to emulator
 - [ ] create a basic operating system
 
