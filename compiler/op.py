@@ -199,7 +199,7 @@ def load_ptraddr(tokens: list):
     is_onstack = False
     end = 0
 
-    if tokens[1] == '[':
+    if tokens[1] == "[":
         o, e = op.load_ptraddr(tokens[1:])
         output.push(o)
         end += e
@@ -224,9 +224,8 @@ def load_ptraddr(tokens: list):
             utl.say_error(f"Unclosed brackets in pointer access\nSyntax example: [ptr]")
 
         output.push(op.calculate_rpn(tokens[1:end + 1]))
-        is_onstack = True
+        return (output, end + 2)
 
-    
     end += 1
     # check closing bracket
     if end >= len(tokens) or tokens[end] != ']':

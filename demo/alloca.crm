@@ -1,9 +1,14 @@
+$ i
 $ ptr
+$ v
 
 dump(_get_sp())
 
-ptr = alloca(10)
+ptr = &v
 
-dump(ptr)
+[ptr 0 +] = 6
+
+dump([ptr 0 +])
+dump([ptr])
 
 dump(_get_sp())

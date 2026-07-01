@@ -207,7 +207,7 @@ void execute_program() {
                 pc++;
                 break;
             case 0x16: // dump
-                fprintf(stderr, "%d\n", RVAL(source0, xmem[pc]));
+                fprintf(stderr, "0x%x (%d)\n", RVAL(source0, xmem[pc]), RVAL(source0, xmem[pc]));
                 pc++;
                 break;
             case 0x17: // mss
@@ -242,6 +242,8 @@ void execute_program() {
         // print the beginning of the stack
         DEBUGF("\033[90m[ ");
         for (int i = 0; i < 5; i++) {
+            if (i == 0)
+                DEBUGF("%04X=", rwmem[sp] + i);
             DEBUGF("%04X ", rwmem[rwmem[sp] + i]);
         }
         DEBUGF("]\033[0m\n");
