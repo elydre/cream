@@ -13,11 +13,11 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] basic command line interface for compiler
 - [x] break and continue
 - [x] alloca
+- [x] for loops
 - [ ] else statements
 - [ ] functions
 - [ ] static variables
 - [ ] strings
-- [ ] for loops
 - [ ] some optimizations
 - [ ] add text mode screen to emulator
 - [ ] create a basic operating system
