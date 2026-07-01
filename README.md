@@ -11,10 +11,10 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] while loops
 - [x] pointers
 - [x] basic command line interface for compiler
+- [x] break and continue
+- [x] alloca
 - [ ] else statements
-- [ ] break and continue
 - [ ] functions
-- [ ] alloca
 - [ ] static variables
 - [ ] strings
 - [ ] for loops

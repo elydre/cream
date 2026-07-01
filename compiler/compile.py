@@ -6,19 +6,19 @@ import compiler.defs as defs
 import compiler.op as op
 
 
-def compile_lines(lines: list, size: int):
+def compile_lines(lines: list, size: int, labels: tuple = None):
     current_line = 0
     output = out.output_code()
 
     while current_line < size:
-        sub_output, to_skip = compile_line(lines, current_line)
+        sub_output, to_skip = compile_line(lines, current_line, labels)
         output.push(sub_output)
         current_line += to_skip
 
     return output
 
 
-def compile_line(lines: list, current_line: int):
+def compile_line(lines: list, current_line: int, labels: tuple = None):
     defs.CURRENT_LNO, tokens = lines[current_line]
 
     print(f"Tokens: {tokens}")
@@ -41,7 +41,7 @@ def compile_line(lines: list, current_line: int):
             utl.say_error(f"Bad pointer declaration\nSyntax example: {defs.NEW_VAR} [ptr_name]")
 
         var_name = tokens[1 + ptrlvl]
-    
+
         # check if the variable already exists
         if defs.is_variable(var_name):
             utl.say_error(f"Variable already exists: {tokens[1 + ptrlvl]}")
@@ -113,7 +113,7 @@ def compile_line(lines: list, current_line: int):
 
         # compile the lines inside the if block
         closing_line = toks.locate_braces(lines, current_line)
-        inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2)
+        inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, labels)
 
         fin_label = utl.get_new_label()
 
@@ -132,6 +132,7 @@ def compile_line(lines: list, current_line: int):
             utl.say_error(f"Bad syntax\nSyntax example: while var < 10")
 
         debut_label = utl.get_new_label()
+        fin_label   = utl.get_new_label()
 
         # reverse polish notation (RPN) expression
         output.add_label(debut_label)
@@ -143,12 +144,11 @@ def compile_line(lines: list, current_line: int):
 
         # compile the lines inside the while block
         closing_line = toks.locate_braces(lines, current_line)
-        inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2)
+        inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, (debut_label, fin_label))
 
         inner_output.add_goto(
             debut_label, (1, 0)) # unconditional jump to the beginning of the while loop
 
-        fin_label = utl.get_new_label()
 
         output.add_goto(
             fin_label, (0, defs.COND_RES_ADDR)) # jump if the condition is false
@@ -157,6 +157,20 @@ def compile_line(lines: list, current_line: int):
         output.add_label(fin_label)
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
+
+    elif tokens[0] == "break":
+        if not labels:
+            utl.say_error(f"Unexpected break statement outside of a loop")
+
+        # add an unconditional jump to the end of the loop
+        output.add_goto(labels[1], (1, 0))
+
+    elif tokens[0] == "continue":
+        if not labels:
+            utl.say_error(f"Unexpected continue statement outside of a loop")
+
+        # add an unconditional jump to the beginning of the loop
+        output.add_goto(labels[0], (1, 0))
 
     else:
         utl.say_error(f"Bad syntax\nUnknown command or variable: {tokens[0]}")
