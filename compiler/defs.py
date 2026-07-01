@@ -17,31 +17,28 @@ class variable:
         LOCAL_VARS["main"].append(self)
 
 class func:
-    TYPE_ASM  = 0   # opcode handler (ports, sleep...)
-    TYPE_BLT  = 1   # builtin function (alloca)
-    TYPE_USER = 2   # user-defined function
-
-    def __init__(self, name, argc, does_return, ftype, blt_handler = None):
+    def __init__(self, name, argc, does_return, is_builtin = False, blt_handler = None):
         self.name = name
         self.argc = argc
         self.does_return = does_return
-        self.ftype = ftype
+        self.is_builtin = is_builtin
         self.blt_handler = blt_handler
-
-
 
 def is_number(s):
     try:
-        int(s)
+        if s.startswith("0x"):
+            int(s, 16)
+        else:
+            int(s)
         return True
     except ValueError:
         return False
 
 def to_number(s):
-    try:
+    if s.startswith("0x"):
+        return int(s, 16)
+    else:
         return int(s)
-    except ValueError:
-        utl.say_error(f"Bad number: {s}")
 
 def is_variable(s, scope = "main"):
     return s in [e.name for e in LOCAL_VARS[scope]]
@@ -97,19 +94,14 @@ MEMORY_SIZE = 65536 - (80 * 25)
 CHARS_SPE = (',', '(', ')', ':', '=', '+', '-', '*', '/', '%', '<', '>', '{', '}', '[', ']', '&')
 NEW_VAR = '$'
 
-COND_RES = MEMORY_SIZE - 1
-STACK_DEBUT_PTR = MEMORY_SIZE - 2
-STACK_PTR = MEMORY_SIZE - 3
+COND_RES_ADDR   = MEMORY_SIZE - 1
+FUNC_RET_ADDR   = MEMORY_SIZE - 2
+STACK_DEBUT_PTR = MEMORY_SIZE - 3
+STACK_PTR       = MEMORY_SIZE - 4
 
 STACK_DEBUT = STACK_PTR
 
 CURRENT_LNO = 0
 
 LOCAL_VARS = {"main": []}
-
-ALL_FUNCS = [
-    func("out",   2, False, func.TYPE_ASM),
-    func("in",    2, False, func.TYPE_ASM),
-    func("sleep", 1, False, func.TYPE_ASM),
-    func("dump",  1, False, func.TYPE_ASM),
-]
+ALL_FUNCS = []

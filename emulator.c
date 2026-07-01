@@ -190,15 +190,16 @@ void execute_program() {
                     pc += 2;
                 break;
             case 0x12: // out
-                DEBUGF("emulator does not support ports yet\n");
+                printf("emulator does not support ports yet\n");
                 pc += 2;
                 break;
             case 0x13: // in
-                DEBUGF("emulator does not support ports yet\n");
+                // simply return 2*port for now
+                WVAL(xmem[pc], source0, 2 * RVAL(source1, xmem[pc + 1]));
                 pc += 2;
                 break;
             case 0x14: // sleep
-                DEBUGF("emulator does not support sleep yet\n");
+                printf("emulator does not support sleep yet\n");
                 pc++;
                 break;
             case 0x15: // ssp

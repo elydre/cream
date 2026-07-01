@@ -10,8 +10,7 @@ ptr_ptr_ptr = &ptr_ptr
 
 [[[ptr_ptr_ptr]]] = 5
 
-dump(var)
 dump([[[ptr_ptr_ptr]]])
-dump([[ptr_ptr_ptr]])
-dump([ptr_ptr_ptr])
-dump(ptr_ptr_ptr)
+dump([[ptr_ptr]])
+dump([ptr])
+dump(var)

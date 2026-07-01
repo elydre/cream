@@ -1,0 +1,9 @@
+$ ptr
+
+dump(_get_sp())
+
+ptr = alloca(10)
+
+dump(ptr)
+
+dump(_get_sp())
