@@ -115,14 +115,65 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, labels)
 
         fin_label = utl.get_new_label()
+        next_label = utl.get_new_label()
 
         # add a jump instruction to skip the if block if the condition is false
         output.add_goto(
-            fin_label,
+            next_label,
             (0, defs.COND_RES_ADDR)) # jump if the condition is false
 
         output.push(inner_output)
-        output.add_label(fin_label)
+
+        # check if there is an elif or else block after the if block
+        next_line = None
+        while closing_line + 1 < len(lines) and lines[closing_line + 1][1][0] in ("elif", "else"):
+            next_line = lines[closing_line + 1]
+            next_tokens = next_line[1]
+
+            output.add_goto(
+                fin_label, (1, 0)) # unconditional jump to the end of the if block
+            output.add_label(next_label)
+
+            next_label = utl.get_new_label()
+
+            if next_tokens[0] == "elif":
+                if len(next_tokens) < 2:
+                    utl.say_error(f"Bad syntax\nSyntax example: elif var == 0")
+
+                # reverse polish notation (RPN) expression
+                output.push(op.calculate_rpn(next_tokens[1:]))
+
+                # pop the result from the stack to the conditional result memory location
+                output.add("pop",
+                    (0, defs.COND_RES_ADDR))
+
+                # compile the lines inside the elif block
+                tmp = toks.locate_braces(lines, closing_line + 1)
+                inner_output = compile_lines(lines[closing_line + 3:tmp], tmp - closing_line - 3, labels)
+                closing_line = tmp
+
+                # add a jump instruction to skip the elif block if the condition is false
+                output.add_goto(
+                    next_label,
+                    (0, defs.COND_RES_ADDR)) # jump if the condition is false
+
+                output.push(inner_output)
+
+            elif next_tokens[0] == "else":
+                if len(next_tokens) != 1:
+                    utl.say_error(f"Unexpected token {next_tokens[1]} after else\nSyntax example: else " + "{ ... }")
+                # compile the lines inside the else block
+                tmp = toks.locate_braces(lines, closing_line + 1)
+                inner_output = compile_lines(lines[closing_line + 3:tmp], tmp - closing_line - 3, labels)
+                closing_line = tmp
+                
+                output.push(inner_output)
+                break
+
+        if next_line is None:
+            output.add_label(next_label)
+        else:
+            output.add_label(fin_label)
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
 
@@ -244,6 +295,10 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
 
         # add an unconditional jump to the beginning of the loop
         output.add_goto(labels[0], (1, 0))
+
+    elif tokens[0] in ("else", "elif"):
+        utl.say_error(f"Unexpected {tokens[0]} statement outside of an if block\n" +
+                        "Syntax example: if var == 0 { ... } elif var == 1 { ... } else { ... }")
 
     else:
         utl.say_error(f"Bad syntax\nUnknown command or variable: {tokens[0]}")

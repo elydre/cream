@@ -15,9 +15,9 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] alloca
 - [x] break and continue
 - [x] for loops
+- [x] elif/else statements
 - [ ] heap arrays and variables
 - [ ] heap strings
-- [ ] elif/else statements
 - [ ] sub stack scope
 - [ ] functions
 - [ ] some optimizations
