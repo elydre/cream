@@ -378,7 +378,9 @@ def op_calculate_rpn(rpn: list):
             v = get_variable(token)
             if have_ampersand:
                 output.add("push",
-                       (1, STACK_DEBUT - v.offset))
+                        (0, STACK_DEBUT_PTR))
+                output.add("add",
+                        (2, 0), (1, ctypes.c_ushort(-v.offset).value))
                 have_ampersand = False
             else:
                 # output.add("push", (1, 0))
@@ -478,6 +480,65 @@ def op_call_asmfunc(f, variables):
 
     return output
 
+def op_load_ptraddr(tokens: list):
+    output = output_code()
+
+    if tokens[0] != "[":
+        say_error(f"(Internal) ptr resolution on non-pointer")
+
+    offset = None
+
+    is_onstack = False
+    end = 0
+
+    if tokens[1] == '[':
+        o, e = op_load_ptraddr(tokens[1:])
+        output.push(o)
+        end += e
+        is_onstack = True
+
+    else:
+        if not is_variable(tokens[1]):
+            say_error(f"Unknown variable in pointer access: {tokens[1]}")
+
+        ptr = get_variable(tokens[1])
+        end += 1
+
+    if tokens[end] == ':':
+        offset = []
+        opening_brackets = 0
+        for i in range(end + 1, len(tokens)):
+            if tokens[i] == '[':
+                opening_brackets += 1
+            elif tokens[i] == ']':
+                opening_brackets -= 1
+                if opening_brackets < 0:
+                    break
+            offset.append(tokens[i])
+            end += 1
+        else:
+            say_error(f"Unclosed brackets in pointer offset\nSyntax example: [ptr:offset_ptr[123]]")
+
+    if offset is not None:
+        say_error(f"(Internal) Pointer offset assignment not implemented yet")
+    
+    end += 1
+    # check closing bracket
+    if end >= len(tokens) or tokens[end] != ']':
+        say_error(f"Unclosed brackets in pointer access\nSyntax example: [ptr]")
+
+    if is_onstack:
+        output.add("mss",
+                (0, STACK_PTR), (1, 0),
+                (2, 0), (1, 0))
+    else:
+        # load the pointer's address from memory
+        output.add("pushs",
+                (0, STACK_DEBUT_PTR),
+                (1, ctypes.c_ushort(-ptr.offset).value))
+    
+    return (output, end + 1)
+
 def op_init():
     output = output_code()
     output.add_comment("\nProgram initialization")
@@ -504,13 +565,19 @@ def op_fini():
 
 prog1 = """
 $ var
-$ coucou
+$ [ptr]
+$ [ptr_ptr]
+$ [ptr_ptr_ptr]
 
-coucou = 123
-var = coucou
+var = 4
+ptr = &var
+ptr_ptr = &ptr
+ptr_ptr_ptr = &ptr_ptr
+
+[[[ptr_ptr_ptr]]] = 5
 
 dump(var)
-""".strip()
+"""
 
 prog2 = """
 $ to_test
@@ -533,9 +600,9 @@ while to_test 100 < {
     }
     to_test = to_test 1 +
 }
-""".strip()
+"""
 
-prog = prog1
+prog = prog2.strip()
 
 local_vars = {"main": []}
 
@@ -630,49 +697,23 @@ def compile_line(lines: list, current_line: int):
                 (1, ctypes.c_ushort(-v.offset).value))
 
     elif tokens[0] == "[":
-        ptrlvl = 1
-        while tokens[ptrlvl] == '[':
-            ptrlvl += 1
-
-        offset = None
-
-        if not is_variable(tokens[ptrlvl]):
-            say_error(f"Undefined pointer during assignment\nSyntax example: [ptr_name] = 123")
-
-        ptr = get_variable(tokens[ptrlvl])
-
-        if tokens[ptrlvl + 1] == ':':
-            offset = []
-            opening_brackets = 0
-            for i in range(ptrlvl + 2, len(tokens)):
-                if tokens[i] == '[':
-                    opening_brackets += 1
-                elif tokens[i] == ']':
-                    opening_brackets -= 1
-                    if opening_brackets < 0:
-                        break
-                offset.append(tokens[i])
-            else:
-                say_error(f"Bad syntax\nExpected ']' after offset expression")
-
-        if offset is not None:
-            say_error(f"(Internal) Pointer offset assignment not implemented yet")
-
-        # check closing brackets
-        begin = ptrlvl + 1 + (len(offset) if offset else 0)
-        end = begin + ptrlvl
+        o, end = op_load_ptraddr(tokens)
 
         if len(tokens) < end + 2 or tokens[end] != '=':
             say_error(f"Bad pointer assignment\nSyntax example: [ptr_name] = 123")
 
-        if tokens[begin:end] != [']'] * ptrlvl:
-            say_error(f"Wrong number of closing brackets in pointer assignment\nSyntax example: [ptr_name] = 123")
+        output.push(o)
 
         # reverse polish notation (RPN) expression
         output.push(op_calculate_rpn(tokens[end + 1:]))
 
         # move the result from the stack to the pointer's memory location
+        output.add("mss",
+                (2, 1), (1, 0),
+                (0, STACK_PTR), (1, 0))
         
+        output.add("pop",
+                (1, 0))
 
     elif tokens[0] in [e.name for e in ASM_FUNCS]:
         f = next(e for e in ASM_FUNCS if e.name == tokens[0])

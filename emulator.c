@@ -30,7 +30,7 @@ static inline uint16_t RVAL(uint8_t source, uint16_t val) {
         case 0: return rwmem[val];
         case 1: return val;
         case 2: return rwmem[rwmem[sp] + val];
-        case 3: return rwmem[rwmem[val]];
+        // case 3: return rwmem[rwmem[val]];
         default: {
             fprintf(stderr, "Error: Invalid source type %d\n", source);
             exit(1);
@@ -52,7 +52,7 @@ static inline void WVAL(uint16_t addr, uint8_t source, uint16_t value) {
         case 0: rwmem[addr] = value; break;
         case 1: break; // cannot write to immediate value
         case 2: rwmem[rwmem[sp] + addr] = value; break;
-        case 3: rwmem[rwmem[addr]] = value; break;
+        // case 3: rwmem[rwmem[addr]] = value; break;
         default: {
             fprintf(stderr, "Error: Invalid source type %d\n", source);
             exit(1);
