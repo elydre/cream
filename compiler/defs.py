@@ -17,12 +17,13 @@ class variable:
         LOCAL_VARS["main"].append(self)
 
 class func:
-    def __init__(self, name, argc, does_return, is_builtin = False, blt_handler = None):
+    def __init__(self, name, argc, does_return, is_builtin = False, blt_handler = None, no_rpn = False):
         self.name = name
         self.argc = argc
         self.does_return = does_return
         self.is_builtin = is_builtin
         self.blt_handler = blt_handler
+        self.no_rpn = no_rpn
 
 def is_number(s):
     try:
@@ -91,7 +92,11 @@ OPCODES = [
 
 MEMORY_SIZE = 65536 - (80 * 25)
 
-CHARS_SPE = (',', '(', ')', ':', '=', '+', '-', '*', '/', '%', '<', '>', '{', '}', '[', ']', '&', '$')
+CHARS_SPE = [',', '(', ')', ':', '=', '{', '}', '[', ']', '&', '$', '!']
+CHARS_OPR = ['+', '-', '*', '/', '%', '==', '!=', '<', '>']
+
+CHARS_SPE += [e for e in CHARS_SPE if len(e) == 1]
+
 NEW_VAR = '$'
 
 COND_RES_ADDR   = MEMORY_SIZE - 1

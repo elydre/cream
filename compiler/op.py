@@ -38,6 +38,7 @@ def calculate_rpn(rpn: list):
     have_ampersand = False
 
     skip_to = 0
+    tmp_number = None
 
     for i, token in enumerate(rpn):
         if i < skip_to:
@@ -101,6 +102,9 @@ def calculate_rpn(rpn: list):
             if not f.does_return:
                 utl.say_error(f"Function {f.name} does not return a value, cannot use in RPN expression")
 
+            if f.no_rpn:
+                utl.say_error(f"Function {f.name} cannot be used in RPN expressions")
+
             output.push(op.call_func(f, rpn[i + 2:skip_to]))
             skip_to += 1
 
@@ -110,43 +114,48 @@ def calculate_rpn(rpn: list):
             stack_size += 1
 
         elif defs.is_number(token):
+            if (i + 1 < len(rpn)) and rpn[i + 1] in defs.CHARS_OPR: # optimize basic calculations
+                tmp_number = defs.to_number(token)
+                continue
             output.add("push",
                    (1, defs.to_number(token)))
             stack_size += 1
 
 
         elif token in ['+', '-', '*', '/', '%', '==', '!=', '<', '>']:
-            stack_size -= 1
-            if token == '+':
-                output.add("add",
-                        (2, 1), (2, 0))
-            elif token == '-':
-                output.add("sub",
-                        (2, 1), (2, 0))
-            elif token == '*':
-                output.add("mul",
-                        (2, 1), (2, 0))
-            elif token == '/':
-                output.add("div",
-                        (2, 1), (2, 0))
-            elif token == '%':
-                output.add("mod",
-                        (2, 1), (2, 0))
-            elif token == '==':
-                output.add("eq",
-                        (2, 1), (2, 0))
-            elif token == '!=':
-                output.add("neq",
-                        (2, 1), (2, 0))
-            elif token == '<':
-                output.add("lt",
-                        (2, 1), (2, 0))
-            elif token == '>':
-                output.add("gt",
-                        (2, 1), (2, 0))
+            
+            if tmp_number is not None:
+                a = (2, 0)
+                b = (1, tmp_number)
+            else:
+                a = (2, 1)
+                b = (2, 0)
+                stack_size -= 1
 
-            output.add("pop",
-                   (1, 0))
+            if token == '+':
+                output.add("add", a, b)
+            elif token == '-':
+                output.add("sub", a, b)
+            elif token == '*':
+                output.add("mul", a, b)
+            elif token == '/':
+                output.add("div", a, b)
+            elif token == '%':
+                output.add("mod", a, b)
+            elif token == '==':
+                output.add("eq", a, b)
+            elif token == '!=':
+                output.add("neq", a, b)
+            elif token == '<':
+                output.add("lt", a, b)
+            elif token == '>':
+                output.add("gt", a, b)
+
+            if tmp_number is None:
+                output.add("pop",
+                    (1, 0))
+            else:
+                tmp_number = None
 
         else:
             utl.say_error(f"Unknown token in RPN expression: {token}")
@@ -174,7 +183,7 @@ def fast_assign_var(v: defs.variable, tokens: list):
         f = defs.get_func(tokens[0])
 
         if len(tokens) < 4 or tokens[1] != '(' or tokens[-1] != ')':
-            utl.say_error(f"Bad syntax on function call\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(f.argc)])})")
+            return None
 
         if not f.does_return:
             utl.say_error(f"Function {f.name} does not return a value, cannot assign to variable {v.name}")
@@ -246,8 +255,6 @@ def load_ptraddr(tokens: list):
 
 def call_func(f: defs.func, tokens: list, ):
     args = toks.split_func_args(tokens)
-
-    print(f"Calling function {f.name} with arguments: {args}")
 
     if len(args) != f.argc:
         utl.say_error(f"Wrong number of arguments for function {f.name}\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(f.argc)])})")

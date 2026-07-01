@@ -21,7 +21,6 @@ def compile_lines(lines: list, size: int, labels: tuple = None):
 def compile_line(lines: list, current_line: int, labels: tuple = None):
     defs.CURRENT_LNO, tokens = lines[current_line]
 
-    print(f"Tokens: {tokens}")
     output = out.output_code()
     output.add_comment(f"\nl{defs.CURRENT_LNO:03}  {' '.join(tokens)}")
 

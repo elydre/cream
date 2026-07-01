@@ -77,7 +77,7 @@ def blt_get_sp(args: list):
     return output
 
 def add_builtin_functions():
-    defs.ALL_FUNCS.append(defs.func("alloca",  1, True,  is_builtin=True, blt_handler = blt_alloca))
+    defs.ALL_FUNCS.append(defs.func("alloca",  1, True,  is_builtin=True, blt_handler = blt_alloca, no_rpn=True))
     defs.ALL_FUNCS.append(defs.func("out",     2, False, is_builtin=True, blt_handler = blt_out))
     defs.ALL_FUNCS.append(defs.func("in",      1, True,  is_builtin=True, blt_handler = blt_in))
     defs.ALL_FUNCS.append(defs.func("sleep",   1, False, is_builtin=True, blt_handler = blt_sleep))
