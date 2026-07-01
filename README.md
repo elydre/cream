@@ -53,7 +53,7 @@ opcode (8 bit)  sources (4 * 2bit)  [  arg0 (16 bit)   ] ... [ arg3 (16 bit)    
 |        |             |                           |
 |  and   | `a` `b`     | `a <= a & b`              |
 |  or    | `a` `b`     | `a <= a bor b` (md sorry) |
-|  not   | `a`         |                           |
+|  not   | `a`         | `a <= !a`                 |
 |        |             |                           |
 |  jmp   | `a` `b`     | `pc  = a if b == 0`       |
 |  jmpr  | `a` `b`     | `pc += a if b == 0`       |
