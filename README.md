@@ -9,16 +9,18 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] RPN calculator
 - [x] if statements
 - [x] while loops
-- [x] pointers
+- [x] pointers operations
 - [x] basic command line interface for compiler
-- [x] break and continue
+- [x] built-in functions
 - [x] alloca
+- [x] break and continue
 - [x] for loops
 - [ ] else statements
 - [ ] functions
 - [ ] static variables
 - [ ] strings
 - [ ] some optimizations
+- [ ] langage documentation
 - [ ] add text mode screen to emulator
 - [ ] create a basic operating system
 
