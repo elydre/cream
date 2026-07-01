@@ -1,14 +1,21 @@
 $ i
 $ ptr
-$ v
 
 dump(_get_sp())
 
-ptr = &v
+ptr = alloca(10)
 
-[ptr 0 +] = 6
+i = 0
+while i 10 < {
+    [ptr i +] = i 10 *
+    i = i 1 +
+}
 
-dump([ptr 0 +])
-dump([ptr])
+i = 0
+while i 10 < {
+    dump([ptr i +])
+    i = i 1 +
+}
+
 
 dump(_get_sp())
