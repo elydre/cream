@@ -373,7 +373,16 @@ def op_calculate_rpn(rpn: list):
     stack_size = 0
     have_ampersand = False
 
-    for token in rpn:
+    skip_to = 0
+
+    for i, token in enumerate(rpn):
+        if i < skip_to:
+            continue
+
+        if token == '&':
+            have_ampersand = True
+            continue
+
         if is_variable(token):
             v = get_variable(token)
             if have_ampersand:
@@ -393,15 +402,30 @@ def op_calculate_rpn(rpn: list):
                        (0, STACK_DEBUT_PTR),
                        (1, ctypes.c_ushort(-v.offset).value))
             stack_size += 1
-
-        elif token == '&':
-            have_ampersand = True
             continue
+        
+        elif have_ampersand:
+            say_error(f"Unexpected '&' before token: {token}\nCorrect syntax example: ptr = &var")
+
+        if token == '[':
+            o, end = op_load_ptraddr(rpn[i:])
+            skip_to = i + end
+            output.push(o)
+
+            # load the value from the pointer's address
+
+            output.add("mss",
+                    (0, STACK_PTR), (1, 0),
+                    (2, 0), (1, 0))
+
+            stack_size += 1
+
 
         elif is_number(token):
             output.add("push",
                    (1, to_number(token)))
             stack_size += 1
+
 
         elif token in ['+', '-', '*', '/', '%', '==', '!=', '<', '>']:
             stack_size -= 1
@@ -447,18 +471,39 @@ def op_calculate_rpn(rpn: list):
 
     return output
 
+def split_func_args(tokens: list):
+    args = []
+    current_arg = []
+    opening_brackets = 0
 
-def op_call_asmfunc(f, variables):
+    for token in tokens:
+        if token == ',' and opening_brackets == 0:
+            args.append(current_arg)
+            current_arg = []
+        else:
+            if token == '[':
+                opening_brackets += 1
+            elif token == ']':
+                opening_brackets -= 1
+                if opening_brackets < 0:
+                    say_error(f"Unclosed brackets in function arguments\nSyntax example: func(arg1, [ptr:offset_ptr[123]])")
+            current_arg.append(token)
+
+    if current_arg:
+        args.append(current_arg)
+
+    return args
+
+def op_call_asmfunc(f, tokens: list):
     output = output_code()
+    args = split_func_args(tokens)
 
-    if len(variables) != len(f.args):
+    if len(args) != len(f.args):
         say_error(f"Wrong number of arguments for function {f.name}\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
 
     # push arguments to the stack in reverse order
-    for v in reversed(variables):
-        output.add("pushs",
-                (0, STACK_DEBUT_PTR),
-                (1, ctypes.c_ushort(-v.offset).value))
+    for v in reversed(args):
+        output.push(op_calculate_rpn(v))
 
     if len(f.args) == 0:
         output.add(f.name)
@@ -474,7 +519,7 @@ def op_call_asmfunc(f, variables):
     else:
         say_error(f"(Internal) Function {f.name} has more than 2 arguments")
 
-    for v in variables:
+    for v in args:
         output.add("pop",
                 (1, 0))
 
@@ -566,8 +611,9 @@ def op_fini():
 prog1 = """
 $ var
 $ [ptr]
-$ [ptr_ptr]
-$ [ptr_ptr_ptr]
+$ [[ptr_ptr]]
+$ [[[ptr_ptr_ptr]]]
+$ test
 
 var = 4
 ptr = &var
@@ -577,6 +623,13 @@ ptr_ptr_ptr = &ptr_ptr
 [[[ptr_ptr_ptr]]] = 5
 
 dump(var)
+dump([[[ptr_ptr_ptr]]])
+dump([[ptr_ptr_ptr]])
+dump([ptr_ptr_ptr])
+dump(ptr_ptr_ptr)
+
+dump(8 8 * var +)
+
 """
 
 prog2 = """
@@ -602,7 +655,7 @@ while to_test 100 < {
 }
 """
 
-prog = prog2.strip()
+prog = prog1.strip()
 
 local_vars = {"main": []}
 
@@ -653,17 +706,21 @@ def compile_line(lines: list, current_line: int):
         while tokens[ptrlvl + 1] == '[':
             ptrlvl += 1
 
-        for i in range(ptrlvl):
-            if tokens[i + 3] != ']':
-                say_error(f"Bad pointer declaration\nSyntax example: {NEW_VAR} [ptr_name]")
-
         if len(tokens) != 2 + ptrlvl * 2:
             if ptrlvl:
                 say_error(f"Bad pointer declaration\nSyntax example: {NEW_VAR} [ptr_name]")
             else:
                 say_error(f"Bad variable declaration\nSyntax example: {NEW_VAR} var_name")
 
+        # check for closing brackets
+        if ptrlvl and (ptrlvl * ']' != ''.join(tokens[2 + ptrlvl:])):
+            say_error(f"Bad pointer declaration\nSyntax example: {NEW_VAR} [ptr_name]")
+
         var_name = tokens[1 + ptrlvl]
+    
+        # check if the variable already exists
+        if is_variable(var_name):
+            say_error(f"Variable already exists: {tokens[1 + ptrlvl]}")
 
         old_offset = local_vars["main"][-1].offset if local_vars["main"] else 0
         v = variable(var_name, ptrlvl, old_offset + 1)
@@ -717,18 +774,9 @@ def compile_line(lines: list, current_line: int):
 
     elif tokens[0] in [e.name for e in ASM_FUNCS]:
         f = next(e for e in ASM_FUNCS if e.name == tokens[0])
-
-        variables = []
-        for i, arg in enumerate(tokens[1:], start=1):
-            if arg in [',', '(', ')']:
-                continue
-            if tokens[i + 1] not in [',', ')']:
-                say_error(f"Only variables are allowed as arguments\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
-
-            v = get_variable(arg)
-            variables.append(v)
-
-        output.push(op_call_asmfunc(f, variables))
+        if len(tokens) < 4 or tokens[1] != '(' or tokens[-1] != ')':
+            say_error(f"Bad syntax\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(len(f.args))])})")
+        output.push(op_call_asmfunc(f, tokens[2:-1]))
 
     elif tokens[0] == "if":
         if len(tokens) < 2:
