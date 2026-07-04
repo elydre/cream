@@ -66,6 +66,13 @@ def blt_dump(args: list):
 
     return output
 
+def blt_halt(args: list):
+    output = out.output_code()
+
+    output.add("hlt")
+
+    return output
+
 def blt_get_sp(args: list):
     output = out.output_code()
 
@@ -77,9 +84,10 @@ def blt_get_sp(args: list):
     return output
 
 def add_builtin_functions():
-    defs.ALL_FUNCS.append(defs.func("alloca",  1, True,  is_builtin=True, blt_handler = blt_alloca, no_rpn=True))
-    defs.ALL_FUNCS.append(defs.func("out",     2, False, is_builtin=True, blt_handler = blt_out))
-    defs.ALL_FUNCS.append(defs.func("in",      1, True,  is_builtin=True, blt_handler = blt_in))
-    defs.ALL_FUNCS.append(defs.func("sleep",   1, False, is_builtin=True, blt_handler = blt_sleep))
-    defs.ALL_FUNCS.append(defs.func("dump",    1, False, is_builtin=True, blt_handler = blt_dump))
-    defs.ALL_FUNCS.append(defs.func("_get_sp", 0, True,  is_builtin=True, blt_handler = blt_get_sp))
+    defs.func("alloca",  1, True,  is_builtin=True, blt_handler = blt_alloca, no_rpn=True).add()
+    defs.func("out",     2, False, is_builtin=True, blt_handler = blt_out).add()
+    defs.func("in",      1, True,  is_builtin=True, blt_handler = blt_in).add()
+    defs.func("sleep",   1, False, is_builtin=True, blt_handler = blt_sleep).add()
+    defs.func("dump",    1, False, is_builtin=True, blt_handler = blt_dump).add()
+    defs.func("halt",    0, False, is_builtin=True, blt_handler = blt_halt).add()
+    defs.func("_get_sp", 0, True,  is_builtin=True, blt_handler = blt_get_sp).add()

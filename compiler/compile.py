@@ -6,14 +6,25 @@ import compiler.defs as defs
 import compiler.op as op
 
 
-def compile_lines(lines: list, size: int, labels: tuple = None):
-    current_line = 0
+def compile_lines(lines: list, size: int, labels: tuple = None, new_scope: str = None):
     output = out.output_code()
+
+    if new_scope is not None:
+        old_scope = defs.CURRENT_SCOPE
+        output.add_comment(f"\n--- begin of {new_scope} ---")
+        defs.CURRENT_SCOPE = new_scope
+        if new_scope not in defs.LOCAL_VARS:
+            defs.LOCAL_VARS[new_scope] = []
+
+    current_line = 0
 
     while current_line < size:
         sub_output, to_skip = compile_line(lines, current_line, labels)
         output.push(sub_output)
         current_line += to_skip
+
+    if new_scope is not None:
+        defs.CURRENT_SCOPE = old_scope
 
     return output
 
@@ -54,8 +65,8 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
                 utl.say_error(f"Invalid variable name: {tokens[ptrlvl]}")
 
             if def_char == defs.NEW_VAR:
-                old_offset = defs.LOCAL_VARS["main"][-1].offset if defs.LOCAL_VARS["main"] else 0
-                v = defs.variable(var_name, ptrlvl, old_offset + 1)
+                old_offset = defs.LOCAL_VARS[defs.CURRENT_SCOPE][-1].offset if defs.LOCAL_VARS[defs.CURRENT_SCOPE] else 0
+                defs.variable(var_name, ptrlvl, old_offset + 1).add()
 
                 output.add("push", (1, 0))
 
@@ -68,7 +79,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
                     val = 0
 
                 addr = out.get_static_addr(1, [val])
-                v = defs.variable(var_name, ptrlvl, addr, is_static = True)
+                defs.variable(var_name, ptrlvl, addr, is_static = True).add()
 
             tokens = tokens[end_brackets:]
 
@@ -117,7 +128,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
 
     elif defs.is_func(tokens[0]):
         f = defs.get_func(tokens[0])
-        if len(tokens) < 4 or tokens[1] != '(' or tokens[-1] != ')':
+        if len(tokens) < 3 or tokens[1] != '(' or tokens[-1] != ')':
             utl.say_error(f"Bad syntax on function call\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(f.argc)])})")
 
         output.push(op.call_func(f, tokens[2:-1]))
@@ -309,6 +320,40 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
 
+    elif tokens[0] == "func":
+        if defs.CURRENT_SCOPE != "global":
+            utl.say_error(f"Function declaration not allowed in non-global scope")
+
+        if len(tokens) < 4 or tokens[2] != '(' or tokens[-1] != ')':
+            utl.say_error(f"Bad syntax\nSyntax example: func func_name(arg1, arg2)")
+
+        if not defs.is_valid_name(tokens[1]):
+            utl.say_error(f"Invalid function name: {tokens[1]}")
+
+        if defs.is_func(tokens[1]):
+            utl.say_error(f"Function already exists: {tokens[1]}")
+
+        args = toks.split_func_args(tokens[3:-1])
+        new_scope = f"func_{tokens[1]}"
+    
+        for i, e in enumerate(args):
+            if len(e) != 1:
+                utl.say_error(f"Bad syntax in arguments\nSyntax example: func func_name(arg1, arg2)")
+            if not defs.is_valid_name(e[0]):
+                utl.say_error(f"Invalid argument name: {e[0]}")
+            defs.variable(e[0], 0, i + 1, scope = new_scope).add()
+        
+        # compile the lines inside the function block
+        closing_line = toks.locate_braces(lines, current_line)
+
+        inner_output = out.output_code()
+        inner_output.add_label(new_scope)
+        inner_output.push(compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, new_scope = new_scope))
+
+        defs.func(tokens[1], len(args), opcodes=inner_output).add()
+
+        return (output, closing_line - current_line + 1) # return the number of lines to skip
+
     elif tokens[0] == "break":
         if not labels:
             utl.say_error(f"Unexpected break statement outside of a loop")
@@ -346,7 +391,15 @@ def compile(lines: str):
     blt.add_builtin_functions()
 
     output = out.output_code()
-    output.push(compile_lines(tokens_lines, len(tokens_lines)))
+    output.push(compile_lines(tokens_lines, len(tokens_lines), "global"))
+
+    for f in defs.ALL_FUNCS:
+        if f.is_builtin:
+            continue
+        if f.opcodes is None:
+            utl.say_error(f"Function {f.name} has no opcodes")
+        output.push(f.opcodes)
+
     output.atdebut(op.init())
     output.push(op.fini())
 

@@ -7,7 +7,7 @@ import compiler.op as op
 
 def init():
     output = out.output_code()
-    output.add_comment("\nProgram initialization")
+    output.add_comment("\n--- program initialization ---")
 
     stack_debut = defs.STATIC_ADDR
 
@@ -24,7 +24,7 @@ def init():
 
 def fini():
     output = out.output_code()
-    output.add_comment("\nProgram finalization")
+    output.add_comment("\n--- program finalization ---")
 
     output.add("hlt")
 
@@ -283,7 +283,7 @@ def load_ptraddr(tokens: list):
     return (output, end + 1)
 
 
-def call_func(f: defs.func, tokens: list, ):
+def call_func(f: defs.func, tokens: list):
     args = toks.split_func_args(tokens)
 
     if len(args) != f.argc:
@@ -291,5 +291,24 @@ def call_func(f: defs.func, tokens: list, ):
 
     if f.is_builtin:
         return f.blt_handler(args)
-    else:
-        utl.say_error(f"(Internal) User-defined functions not implemented yet: {f.name}")
+
+    output = out.output_code()
+
+    output.add("push",
+            (0, defs.STACK_DEBUT_PTR))
+    
+    # push the arguments to the stack
+    for arg in args:
+        output.push(op.calculate_rpn(arg))
+
+    output.add("mov",
+            (0, defs.STACK_DEBUT_PTR),
+            (0, defs.STACK_PTR))
+    
+    output.add("add",
+            (0, defs.STACK_DEBUT_PTR),
+            (1, utl.to_u16(f.argc)))
+    
+    output.add_goto(f"func_{f.name}", (1, 0)) # unconditional jump to the function's code
+
+    return output

@@ -8,37 +8,58 @@ class opcode:
 
 
 class variable:
-    def __init__(self, name, ptrlvl, offset_or_addr, scope = "main", is_static = False):
+    def __init__(self, name, ptrlvl, offset_or_addr, scope = None, is_static = False):
         self.name = name
         self.ptrlvl = ptrlvl # number of [] at declaration (actually unused)
         self.is_static = is_static
 
+        if scope is None:
+            scope = CURRENT_SCOPE
+
         if is_static:
-            STATIC_VARS.append(self)
             self.scope = None
             self.addr = offset_or_addr
             self.offset = None
         else:
-            LOCAL_VARS[scope].append(self)
             self.scope = scope
             self.offset = offset_or_addr
             self.addr = None
 
+    def add(self):
+        if self.is_static:
+            STATIC_VARS.append(self)
+        else:
+            if self.scope not in LOCAL_VARS:
+                LOCAL_VARS[self.scope] = []
+            LOCAL_VARS[self.scope].append(self)
+
 class func:
-    def __init__(self, name, argc, does_return, is_builtin = False, blt_handler = None, no_rpn = False):
+    def __init__(self, name, argc, does_return = True, is_builtin = False, blt_handler = None, no_rpn = False, opcodes = None):
         self.name = name
         self.argc = argc
         self.does_return = does_return
         self.is_builtin = is_builtin
-        self.blt_handler = blt_handler
-        self.no_rpn = no_rpn
 
-def is_variable(s, scope = "main"):
+        self.blt_handler = blt_handler  # function to call if builtin
+        self.no_rpn = no_rpn            # illegal use in RPN (alloca)
+        self.opcodes = opcodes          # compiled user code if not a builtin
+
+    def add(self):
+        ALL_FUNCS.append(self)
+
+
+def is_variable(s, scope = None):
+    if scope is None:
+        scope = CURRENT_SCOPE
+
     if s in [e.name for e in STATIC_VARS]:
         return True
     return s in [e.name for e in LOCAL_VARS[scope]]
 
-def get_variable(s, scope = "main"):
+def get_variable(s, scope = None):
+    if scope is None:
+        scope = CURRENT_SCOPE
+
     if not is_variable(s, scope):
         utl.say_error(f"Unknown variable: {s}")
 
@@ -64,6 +85,8 @@ def is_valid_name(s):
     for c in s:
         if not (c.isalnum() or c == '_'):
             return False
+    if s in KEYWORDS:
+        return False
     return True
 
 OPCODES = [
@@ -105,6 +128,8 @@ CHARS_SPE = [',', '(', ')', ':', '=', '{', '}', '[', ']', '&', '$', '!']
 CHARS_OPR = ['+', '-', '*', '/', '%', '==', '!=', '<', '>']
 CHARS_SPE += CHARS_OPR
 
+KEYWORDS = ["if", "elif", "else", "while", "func", "return", "break", "continue", "for"]
+
 NEW_VAR = ':'
 NEW_VAR_STATIC = '$'
 
@@ -117,8 +142,9 @@ STATIC_ADDR     = MEMORY_SIZE - 4 # will be decremented as static variables / st
 STATIC_BYTES    = bytearray()
 
 CURRENT_LNO = 0
+CURRENT_SCOPE = "global"
 
-LOCAL_VARS = {"main": []}
+LOCAL_VARS = {"global": []}
 STATIC_VARS = []
 
 ALL_FUNCS = []

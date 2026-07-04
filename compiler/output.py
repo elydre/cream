@@ -181,7 +181,7 @@ class output_code:
         instr.setlabel(label)
         self.instructions.append(instr)
 
-    def add_goto(self, label, val = None):
+    def add_goto(self, label, val):
         instr = self.instruction()
         instr.setgoto(label, val)
         self.instructions.append(instr)
