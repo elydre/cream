@@ -305,6 +305,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
             debut_label, (1, 0)) # unconditional jump to the beginning of the for loop
         
         output.add_label(fin_label)
+        output.add("pop", (1, 0)) # pop the fin value from the stack
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
 
