@@ -103,8 +103,7 @@ ARCH_VERSION = 0x0001
 
 CHARS_SPE = [',', '(', ')', ':', '=', '{', '}', '[', ']', '&', '$', '!']
 CHARS_OPR = ['+', '-', '*', '/', '%', '==', '!=', '<', '>']
-
-CHARS_SPE += [e for e in CHARS_SPE if len(e) == 1]
+CHARS_SPE += CHARS_OPR
 
 NEW_VAR = ':'
 NEW_VAR_STATIC = '$'

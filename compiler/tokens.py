@@ -1,6 +1,13 @@
 import compiler.utils as utl
 import compiler.defs as defs
 
+def find_longest_match(string):
+    longest_match = ""
+    for match in defs.CHARS_SPE:
+        if string.startswith(match) and len(match) > len(longest_match):
+            longest_match = match
+    return longest_match
+
 def tokenize_line(line):
     tokens = []
     lines = []
@@ -8,41 +15,49 @@ def tokenize_line(line):
     in_string = False
     current_token = ""
 
-    for char in line:
-        if char == '"' and not in_string:
-            in_string = True
-            current_token += char
+    skip_to = 0
 
-        elif char == '"' and in_string:
-            in_string = False
-            current_token += char
-            tokens.append(current_token)
-            current_token = ""
+    for i, char in enumerate(line):
+        if i < skip_to:
+            continue
 
-        elif in_string:
+        if char == '"':
             current_token += char
+            if in_string:
+                tokens.append(current_token)
+                current_token = ""
+            in_string = not in_string
+            continue
+
+        if in_string:
+            current_token += char
+            continue
 
         elif char.isspace():
             tokens.append(current_token)
             current_token = ""
-        
-        elif char == "=" and not current_token and tokens and tokens[-1] in defs.CHARS_SPE:
-            tokens[-1] += char
+            continue
 
-        elif char in defs.CHARS_SPE:
+        matching = find_longest_match(line[i:])
+
+        if matching:
+            skip_to = i + len(matching)
             tokens.append(current_token)
             current_token = ""
-            if char == "{" or char == "}":
+
+            if matching == "//":
+                break
+            elif matching == "{" or matching == "}":
                 if tokens:
                     lines.append(tokens.copy())
-                tokens = [char]
+                tokens = [matching]
                 lines.append(tokens.copy())
                 tokens = []
             else:
-                tokens.append(char)
+                tokens.append(matching)
+            continue
 
-        else:
-            current_token += char
+        current_token += char
 
     tokens.append(current_token)
 
