@@ -25,52 +25,52 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
     output.add_comment(f"\nl{defs.CURRENT_LNO:03}  {' '.join(tokens)}")
 
     if tokens[0] == defs.NEW_VAR or tokens[0] == defs.NEW_VAR_STATIC:
-        ptrlvl = 0
-        while tokens[ptrlvl + 1] == '[':
-            ptrlvl += 1
+        def_char = tokens[0]
+        tokens = tokens[1:]
 
-        end_brackets = 2 + ptrlvl * 2
-        if len(tokens) < end_brackets:
-            if ptrlvl:
-                utl.say_error(f"Bad pointer declaration\nSyntax example: {tokens[0]} [ptr_name]")
+        while len(tokens) > 0:
+            ptrlvl = 0
+            while tokens[ptrlvl] == '[':
+                ptrlvl += 1
+
+            end_brackets = 1 + ptrlvl * 2
+            if len(tokens) < end_brackets:
+                if ptrlvl:
+                    utl.say_error(f"Bad pointer declaration\nSyntax example: {def_char} [ptr_name]")
+                else:
+                    utl.say_error(f"Bad variable declaration\nSyntax example: {def_char} var_name")
+
+            # check for closing brackets
+            if ptrlvl and (ptrlvl * ']' != ''.join(tokens[1 + ptrlvl:2 + ptrlvl * 2])):
+                utl.say_error(f"Bad pointer declaration\nSyntax example: {def_char} [ptr_name]")
+
+            var_name = tokens[ptrlvl]
+
+            # check if the variable already exists
+            if defs.is_variable(var_name):
+                utl.say_error(f"Variable already exists: {tokens[ptrlvl]}")
+
+            if not defs.is_valid_name(var_name):
+                utl.say_error(f"Invalid variable name: {tokens[ptrlvl]}")
+
+            if def_char == defs.NEW_VAR:
+                old_offset = defs.LOCAL_VARS["main"][-1].offset if defs.LOCAL_VARS["main"] else 0
+                v = defs.variable(var_name, ptrlvl, old_offset + 1)
+
+                output.add("push", (1, 0))
+
             else:
-                utl.say_error(f"Bad variable declaration\nSyntax example: {tokens[0]} var_name")
+                if len(tokens) > end_brackets:
+                    if tokens[end_brackets] != '=' or len(tokens) != end_brackets + 2 or not utl.is_number(tokens[end_brackets + 1]):
+                        utl.say_error(f"Bad static variable declaration, only const expected\nSyntax example: {tokens[0]} var_name = 123")
+                    val = int(tokens[end_brackets + 1])
+                else:
+                    val = 0
 
-        # check for closing brackets
-        if ptrlvl and (ptrlvl * ']' != ''.join(tokens[2 + ptrlvl:])):
-            utl.say_error(f"Bad pointer declaration\nSyntax example: {tokens[0]} [ptr_name]")
+                addr = out.get_static_addr(1, [val])
+                v = defs.variable(var_name, ptrlvl, addr, is_static = True)
 
-        var_name = tokens[1 + ptrlvl]
-
-        # check if the variable already exists
-        if defs.is_variable(var_name):
-            utl.say_error(f"Variable already exists: {tokens[1 + ptrlvl]}")
-
-        if tokens[0] == defs.NEW_VAR:
-            old_offset = defs.LOCAL_VARS["main"][-1].offset if defs.LOCAL_VARS["main"] else 0
-            v = defs.variable(var_name, ptrlvl, old_offset + 1)
-        
-            if len(tokens) > end_brackets:
-                if tokens[end_brackets] != '=':
-                    utl.say_error(f"Bad variable declaration\nSyntax example: {tokens[0]} var_name = 123")
-
-                # reverse polish notation (RPN) expression
-                output.push(op.calculate_rpn(tokens[end_brackets + 1:]))
-
-            else:
-                output.add("push",
-                    (1, 0))
-
-        else:
-            if len(tokens) > end_brackets:
-                if tokens[end_brackets] != '=' or len(tokens) != end_brackets + 2 or not utl.is_number(tokens[end_brackets + 1]):
-                    utl.say_error(f"Bad static variable declaration, only const expected\nSyntax example: {tokens[0]} var_name = 123")
-                val = int(tokens[end_brackets + 1])
-            else:
-                val = 0
-
-            addr = out.get_static_addr(1, [val])
-            v = defs.variable(var_name, ptrlvl, addr, is_static = True)
+            tokens = tokens[end_brackets:]
 
     elif defs.is_variable(tokens[0]):
         if len(tokens) < 3 or tokens[1] != '=':

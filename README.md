@@ -18,10 +18,10 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] elif/else statements
 - [x] output file format
 - [x] heap variables (static)
-- [ ] heap arrays
-- [ ] heap strings
-- [ ] sub stack scope
+- [x] heap strings
 - [ ] functions
+- [ ] heap arrays
+- [ ] sub stack scope
 - [ ] structs
 - [ ] some optimizations
 

@@ -63,12 +63,6 @@ def calculate_rpn(rpn: list):
                             (2, 0), (1, utl.to_u16(-v.offset)))
                 have_ampersand = False
             else:
-                # output.add("push", (1, 0))
-                # output.add("mss",
-                #         (0, defs.STACK_PTR),
-                #         (1, 0),
-                #         (0, defs.STACK_DEBUT_PTR),
-                #         (1, utl.to_u16(-v.offset)))
                 if v.is_static:
                     output.add("push",
                             (0, v.addr))
@@ -129,6 +123,13 @@ def calculate_rpn(rpn: list):
                 continue
             output.add("push",
                    (1, utl.to_number(token)))
+            stack_size += 1
+
+        elif token[0] == '"' and token[-1] == '"' and len(token) >= 2:
+            string = token[1:-1]
+            addr = out.get_static_addr(len(string) + 1, [ord(c) for c in string] + [0])
+            output.add("push",
+                    (1, addr))
             stack_size += 1
 
 

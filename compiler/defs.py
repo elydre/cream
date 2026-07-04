@@ -56,6 +56,15 @@ def get_func(s):
 
     return next(e for e in ALL_FUNCS if e.name == s)
 
+def is_valid_name(s):
+    if not s:
+        return False
+    if not (s[0].isalpha() or s[0] == '_'):
+        return False
+    for c in s:
+        if not (c.isalnum() or c == '_'):
+            return False
+    return True
 
 OPCODES = [
     opcode("nop",   0x00, 0),

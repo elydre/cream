@@ -1,7 +1,7 @@
-:str
-:c
+:str c i
 
 str = "Hello, World!"
+dump(str)
 
 for i (0, 100) {
     c = [str i +]

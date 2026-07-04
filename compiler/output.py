@@ -2,13 +2,11 @@ import compiler.utils as utl
 import compiler.defs as defs
 
 
-def get_static_addr(size: int, data: list|str = None):
+def get_static_addr(size: int, data: list = None):
     if data == None:
         data = [0] * size
     elif len(data) != size:
         utl.say_error(f"(Internal) Data size mismatch in get_static_addr\nExpected {size}, got {len(data)}")
-    elif type(data) == str:
-        data = [ord(c) for c in data]
 
     byte_data = bytearray()
     for d in data:
