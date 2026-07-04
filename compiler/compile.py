@@ -47,7 +47,6 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
 
         old_offset = defs.LOCAL_VARS["main"][-1].offset if defs.LOCAL_VARS["main"] else 0
         v = defs.variable(var_name, ptrlvl, old_offset + 1)
-        v.add_to_local_variables()
 
         output.add("push",
             (1, 0))

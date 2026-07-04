@@ -1,0 +1,12 @@
+$ str
+$ c
+
+str = "Hello, World!"
+
+for i (0, 100) {
+    c = [str i +]
+    if c 0 == {
+        break
+    }
+    dump(c)
+}

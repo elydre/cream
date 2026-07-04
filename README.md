@@ -16,10 +16,12 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] break and continue
 - [x] for loops
 - [x] elif/else statements
+- [ ] new output format
 - [ ] heap arrays and variables
 - [ ] heap strings
 - [ ] sub stack scope
 - [ ] functions
+- [ ] structs
 - [ ] some optimizations
 
 ### Extra
@@ -89,3 +91,34 @@ each argument can be one of the following:
 |  1     | `a`         | value           |
 |  2     | `sp+a`      | stack address   |
 |  3     | `?`         | unused          |
+
+## Compiled file format (not implemented yet)
+
+```
+[HEADER]
+magic number         (16 bit)
+ARCH version         (16 bit)
+section count        (16 bit)
+
+section 0 debut      (16 bit)
+section 0 size       (16 bit)
+section 0 dest-addr  (16 bit)
+section 0 type       (16 bit)
+
+section 1 debut      (16 bit)
+section 1 size       (16 bit)
+section 1 dest-addr  (16 bit)
+section 1 type       (16 bit)
+...
+
+[DATA]
+section 0 data   (section 0 size * 16 bit)
+section 1 data   (section 1 size * 16 bit)
+...
+```
+
+`section debut` is the offset in the file where the section data starts
+
+section type:
+- 0: code (in X memory)
+- 1: data (in RW memory)

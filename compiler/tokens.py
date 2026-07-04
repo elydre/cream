@@ -5,12 +5,27 @@ def tokenize_line(line):
     tokens = []
     lines = []
 
+    in_string = False
     current_token = ""
+
     for char in line:
-        if char.isspace():
+        if char == '"' and not in_string:
+            in_string = True
+            current_token += char
+
+        elif char == '"' and in_string:
+            in_string = False
+            current_token += char
             tokens.append(current_token)
             current_token = ""
 
+        elif in_string:
+            current_token += char
+
+        elif char.isspace():
+            tokens.append(current_token)
+            current_token = ""
+        
         elif char == "=" and not current_token and tokens and tokens[-1] in defs.CHARS_SPE:
             tokens[-1] += char
 

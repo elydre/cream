@@ -8,13 +8,18 @@ class opcode:
 
 
 class variable:
-    def __init__(self, name, ptrlvl, offset):
+    def __init__(self, name, ptrlvl, offset, scope = "main", is_static = False):
         self.name = name
-        self.ptrlvl = ptrlvl
-        self.offset = offset
+        self.ptrlvl = ptrlvl # number of [] at declaration (actually unused)
+        self.offset = offset # offset from the beginning of the stack or raw address if static
+        self.is_static = is_static
 
-    def add_to_local_variables(self):
-        LOCAL_VARS["main"].append(self)
+        if is_static:
+            STATIC_VARS.append(self)
+            self.scope = None
+        else:
+            LOCAL_VARS[scope].append(self)
+            self.scope = scope
 
 class func:
     def __init__(self, name, argc, does_return, is_builtin = False, blt_handler = None, no_rpn = False):
@@ -42,11 +47,16 @@ def to_number(s):
         return int(s)
 
 def is_variable(s, scope = "main"):
+    if s in [e.name for e in STATIC_VARS]:
+        return True
     return s in [e.name for e in LOCAL_VARS[scope]]
 
 def get_variable(s, scope = "main"):
     if not is_variable(s, scope):
         utl.say_error(f"Unknown variable: {s}")
+
+    if s in [e.name for e in STATIC_VARS]:
+        return next(e for e in STATIC_VARS if e.name == s)
 
     return next(e for e in LOCAL_VARS[scope] if e.name == s)
 
@@ -109,4 +119,8 @@ STACK_DEBUT = STACK_PTR
 CURRENT_LNO = 0
 
 LOCAL_VARS = {"main": []}
+STATIC_VARS = []
+
 ALL_FUNCS = []
+
+DATA_SEQ = []
