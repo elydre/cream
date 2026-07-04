@@ -1,6 +1,69 @@
 import compiler.utils as utl
 import compiler.defs as defs
 
+
+def get_static_addr(size: int, data: list|str = None):
+    if data == None:
+        data = [0] * size
+    elif len(data) != size:
+        utl.say_error(f"(Internal) Data size mismatch in get_static_addr\nExpected {size}, got {len(data)}")
+    elif type(data) == str:
+        data = [ord(c) for c in data]
+
+    byte_data = bytearray()
+    for d in data:
+        if type(d) != int or d < 0 or d > 0xFFFF:
+            utl.say_error(f"(Internal) Invalid data value in get_static_addr\nExpected int in range [0, 65535], got {d}")
+        byte_data += d.to_bytes(2, byteorder='little')
+
+    defs.STATIC_ADDR -= size
+    defs.STATIC_BYTES = byte_data + defs.STATIC_BYTES
+
+    return defs.STATIC_ADDR
+
+
+class output_file:
+    class section:
+        TYPE_CODE = 0
+        TYPE_DATA = 1
+
+        def __init__(self, dest_addr, type, data):
+            self.debut = 0
+            self.size = len(data)
+            self.dest_addr = dest_addr
+            self.type = type
+            self.data = data
+
+    def __init__(self):
+        self.sections = []
+
+    def add_section(self, dest_addr, type, data):
+        self.sections.append(self.section(dest_addr, type, data))
+
+    def write(self, file):
+        header = bytearray()
+        header += defs.MAGIC_NUMBER.to_bytes(2, byteorder='little')
+        header += defs.ARCH_VERSION.to_bytes(2, byteorder='little')
+        header += len(self.sections).to_bytes(2, byteorder='little')
+
+        # update debut values
+        debut = 6 + len(self.sections) * 8
+        for section in self.sections:
+            section.debut = debut
+            debut += section.size
+
+        for section in self.sections:
+            header += section.debut.to_bytes(2, byteorder='little')
+            header += section.size.to_bytes(2, byteorder='little')
+            header += section.dest_addr.to_bytes(2, byteorder='little')
+            header += section.type.to_bytes(2, byteorder='little')
+
+        file.write(header)
+
+        for section in self.sections:
+            file.write(section.data)
+
+
 class output_code:
     class instruction:
         TYPE_COMMENT = 0
@@ -128,6 +191,9 @@ class output_code:
     def push(self, other):
         self.instructions += other.instructions
 
+    def atdebut(self, other):
+        self.instructions = other.instructions + self.instructions
+
     def dump(self, hide_labels = False):
         pc = 0
         for instr in self.instructions:
@@ -163,6 +229,8 @@ class output_code:
             # Replace the goto instruction with a jmp instruction
             instr.setopcode("jmp", (1, resolved_address), instr.goto_val, None, None)
 
-    def write(self, file):
+    def to_bytes(self):
+        code_bytes = bytearray()
         for instr in self.instructions:
-            file.write(instr.bytes)
+            code_bytes += instr.bytes
+        return code_bytes

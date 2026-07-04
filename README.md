@@ -16,8 +16,9 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] break and continue
 - [x] for loops
 - [x] elif/else statements
-- [ ] new output format
-- [ ] heap arrays and variables
+- [x] output file format
+- [x] heap variables (static)
+- [ ] heap arrays
 - [ ] heap strings
 - [ ] sub stack scope
 - [ ] functions
@@ -92,7 +93,7 @@ each argument can be one of the following:
 |  2     | `sp+a`      | stack address   |
 |  3     | `?`         | unused          |
 
-## Compiled file format (not implemented yet)
+## Compiled file format
 
 ```
 [HEADER]

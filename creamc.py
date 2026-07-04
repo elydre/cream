@@ -1,4 +1,6 @@
+from compiler.output import output_file
 from compiler.compile import compile
+import compiler.defs as defs
 
 import argparse
 
@@ -28,6 +30,10 @@ if args.dump_asm:
 
 main_output.resolve_gotos()
 # main_output.dump(hide_labels = True)
-main_output.write(ofile)
 
-ofile.close()
+output = output_file()
+output.add_section(0, output_file.section.TYPE_CODE, main_output.to_bytes())
+if defs.STATIC_BYTES:
+    output.add_section(defs.STATIC_ADDR, output_file.section.TYPE_DATA, defs.STATIC_BYTES)
+
+output.write(ofile)

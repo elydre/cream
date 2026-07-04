@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 
-#define RWMEMORY_SIZE 65536
+#define MEMORY_SIZE 65536
 
 #undef min
 #define min(a, b) ((a) < (b) ? (a) : (b))
@@ -248,14 +248,34 @@ void execute_program() {
         }
         DEBUGF("]\033[0m\n");
 
-        if (pc >= RWMEMORY_SIZE - 10)
+        if (pc >= MEMORY_SIZE - 10)
             return;
     }
 
 }
-            
+
+typedef struct {
+    uint16_t magic;
+    uint16_t version;
+    uint16_t section_count;
+} file_header_t;
+
+typedef struct {
+    uint16_t debut;
+    uint16_t size;
+    uint16_t dest_addr;
+    uint16_t type;
+} section_header_t;
+
+#define MAGIC_NUMBER 0xF057
+#define ARCH_VERSION 1
+#define MAX_SECTIONS 16
+
+#define SECTION_TYPE_CODE 0
+#define SECTION_TYPE_DATA 1
 
 int main(void) {
+
     FILE *bytecode = fopen("output.bin", "rb");
 
     if (bytecode == NULL) {
@@ -263,14 +283,42 @@ int main(void) {
         return 1;
     }
 
-    // load the bytecode into memory
-    fseek(bytecode, 0, SEEK_END);
-    long size = ftell(bytecode);
-    fseek(bytecode, 0, SEEK_SET);
+    file_header_t header;
+    
+    if (fread(&header, sizeof(file_header_t), 1, bytecode) != 1) {
+        perror("Failed to read file header");
+        fclose(bytecode);
+        return 1;
+    }
 
+    if (header.magic != MAGIC_NUMBER) {
+        fprintf(stderr, "Error: Invalid magic number in bytecode file\n");
+        fclose(bytecode);
+        return 1;
+    }
 
-    xmem = calloc(RWMEMORY_SIZE, sizeof(uint16_t));
-    rwmem = calloc(RWMEMORY_SIZE, sizeof(uint16_t));
+    if (header.version != ARCH_VERSION) {
+        fprintf(stderr, "Error: Unsupported architecture version in bytecode file\n");
+        fclose(bytecode);
+        return 1;
+    }
+
+    if (header.section_count > MAX_SECTIONS) {
+        fprintf(stderr, "Error: Too many sections in bytecode file\n");
+        fclose(bytecode);
+        return 1;
+    }
+
+    section_header_t sections[MAX_SECTIONS];
+
+    if (fread(sections, sizeof(section_header_t), header.section_count, bytecode) != header.section_count) {
+        perror("Failed to read section headers");
+        fclose(bytecode);
+        return 1;
+    }
+
+    xmem = calloc(MEMORY_SIZE, sizeof(uint16_t));
+    rwmem = calloc(MEMORY_SIZE, sizeof(uint16_t));
 
     if (xmem == NULL || rwmem == NULL) {
         perror("Failed to allocate memory");
@@ -278,15 +326,45 @@ int main(void) {
         return 1;
     }
 
-    size = min(size, (long)(RWMEMORY_SIZE * sizeof(uint16_t)));
-    if ((long) fread(xmem, 1, size, bytecode) != size) {
-        perror("Failed to read bytecode");
-        free(xmem);
-        fclose(bytecode);
-        return 1;
+    for (int i = 0; i < header.section_count; i++) {
+        if (sections[i].type != SECTION_TYPE_CODE && sections[i].type != SECTION_TYPE_DATA) {
+            fprintf(stderr, "Error: Invalid section type %d in section %d\n", sections[i].type, i);
+            fclose(bytecode);
+            return 1;
+        }
+    
+        if (sections[i].size % sizeof(uint16_t) != 0) {
+            fprintf(stderr, "Error: Section %d size is not a multiple of 2\n", i);
+            fclose(bytecode);
+            return 1;
+        }
+
+        if (sections[i].dest_addr + (sections[i].size / sizeof(uint16_t)) > MEMORY_SIZE) {
+            fprintf(stderr, "Error: Section %d exceeds memory bounds\n", i);
+            fclose(bytecode);
+            return 1;
+        }
+    
+        if (sections[i].type == SECTION_TYPE_CODE) {
+            if (fseek(bytecode, sections[i].debut, SEEK_SET) || fread(&xmem[sections[i].dest_addr], 1, sections[i].size, bytecode) != sections[i].size) {
+                perror("Failed to read code section");
+                fclose(bytecode);
+                return 1;
+            }
+            printf("Loaded code section %d: %d bytes to address 0x%04X\n", i, sections[i].size, sections[i].dest_addr);
+        } else if (sections[i].type == SECTION_TYPE_DATA) {
+            if (fseek(bytecode, sections[i].debut, SEEK_SET) || fread(&rwmem[sections[i].dest_addr], 1, sections[i].size, bytecode) != sections[i].size) {
+                perror("Failed to read data section");
+                fclose(bytecode);
+                return 1;
+            }
+            printf("Loaded data section %d: %d bytes to address 0x%04X\n", i, sections[i].size, sections[i].dest_addr);
+        }
     }
 
     fclose(bytecode);
+
+    printf("Starting emulation\n");
 
     execute_program();
 

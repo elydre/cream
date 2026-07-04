@@ -9,14 +9,16 @@ def init():
     output = out.output_code()
     output.add_comment("\nProgram initialization")
 
+    stack_debut = defs.STATIC_ADDR
+
     output.add("ssp",
             (1, defs.STACK_PTR))
     output.add("mov",
             (0, defs.STACK_PTR),
-            (1, defs.STACK_DEBUT))
+            (1, stack_debut))
     output.add("mov",
             (0, defs.STACK_DEBUT_PTR),
-            (1, defs.STACK_DEBUT))
+            (1, stack_debut))
 
     return output
 
@@ -51,10 +53,14 @@ def calculate_rpn(rpn: list):
         if defs.is_variable(token):
             v = defs.get_variable(token)
             if have_ampersand:
-                output.add("push",
-                        (0, defs.STACK_DEBUT_PTR))
-                output.add("add",
-                        (2, 0), (1, utl.to_u16(-v.offset)))
+                if v.is_static:
+                    output.add("push",
+                            (1, v.addr))
+                else:
+                    output.add("push",
+                            (0, defs.STACK_DEBUT_PTR))
+                    output.add("add",
+                            (2, 0), (1, utl.to_u16(-v.offset)))
                 have_ampersand = False
             else:
                 # output.add("push", (1, 0))
@@ -63,9 +69,13 @@ def calculate_rpn(rpn: list):
                 #         (1, 0),
                 #         (0, defs.STACK_DEBUT_PTR),
                 #         (1, utl.to_u16(-v.offset)))
-                output.add("pushs",
-                       (0, defs.STACK_DEBUT_PTR),
-                       (1, utl.to_u16(-v.offset)))
+                if v.is_static:
+                    output.add("push",
+                            (0, v.addr))
+                else:
+                    output.add("pushs",
+                        (0, defs.STACK_DEBUT_PTR),
+                        (1, utl.to_u16(-v.offset)))
             stack_size += 1
             continue
 
@@ -113,17 +123,17 @@ def calculate_rpn(rpn: list):
                     (0, defs.FUNC_RET_ADDR))
             stack_size += 1
 
-        elif defs.is_number(token):
+        elif utl.is_number(token):
             if (i + 1 < len(rpn)) and rpn[i + 1] in defs.CHARS_OPR: # optimize basic calculations
-                tmp_number = defs.to_number(token)
+                tmp_number = utl.to_number(token)
                 continue
             output.add("push",
-                   (1, defs.to_number(token)))
+                   (1, utl.to_number(token)))
             stack_size += 1
 
 
         elif token in ['+', '-', '*', '/', '%', '==', '!=', '<', '>']:
-            
+
             if tmp_number is not None:
                 a = (2, 0)
                 b = (1, tmp_number)
@@ -174,9 +184,24 @@ def fast_assign_var(v: defs.variable, tokens: list):
 
     if len(tokens) == 1 and defs.is_variable(tokens[0]):
         v2 = defs.get_variable(tokens[0])
-        output.add("mss",
-                (0, defs.STACK_DEBUT_PTR), (1, utl.to_u16(-v.offset)),
-                (0, defs.STACK_DEBUT_PTR), (1, utl.to_u16(-v2.offset)))
+
+        if v.is_static and v2.is_static:
+            output.add("mov",
+                    (0, v2.addr),
+                    (1, v.addr))
+        elif v.is_static and not v2.is_static:
+            output.add("mss",
+                    (0, defs.STACK_DEBUT_PTR), (1, utl.to_u16(-v2.offset)),
+                    (1, v.addr), (1, 0))
+        elif not v.is_static and v2.is_static:
+            output.add("mss",
+                    (1, v2.addr), (1, 0),
+                    (0, defs.STACK_DEBUT_PTR), (1, utl.to_u16(-v.offset)))
+        else:
+            output.add("mss",
+                    (0, defs.STACK_DEBUT_PTR), (1, utl.to_u16(-v.offset)),
+                    (0, defs.STACK_DEBUT_PTR), (1, utl.to_u16(-v2.offset)))
+
         return output
 
     if defs.is_func(tokens[0]):
@@ -194,7 +219,7 @@ def fast_assign_var(v: defs.variable, tokens: list):
         output.add("mss",
                 (0, defs.STACK_DEBUT_PTR), (1, utl.to_u16(-v.offset)),
                 (1, defs.FUNC_RET_ADDR), (1, 0))
-        
+
         return output
 
     return None
@@ -244,12 +269,16 @@ def load_ptraddr(tokens: list):
         output.add("mss",
                 (0, defs.STACK_PTR), (1, 0),
                 (2, 0), (1, 0))
+
+    # load the pointer's address from memory
+    elif ptr.is_static:
+        output.add("push",
+                (0, ptr.addr))
     else:
-        # load the pointer's address from memory
         output.add("pushs",
                 (0, defs.STACK_DEBUT_PTR),
                 (1, utl.to_u16(-ptr.offset)))
-    
+
     return (output, end + 1)
 
 

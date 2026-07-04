@@ -8,18 +8,21 @@ class opcode:
 
 
 class variable:
-    def __init__(self, name, ptrlvl, offset, scope = "main", is_static = False):
+    def __init__(self, name, ptrlvl, offset_or_addr, scope = "main", is_static = False):
         self.name = name
         self.ptrlvl = ptrlvl # number of [] at declaration (actually unused)
-        self.offset = offset # offset from the beginning of the stack or raw address if static
         self.is_static = is_static
 
         if is_static:
             STATIC_VARS.append(self)
             self.scope = None
+            self.addr = offset_or_addr
+            self.offset = None
         else:
             LOCAL_VARS[scope].append(self)
             self.scope = scope
+            self.offset = offset_or_addr
+            self.addr = None
 
 class func:
     def __init__(self, name, argc, does_return, is_builtin = False, blt_handler = None, no_rpn = False):
@@ -29,22 +32,6 @@ class func:
         self.is_builtin = is_builtin
         self.blt_handler = blt_handler
         self.no_rpn = no_rpn
-
-def is_number(s):
-    try:
-        if s.startswith("0x"):
-            int(s, 16)
-        else:
-            int(s)
-        return True
-    except ValueError:
-        return False
-
-def to_number(s):
-    if s.startswith("0x"):
-        return int(s, 16)
-    else:
-        return int(s)
 
 def is_variable(s, scope = "main"):
     if s in [e.name for e in STATIC_VARS]:
@@ -102,6 +89,9 @@ OPCODES = [
 
 MEMORY_SIZE = 65536 - (80 * 25)
 
+MAGIC_NUMBER = 0xF057
+ARCH_VERSION = 0x0001
+
 CHARS_SPE = [',', '(', ')', ':', '=', '{', '}', '[', ']', '&', '$', '!']
 CHARS_OPR = ['+', '-', '*', '/', '%', '==', '!=', '<', '>']
 
@@ -115,7 +105,8 @@ FUNC_RET_ADDR   = MEMORY_SIZE - 2
 STACK_DEBUT_PTR = MEMORY_SIZE - 3
 STACK_PTR       = MEMORY_SIZE - 4
 
-STACK_DEBUT = STACK_PTR
+STATIC_ADDR     = MEMORY_SIZE - 4 # will be decremented as static variables / strings are added
+STATIC_BYTES    = bytearray()
 
 CURRENT_LNO = 0
 

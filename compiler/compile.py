@@ -24,20 +24,21 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
     output = out.output_code()
     output.add_comment(f"\nl{defs.CURRENT_LNO:03}  {' '.join(tokens)}")
 
-    if tokens[0] == defs.NEW_VAR:
+    if tokens[0] == defs.NEW_VAR or tokens[0] == defs.NEW_VAR_STATIC:
         ptrlvl = 0
         while tokens[ptrlvl + 1] == '[':
             ptrlvl += 1
 
-        if len(tokens) != 2 + ptrlvl * 2:
+        end_brackets = 2 + ptrlvl * 2
+        if len(tokens) < end_brackets:
             if ptrlvl:
-                utl.say_error(f"Bad pointer declaration\nSyntax example: {defs.NEW_VAR} [ptr_name]")
+                utl.say_error(f"Bad pointer declaration\nSyntax example: {tokens[0]} [ptr_name]")
             else:
-                utl.say_error(f"Bad variable declaration\nSyntax example: {defs.NEW_VAR} var_name")
+                utl.say_error(f"Bad variable declaration\nSyntax example: {tokens[0]} var_name")
 
         # check for closing brackets
         if ptrlvl and (ptrlvl * ']' != ''.join(tokens[2 + ptrlvl:])):
-            utl.say_error(f"Bad pointer declaration\nSyntax example: {defs.NEW_VAR} [ptr_name]")
+            utl.say_error(f"Bad pointer declaration\nSyntax example: {tokens[0]} [ptr_name]")
 
         var_name = tokens[1 + ptrlvl]
 
@@ -45,11 +46,31 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         if defs.is_variable(var_name):
             utl.say_error(f"Variable already exists: {tokens[1 + ptrlvl]}")
 
-        old_offset = defs.LOCAL_VARS["main"][-1].offset if defs.LOCAL_VARS["main"] else 0
-        v = defs.variable(var_name, ptrlvl, old_offset + 1)
+        if tokens[0] == defs.NEW_VAR:
+            old_offset = defs.LOCAL_VARS["main"][-1].offset if defs.LOCAL_VARS["main"] else 0
+            v = defs.variable(var_name, ptrlvl, old_offset + 1)
+        
+            if len(tokens) > end_brackets:
+                if tokens[end_brackets] != '=':
+                    utl.say_error(f"Bad variable declaration\nSyntax example: {tokens[0]} var_name = 123")
 
-        output.add("push",
-            (1, 0))
+                # reverse polish notation (RPN) expression
+                output.push(op.calculate_rpn(tokens[end_brackets + 1:]))
+
+            else:
+                output.add("push",
+                    (1, 0))
+
+        else:
+            if len(tokens) > end_brackets:
+                if tokens[end_brackets] != '=' or len(tokens) != end_brackets + 2 or not utl.is_number(tokens[end_brackets + 1]):
+                    utl.say_error(f"Bad static variable declaration, only const expected\nSyntax example: {tokens[0]} var_name = 123")
+                val = int(tokens[end_brackets + 1])
+            else:
+                val = 0
+
+            addr = out.get_static_addr(1, [val])
+            v = defs.variable(var_name, ptrlvl, addr, is_static = True)
 
     elif defs.is_variable(tokens[0]):
         if len(tokens) < 3 or tokens[1] != '=':
@@ -66,9 +87,12 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
             output.push(op.calculate_rpn(tokens[2:]))
 
             # move the result from the stack to the variable's memory location
-            output.add("pops",
-                    (0, defs.STACK_DEBUT_PTR),
-                    (1, utl.to_u16(-v.offset)))
+            if v.is_static:
+                output.add("pop", (0, v.addr))
+            else:
+                output.add("pops",
+                        (0, defs.STACK_DEBUT_PTR),
+                        (1, utl.to_u16(-v.offset)))
 
 
     elif tokens[0] == "[":
@@ -214,9 +238,12 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
             utl.say_error(f"Bad syntax\nSyntax example: for var (0, 10)")
 
         if not defs.is_variable(tokens[1]):
-            utl.say_error(f"For loop variable must be a declared variable: {tokens[1]}\nSyntax example: $ var ; for var (0, 10)")
+            utl.say_error(f"For loop variable must be a declared variable: {tokens[1]}\nSyntax example: :var ; for var (0, 10)")
 
         v = defs.get_variable(tokens[1])
+
+        if v.is_static:
+            utl.say_error(f"For loop variable must be a local variable: {tokens[1]}\nSyntax example: :var ; for var (0, 10)")
 
         args = toks.split_func_args(tokens[3:-1])
 
@@ -318,8 +345,8 @@ def compile(lines: str):
     blt.add_builtin_functions()
 
     output = out.output_code()
-    output.push(op.init())
     output.push(compile_lines(tokens_lines, len(tokens_lines)))
+    output.atdebut(op.init())
     output.push(op.fini())
 
     return output
