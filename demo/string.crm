@@ -1,5 +1,5 @@
-$ str
-$ c
+:str
+:c
 
 str = "Hello, World!"
 

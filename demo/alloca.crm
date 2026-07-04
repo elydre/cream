@@ -1,5 +1,5 @@
-$ i
-$ ptr
+:ptr
+:i
 
 dump(_get_sp())
 

@@ -1,7 +1,7 @@
-$ var
-$ [ptr]
-$ [[ptr_ptr]]
-$ [[[ptr_ptr_ptr]]]
+: var
+: [ptr]
+: [[ptr_ptr]]
+: [[[ptr_ptr_ptr]]]
 
 var = 4
 ptr = &var

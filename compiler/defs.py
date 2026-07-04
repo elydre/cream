@@ -107,7 +107,8 @@ CHARS_OPR = ['+', '-', '*', '/', '%', '==', '!=', '<', '>']
 
 CHARS_SPE += [e for e in CHARS_SPE if len(e) == 1]
 
-NEW_VAR = '$'
+NEW_VAR = ':'
+NEW_VAR_STATIC = '$'
 
 COND_RES_ADDR   = MEMORY_SIZE - 1
 FUNC_RET_ADDR   = MEMORY_SIZE - 2

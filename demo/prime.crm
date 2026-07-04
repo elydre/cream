@@ -1,6 +1,6 @@
-$ to_test
-$ div
-$ is_prime
+:to_test
+:div
+:is_prime
 
 to_test = 1
 
