@@ -16,18 +16,20 @@ class variable:
         if scope is None:
             scope = CURRENT_SCOPE
 
+        self.scope = scope
+    
         if is_static:
-            self.scope = None
             self.addr = offset_or_addr
             self.offset = None
         else:
-            self.scope = scope
             self.offset = offset_or_addr
             self.addr = None
 
     def add(self):
         if self.is_static:
-            STATIC_VARS.append(self)
+            if self.scope not in STATIC_VARS:
+                STATIC_VARS[self.scope] = []
+            STATIC_VARS[self.scope].append(self)
         else:
             if self.scope not in LOCAL_VARS:
                 LOCAL_VARS[self.scope] = []
@@ -52,21 +54,26 @@ def is_variable(s, scope = None):
     if scope is None:
         scope = CURRENT_SCOPE
 
-    if s in [e.name for e in STATIC_VARS]:
+    if scope in STATIC_VARS.keys() and s in [e.name for e in STATIC_VARS[scope]]:
         return True
-    return s in [e.name for e in LOCAL_VARS[scope]]
+    if scope in LOCAL_VARS.keys() and s in [e.name for e in LOCAL_VARS[scope]]:
+        return True
+    if "global" in STATIC_VARS.keys() and s in [e.name for e in STATIC_VARS["global"]]:
+        return True
+    return False
 
 def get_variable(s, scope = None):
     if scope is None:
         scope = CURRENT_SCOPE
 
-    if not is_variable(s, scope):
-        utl.say_error(f"Unknown variable: {s}")
-
-    if s in [e.name for e in STATIC_VARS]:
-        return next(e for e in STATIC_VARS if e.name == s)
-
-    return next(e for e in LOCAL_VARS[scope] if e.name == s)
+    if scope in STATIC_VARS.keys() and s in [e.name for e in STATIC_VARS[scope]]:
+        return next(e for e in STATIC_VARS[scope] if e.name == s)
+    if scope in LOCAL_VARS.keys() and s in [e.name for e in LOCAL_VARS[scope]]:
+        return next(e for e in LOCAL_VARS[scope] if e.name == s)
+    if "global" in STATIC_VARS.keys() and s in [e.name for e in STATIC_VARS["global"]]:
+        return next(e for e in STATIC_VARS["global"] if e.name == s)
+    
+    utl.say_error(f"Unknown variable: {s}")
 
 def is_func(s):
     return s in [e.name for e in ALL_FUNCS]
@@ -144,8 +151,8 @@ STATIC_BYTES    = bytearray()
 CURRENT_LNO = 0
 CURRENT_SCOPE = "global"
 
-LOCAL_VARS = {"global": []}
-STATIC_VARS = []
+LOCAL_VARS = {}
+STATIC_VARS = {}
 
 ALL_FUNCS = []
 

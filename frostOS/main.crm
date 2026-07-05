@@ -1,27 +1,41 @@
-:str c
-:screen
-:i b
+:str
+$screen
 
-for i (0, 60000) {
-    for b (0, 1000) {
-    }
-}
-
-str = "hello world!"
 screen = _get_screen()
-dump(screen)
 
-for i (0) {
-    c = [str i +]
-    if c 0 == {
-        break
+func print(str) {
+    $ x
+    $ y
+    : i c
+
+    for i (0) {
+        c = [str i +]
+        if c 0 == {
+            break
+        }
+        if c '\n' == {
+            x = 0
+            y = y 1 +
+            continue
+        }
+        if x 79 > {
+            x = 0
+            y = y 1 +
+        }
+        if y 24 > {
+            break
+        }
+        [screen 80 y * + x +] = c 
+        x = x 1 +
     }
-    [screen i +] = c
+
+    out(0x1000, 0)
 }
 
-out(0x1000, 0)
+str = "hello world!\noui"
 
-sleep(20)
+print(str)
 
 while 1 {
+    sleep(1)
 }

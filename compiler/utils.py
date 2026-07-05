@@ -2,6 +2,15 @@ import compiler.defs as defs
 
 import ctypes
 
+char_escape_dict = {
+    "\\n": 10,
+    "\\t": 9,
+    "\\r": 13,
+    "\\'": 39,
+    '\\"': 34,
+    "\\\\": 92
+}
+
 def say_error(message):
     print(f"Error line {defs.CURRENT_LNO}: {message}")
     exit(1)
@@ -27,8 +36,46 @@ def is_number(s):
     except ValueError:
         return False
 
+def is_char(s):
+    if s[0] != "'" or s[-1] != "'":
+        return False
+    if len(s) == 3:
+        return True
+    if len(s) == 4 and s[1:3] in char_escape_dict:
+        return True
+    return False
+
 def to_number(s):
+    if is_char(s):
+        if len(s) == 3:
+            return ord(s[1])
+        return char_escape_dict[s[1:3]]
+
     if s.startswith("0x"):
         return int(s, 16)
     else:
         return int(s)
+
+def is_string(s):
+    if s[0] != '"' or s[-1] != '"':
+        return False
+    return True
+
+def convert_string(s):            
+    # returns a list of numbers representing the string, with a null terminator at the end
+
+    result = []
+    i = 1
+    while i < len(s) - 1:
+        if s[i] == '\\':
+            if i + 1 < len(s) - 1 and s[i:i+2] in char_escape_dict:
+                result.append(char_escape_dict[s[i:i+2]])
+                i += 2
+            else:
+                say_error(f"Invalid escape sequence: {s[i:i+2]}")
+        else:
+            result.append(ord(s[i]))
+            i += 1
+
+    result.append(0)  # null terminator
+    return result

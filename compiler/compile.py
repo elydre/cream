@@ -73,7 +73,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
             else:
                 if len(tokens) > end_brackets:
                     if tokens[end_brackets] != '=' or len(tokens) != end_brackets + 2 or not utl.is_number(tokens[end_brackets + 1]):
-                        utl.say_error(f"Bad static variable declaration, only const expected\nSyntax example: {tokens[0]} var_name = 123")
+                        utl.say_error(f"Bad static variable declaration, only const expected\nSyntax example: {tokens[0]} = 123")
                     val = int(tokens[end_brackets + 1])
                 else:
                     val = 0

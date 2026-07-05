@@ -117,17 +117,20 @@ def calculate_rpn(rpn: list):
                     (0, defs.FUNC_RET_ADDR))
             stack_size += 1
 
-        elif utl.is_number(token):
+        elif utl.is_number(token) or utl.is_char(token):
+            v = utl.to_number(token)
+
             if (i + 1 < len(rpn)) and rpn[i + 1] in defs.CHARS_OPR: # optimize basic calculations
-                tmp_number = utl.to_number(token)
+                tmp_number = v
                 continue
-            output.add("push",
-                   (1, utl.to_number(token)))
+
+            output.add("push", (1, v))
             stack_size += 1
 
-        elif token[0] == '"' and token[-1] == '"' and len(token) >= 2:
-            string = token[1:-1]
-            addr = out.get_static_addr(len(string) + 1, [ord(c) for c in string] + [0])
+        elif utl.is_string(token):
+            converted_string = utl.convert_string(token)
+
+            addr = out.get_static_addr(len(converted_string), converted_string)
             output.add("push",
                     (1, addr))
             stack_size += 1
