@@ -35,7 +35,10 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
     output = out.output_code()
     output.add_comment(f"\nl{defs.CURRENT_LNO:03}  {' '.join(tokens)}")
 
-    if tokens[0] == defs.NEW_VAR or tokens[0] == defs.NEW_VAR_STATIC:
+    if tokens[0] in (defs.NEW_VAR, defs.NEW_VAR_STATIC):
+        if current_line > 0 and lines[current_line - 1][1][0] not in (defs.NEW_VAR, defs.NEW_VAR_STATIC):
+            utl.say_error(f"Variable declarations must be at the beginning of a scope")
+
         def_char = tokens[0]
         tokens = tokens[1:]
 
@@ -411,7 +414,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
                         "Syntax example: if var == 0 { ... } elif var == 1 { ... } else { ... }")
 
     else:
-        utl.say_error(f"Bad syntax\nUnknown command or variable: {tokens[0]}")
+        utl.say_error(f"Unknown word: {tokens[0]}")
 
     return (output, 1)
 

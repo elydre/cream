@@ -1,5 +1,5 @@
-:str
 $screen
+:str
 
 screen = _get_screen()
 
@@ -32,9 +32,23 @@ func print(str) {
     out(0x1000, 0)
 }
 
-str = "hello world!\noui"
+func putnbr(n) {
+    :str
+    str = "x"
+
+    if n 9 > {
+        putnbr(n 10 /)
+    }
+
+    [str] = n 10 % '0' +
+
+    print(str)
+}
+
+str = "hello world!\noui "
 
 print(str)
+putnbr(123)
 
 while 1 {
     sleep(1)
