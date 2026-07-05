@@ -28,6 +28,7 @@ if not ofile:
 
 if args.dump_asm:
     main_output.dump()
+    print("\n") 
 
 main_output.resolve_labels()
 # main_output.dump(hide_labels = True)

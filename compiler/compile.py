@@ -346,11 +346,14 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         # compile the lines inside the function block
         closing_line = toks.locate_braces(lines, current_line)
 
+        f = defs.func(tokens[1], len(args))
+        f.add()
+
         inner_output = out.output_code()
         inner_output.add_label(new_scope)
         inner_output.atend(compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, new_scope = new_scope))
 
-        defs.func(tokens[1], len(args), opcodes=inner_output).add()
+        f.opcodes = inner_output
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
 

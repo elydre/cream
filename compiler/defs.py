@@ -119,8 +119,7 @@ OPCODES = [
     opcode("hlt",   0xFF, 0),
 ]
 
-PC_ADDR     = 65535
-MEMORY_SIZE = 65536 - (80 * 25) - 1
+MEMORY_SIZE = 65536 - (80 * 25)
 
 MAGIC_NUMBER = 0xF057
 ARCH_VERSION = 0x0001
