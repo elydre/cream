@@ -79,7 +79,7 @@ def calculate_rpn(rpn: list):
         if token == '[':
             o, end = op.load_ptraddr(rpn[i:])
             skip_to = i + end
-            output.push(o)
+            output.atend(o)
 
             # load the value from the pointer's address
 
@@ -109,7 +109,7 @@ def calculate_rpn(rpn: list):
             if f.no_rpn:
                 utl.say_error(f"Function {f.name} cannot be used in RPN expressions")
 
-            output.push(op.call_func(f, rpn[i + 2:skip_to]))
+            output.atend(op.call_func(f, rpn[i + 2:skip_to]))
             skip_to += 1
 
             # push the return value to the stack if the function returns a value
@@ -214,7 +214,7 @@ def fast_assign_var(v: defs.variable, tokens: list):
         if not f.does_return:
             utl.say_error(f"Function {f.name} does not return a value, cannot assign to variable {v.name}")
 
-        output.push(op.call_func(f, tokens[2:-1]))
+        output.atend(op.call_func(f, tokens[2:-1]))
 
         # move the result from FUNC_RET_ADDR to the variable's memory location
         output.add("mss",
@@ -236,7 +236,7 @@ def load_ptraddr(tokens: list):
 
     if tokens[1] == "[":
         o, e = op.load_ptraddr(tokens[1:])
-        output.push(o)
+        output.atend(o)
         end += e
         is_onstack = True
 
@@ -258,7 +258,7 @@ def load_ptraddr(tokens: list):
         else:
             utl.say_error(f"Unclosed brackets in pointer access\nSyntax example: [ptr]")
 
-        output.push(op.calculate_rpn(tokens[1:end + 1]))
+        output.atend(op.calculate_rpn(tokens[1:end + 1]))
         return (output, end + 2)
 
     end += 1
@@ -294,21 +294,31 @@ def call_func(f: defs.func, tokens: list):
 
     output = out.output_code()
 
+    end_label = utl.get_new_label()
+
+    # push the stack debut and the call end label
+    output.add_push_label(end_label)
+
     output.add("push",
             (0, defs.STACK_DEBUT_PTR))
-    
+
     # push the arguments to the stack
     for arg in args:
-        output.push(op.calculate_rpn(arg))
+        output.atend(op.calculate_rpn(arg))
 
     output.add("mov",
             (0, defs.STACK_DEBUT_PTR),
             (0, defs.STACK_PTR))
-    
+
     output.add("add",
             (0, defs.STACK_DEBUT_PTR),
             (1, utl.to_u16(f.argc)))
-    
+
     output.add_goto(f"func_{f.name}", (1, 0)) # unconditional jump to the function's code
+
+    output.add_label(end_label)
+
+    output.add("pop",
+            (1, 0)) # pop the call end label from the stack
 
     return output

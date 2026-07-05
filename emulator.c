@@ -95,12 +95,13 @@ char *opcode_to_string(uint8_t opcode) {
     }
 }
 
+#define PC rwmem[0xFFFF]
+
 void execute_program() {
-    uint16_t pc; // program counter
-    pc = sp = 0;
+    PC = sp = 0;
 
     while (1) {
-        uint16_t instruction = xmem[pc++];
+        uint16_t instruction = xmem[PC++];
 
         uint8_t opcode = instruction & 0xFF00 >> 8;
 
@@ -109,128 +110,128 @@ void execute_program() {
         uint8_t source2 = instruction >> 10 & 0x03;
         uint8_t source3 = instruction >> 8 & 0x03;
 
-        DEBUGF("PC: %04X \033[34m%s\033[0m\n", pc - 1, opcode_to_string(opcode));
+        DEBUGF("PC: %04X \033[34m%s\033[0m\n", PC - 1, opcode_to_string(opcode));
 
         switch (opcode) {
             case 0x00: // nop
                 break;
             case 0x01: // mov
-                WVAL(xmem[pc], source0, RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x02: // push
-                uint16_t v = RVAL(source0, xmem[pc]);
+                uint16_t v = RVAL(source0, xmem[PC]);
                 rwmem[sp]--;
                 rwmem[rwmem[sp]] = v;
-                pc++;
+                PC++;
                 break;
             case 0x03: // pop
-                WVAL(xmem[pc], source0, rwmem[rwmem[sp]]);
+                WVAL(xmem[PC], source0, rwmem[rwmem[sp]]);
                 rwmem[sp]++;
-                pc++;
+                PC++;
                 break;
             case 0x04: // sub
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) - RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) - RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x05: // add
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) + RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) + RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x06: // mul
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) * RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) * RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x07: // div
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) / RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) / RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x08: // mod
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) % RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) % RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x09: // eq
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) == RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) == RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x0A: // neq
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) != RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) != RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x0B: // lt
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) < RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) < RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x0C: // gt
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) > RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) > RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x0D: // and
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) & RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) & RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x0E: // or
-                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) | RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, RVAL(source0, xmem[PC]) | RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x0F: // not
-                WVAL(xmem[pc], source0, ~RVAL(source0, xmem[pc]));
-                pc++;
+                WVAL(xmem[PC], source0, ~RVAL(source0, xmem[PC]));
+                PC++;
                 break;
             case 0x10: // jmp
-                if (RVAL(source1, xmem[pc + 1]) == 0)
-                    pc = RVAL(source0, xmem[pc]);
+                if (RVAL(source1, xmem[PC + 1]) == 0)
+                    PC = RVAL(source0, xmem[PC]);
                 else
-                    pc += 2;
+                    PC += 2;
                 break;
             case 0x11: // jmpr
-                if (RVAL(source1, xmem[pc + 1]) == 0)
-                    pc += RVAL(source0, xmem[pc]);
+                if (RVAL(source1, xmem[PC + 1]) == 0)
+                    PC += RVAL(source0, xmem[PC]);
                 else
-                    pc += 2;
+                    PC += 2;
                 break;
             case 0x12: // out
                 printf("emulator does not support ports yet\n");
-                pc += 2;
+                PC += 2;
                 break;
             case 0x13: // in
                 // simply return 2*port for now
-                WVAL(xmem[pc], source0, 2 * RVAL(source1, xmem[pc + 1]));
-                pc += 2;
+                WVAL(xmem[PC], source0, 2 * RVAL(source1, xmem[PC + 1]));
+                PC += 2;
                 break;
             case 0x14: // sleep
                 printf("emulator does not support sleep yet\n");
-                pc++;
+                PC++;
                 break;
             case 0x15: // ssp
-                sp = RVAL(source0, xmem[pc]);
-                pc++;
+                sp = RVAL(source0, xmem[PC]);
+                PC++;
                 break;
             case 0x16: // dump
-                fprintf(stderr, "0x%x (%d)\n", RVAL(source0, xmem[pc]), RVAL(source0, xmem[pc]));
-                pc++;
+                fprintf(stderr, "0x%x (%d)\n", RVAL(source0, xmem[PC]), RVAL(source0, xmem[PC]));
+                PC++;
                 break;
             case 0x17: // mss
             {
-                uint16_t dest = RVAL(source0, xmem[pc])     + RVAL(source1, xmem[pc + 1]);
-                uint16_t src  = RVAL(source2, xmem[pc + 2]) + RVAL(source3, xmem[pc + 3]);
+                uint16_t dest = RVAL(source0, xmem[PC])     + RVAL(source1, xmem[PC + 1]);
+                uint16_t src  = RVAL(source2, xmem[PC + 2]) + RVAL(source3, xmem[PC + 3]);
 
                 DEBUGF("mss: [%04X] = [%04X] = %04X\n", dest, src, rwmem[src]);
                 rwmem[dest] = rwmem[src];
-                pc += 4;
+                PC += 4;
                 break;
             }
             case 0x18: // pushs
                 // push but like mss
                 rwmem[sp]--;
-                rwmem[rwmem[sp]] = rwmem[(uint16_t)(RVAL(source0, xmem[pc]) + RVAL(source1, xmem[pc + 1]))];
-                pc += 2;
+                rwmem[rwmem[sp]] = rwmem[(uint16_t)(RVAL(source0, xmem[PC]) + RVAL(source1, xmem[PC + 1]))];
+                PC += 2;
                 break;
             case 0x19: // pops
                 // pop but like mss
-                rwmem[(uint16_t)(RVAL(source0, xmem[pc]) + RVAL(source1, xmem[pc + 1]))] = rwmem[rwmem[sp]];
+                rwmem[(uint16_t)(RVAL(source0, xmem[PC]) + RVAL(source1, xmem[PC + 1]))] = rwmem[rwmem[sp]];
                 rwmem[sp]++;
-                pc += 2;
+                PC += 2;
                 break;
             case 0xFF: // halt
                 return;
@@ -248,10 +249,9 @@ void execute_program() {
         }
         DEBUGF("]\033[0m\n");
 
-        if (pc >= MEMORY_SIZE - 10)
+        if (PC >= MEMORY_SIZE - 10)
             return;
     }
-
 }
 
 typedef struct {

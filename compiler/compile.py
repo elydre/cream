@@ -20,7 +20,7 @@ def compile_lines(lines: list, size: int, labels: tuple = None, new_scope: str =
 
     while current_line < size:
         sub_output, to_skip = compile_line(lines, current_line, labels)
-        output.push(sub_output)
+        output.atend(sub_output)
         current_line += to_skip
 
     if new_scope is not None:
@@ -92,10 +92,10 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         fast_assignment = op.fast_assign_var(v, tokens[2:])
 
         if fast_assignment:
-            output.push(fast_assignment)
+            output.atend(fast_assignment)
         else:
             # reverse polish notation (RPN) expression
-            output.push(op.calculate_rpn(tokens[2:]))
+            output.atend(op.calculate_rpn(tokens[2:]))
 
             # move the result from the stack to the variable's memory location
             if v.is_static:
@@ -112,10 +112,10 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         if len(tokens) < end + 2 or tokens[end] != '=':
             utl.say_error(f"Bad pointer assignment\nSyntax example: [ptr_name] = 123")
 
-        output.push(o)
+        output.atend(o)
 
         # reverse polish notation (RPN) expression
-        output.push(op.calculate_rpn(tokens[end + 1:]))
+        output.atend(op.calculate_rpn(tokens[end + 1:]))
 
         # move the result from the stack to the pointer's memory location
         output.add("mss",
@@ -131,14 +131,14 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         if len(tokens) < 3 or tokens[1] != '(' or tokens[-1] != ')':
             utl.say_error(f"Bad syntax on function call\nSyntax example: {f.name}({', '.join(['var' + str(i + 1) for i in range(f.argc)])})")
 
-        output.push(op.call_func(f, tokens[2:-1]))
+        output.atend(op.call_func(f, tokens[2:-1]))
 
     elif tokens[0] == "if":
         if len(tokens) < 2:
             utl.say_error(f"Bad syntax\nSyntax example: if var == 0")
 
         # reverse polish notation (RPN) expression
-        output.push(op.calculate_rpn(tokens[1:]))
+        output.atend(op.calculate_rpn(tokens[1:]))
 
         # pop the result from the stack to the conditional result memory location
         output.add("pop",
@@ -156,7 +156,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
             next_label,
             (0, defs.COND_RES_ADDR)) # jump if the condition is false
 
-        output.push(inner_output)
+        output.atend(inner_output)
 
         # check if there is an elif or else block after the if block
         next_line = None
@@ -175,7 +175,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
                     utl.say_error(f"Bad syntax\nSyntax example: elif var == 0")
 
                 # reverse polish notation (RPN) expression
-                output.push(op.calculate_rpn(next_tokens[1:]))
+                output.atend(op.calculate_rpn(next_tokens[1:]))
 
                 # pop the result from the stack to the conditional result memory location
                 output.add("pop",
@@ -191,7 +191,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
                     next_label,
                     (0, defs.COND_RES_ADDR)) # jump if the condition is false
 
-                output.push(inner_output)
+                output.atend(inner_output)
 
             elif next_tokens[0] == "else":
                 if len(next_tokens) != 1:
@@ -201,7 +201,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
                 inner_output = compile_lines(lines[closing_line + 3:tmp], tmp - closing_line - 3, labels)
                 closing_line = tmp
                 
-                output.push(inner_output)
+                output.atend(inner_output)
                 break
 
         if next_line is None:
@@ -220,7 +220,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
 
         # reverse polish notation (RPN) expression
         output.add_label(debut_label)
-        output.push(op.calculate_rpn(tokens[1:]))
+        output.atend(op.calculate_rpn(tokens[1:]))
 
         # pop the result from the stack to the conditional result memory location
         output.add("pop",
@@ -237,7 +237,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         output.add_goto(
             fin_label, (0, defs.COND_RES_ADDR)) # jump if the condition is false
 
-        output.push(inner_output)
+        output.atend(inner_output)
         output.add_label(fin_label)
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
@@ -265,9 +265,9 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         fast_assignment = op.fast_assign_var(v, args[0])
 
         if fast_assignment:
-            output.push(fast_assignment)
+            output.atend(fast_assignment)
         else:
-            output.push(op.calculate_rpn(args[0]))
+            output.atend(op.calculate_rpn(args[0]))
 
             # move the result from the stack to the variable's memory location
             output.add("pops",
@@ -279,7 +279,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         fin_label   = utl.get_new_label()
 
         # push the loop fin value onto the stack
-        output.push(op.calculate_rpn(args[1]))
+        output.atend(op.calculate_rpn(args[1]))
 
         output.add_label(debut_label)
 
@@ -299,7 +299,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         closing_line = toks.locate_braces(lines, current_line)
         inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, (next_label, fin_label))
 
-        output.push(inner_output)
+        output.atend(inner_output)
         output.add_comment(f"\nIncrement the loop variable {v.name}")
 
         output.add_label(next_label)
@@ -348,7 +348,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
 
         inner_output = out.output_code()
         inner_output.add_label(new_scope)
-        inner_output.push(compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, new_scope = new_scope))
+        inner_output.atend(compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, new_scope = new_scope))
 
         defs.func(tokens[1], len(args), opcodes=inner_output).add()
 
@@ -367,6 +367,31 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
 
         # add an unconditional jump to the beginning of the loop
         output.add_goto(labels[0], (1, 0))
+
+    elif tokens[0] == "return":
+        if defs.CURRENT_SCOPE == "global":
+            utl.say_error(f"Unexpected return statement outside of a function")
+
+        if len(tokens) > 1:
+            # reverse polish notation (RPN) expression
+            output.atend(op.calculate_rpn(tokens[1:]))
+
+            # move the result from the stack to the return value memory location
+            output.add("pop",
+                    (0, defs.FUNC_RET_ADDR))
+        else:
+            # set return value to 0
+            output.add("mov",
+                    (0, defs.FUNC_RET_ADDR), (1, 0)) 
+
+        output.add("mov",
+            (0, defs.STACK_PTR), (0, defs.STACK_DEBUT_PTR))
+
+        # restore stack debut and pc values
+        output.add("pop",
+                (0, defs.STACK_DEBUT_PTR))
+        output.add("jmp",
+                (2, 0), (1, 0))
 
     elif tokens[0] in ("else", "elif"):
         utl.say_error(f"Unexpected {tokens[0]} statement outside of an if block\n" +
@@ -391,16 +416,16 @@ def compile(lines: str):
     blt.add_builtin_functions()
 
     output = out.output_code()
-    output.push(compile_lines(tokens_lines, len(tokens_lines), "global"))
+    output.atend(compile_lines(tokens_lines, len(tokens_lines), new_scope="global"))
+    output.atend(op.fini())
 
     for f in defs.ALL_FUNCS:
         if f.is_builtin:
             continue
         if f.opcodes is None:
             utl.say_error(f"Function {f.name} has no opcodes")
-        output.push(f.opcodes)
+        output.atend(f.opcodes)
 
     output.atdebut(op.init())
-    output.push(op.fini())
 
     return output

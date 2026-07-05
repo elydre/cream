@@ -80,10 +80,10 @@ def get_func(s):
 def is_valid_name(s):
     if not s:
         return False
-    if not (s[0].isalpha() or s[0] == '_'):
+    if not (s[0].isalpha() or s[0] == "_"):
         return False
     for c in s:
-        if not (c.isalnum() or c == '_'):
+        if not (c.isalnum() or c == "_"):
             return False
     if s in KEYWORDS:
         return False
@@ -119,19 +119,20 @@ OPCODES = [
     opcode("hlt",   0xFF, 0),
 ]
 
-MEMORY_SIZE = 65536 - (80 * 25)
+PC_ADDR     = 65535
+MEMORY_SIZE = 65536 - (80 * 25) - 1
 
 MAGIC_NUMBER = 0xF057
 ARCH_VERSION = 0x0001
 
-CHARS_SPE = [',', '(', ')', ':', '=', '{', '}', '[', ']', '&', '$', '!']
-CHARS_OPR = ['+', '-', '*', '/', '%', '==', '!=', '<', '>']
+CHARS_SPE = [",", "(", ")", ":", "=", "{", "}", "[", "]", "&", "$", "!", "//"]
+CHARS_OPR = ["+", "-", "*", "/", "%", "==", "!=", "<", ">"]
 CHARS_SPE += CHARS_OPR
 
 KEYWORDS = ["if", "elif", "else", "while", "func", "return", "break", "continue", "for"]
 
-NEW_VAR = ':'
-NEW_VAR_STATIC = '$'
+NEW_VAR = ":"
+NEW_VAR_STATIC = "$"
 
 COND_RES_ADDR   = MEMORY_SIZE - 1
 FUNC_RET_ADDR   = MEMORY_SIZE - 2

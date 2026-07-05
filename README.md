@@ -20,7 +20,7 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] heap variables (static)
 - [x] heap strings
 - [x] comments
-- [ ] functions
+- [x] functions
 - [ ] heap arrays
 - [ ] sub stack scope
 - [ ] structs

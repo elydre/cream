@@ -68,7 +68,8 @@ class output_code:
         TYPE_LABEL = 1
         TYPE_OPCODE = 2
         TYPE_GOTO = 3
-        TYPE_NOTSET = 4
+        TYPE_PUSH_LABEL = 4
+        TYPE_NOTSET = 5
 
         def __init__(self):
             self.string = ""
@@ -112,6 +113,16 @@ class output_code:
 
             self.goto_label = label
             self.goto_val = val
+
+        def setpush_label(self, label):
+            self.type = self.TYPE_PUSH_LABEL
+
+            self.string = f"push {label}"
+
+            self.psize = 2
+            self.bytes = bytearray()
+
+            self.goto_label = label
 
         def setopcode(self, opcode, v1, v2, v3, v4):
             self.type = self.TYPE_OPCODE
@@ -186,11 +197,16 @@ class output_code:
         instr.setgoto(label, val)
         self.instructions.append(instr)
 
-    def push(self, other):
-        self.instructions += other.instructions
+    def add_push_label(self, label):
+        instr = self.instruction()
+        instr.setpush_label(label)
+        self.instructions.append(instr)
 
     def atdebut(self, other):
         self.instructions = other.instructions + self.instructions
+
+    def atend(self, other):
+        self.instructions += other.instructions
 
     def dump(self, hide_labels = False):
         pc = 0
@@ -203,11 +219,13 @@ class output_code:
                 print(f"\033[33m{hex(pc)[2:].zfill(4)}: {instr.string}\033[0m")
             elif instr.type == self.instruction.TYPE_OPCODE:
                 print(f"\033[34m{hex(pc)[2:].zfill(4)}: {instr.string}\033[0m")
+            elif instr.type == self.instruction.TYPE_PUSH_LABEL:
+                print(f"\033[33m{hex(pc)[2:].zfill(4)}: {instr.string}\033[0m")
             else:
                 utl.say_error(f"(Internal) Unknown instruction type: {instr.type}")
             pc += instr.psize
 
-    def resolve_gotos(self):
+    def resolve_labels(self):
         pc = 0
         label_addresses = {}
 
@@ -219,13 +237,19 @@ class output_code:
 
         # Second pass: resolve goto instructions
         for instr in self.instructions:
-            if instr.type != self.instruction.TYPE_GOTO:
-                continue
-            resolved_address = label_addresses.get(instr.goto_label)
-            if resolved_address is None:
-                utl.say_error(f"(Internal) Unknown label: {instr.goto_label}")
-            # Replace the goto instruction with a jmp instruction
-            instr.setopcode("jmp", (1, resolved_address), instr.goto_val, None, None)
+            if instr.type == self.instruction.TYPE_GOTO:
+                resolved_address = label_addresses.get(instr.goto_label)
+                if resolved_address is None:
+                    utl.say_error(f"(Internal) Unknown label: {instr.goto_label}")
+                # Replace the goto instruction with a jmp instruction
+                instr.setopcode("jmp", (1, resolved_address), instr.goto_val, None, None)
+            
+            elif instr.type == self.instruction.TYPE_PUSH_LABEL:
+                resolved_address = label_addresses.get(instr.goto_label)
+                if resolved_address is None:
+                    utl.say_error(f"(Internal) Unknown label: {instr.goto_label}")
+                # Replace the push_label instruction with a push instruction
+                instr.setopcode("push", (1, resolved_address), None, None, None)
 
     def to_bytes(self):
         code_bytes = bytearray()

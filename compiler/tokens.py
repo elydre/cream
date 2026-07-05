@@ -105,12 +105,10 @@ def split_func_args(tokens: list):
             args.append(current_arg)
             current_arg = []
         else:
-            if token == '[':
+            if token == '(':
                 opening_brackets += 1
-            elif token == ']':
+            elif token == ')':
                 opening_brackets -= 1
-                if opening_brackets < 0:
-                    utl.say_error(f"Unclosed brackets in function arguments\nSyntax example: func(arg1, [ptr:offset_ptr[123]])")
             current_arg.append(token)
 
     if current_arg:

@@ -5,7 +5,7 @@ import compiler.op as op
 def blt_alloca(args: list):
     output = out.output_code()
     # calculate the requested size in bytes
-    output.push(op.calculate_rpn(args[0]))
+    output.atend(op.calculate_rpn(args[0]))
 
     # add the requested size to the stack pointer
     output.add("sub",
@@ -29,8 +29,8 @@ def blt_out(args: list):
     output = out.output_code()
 
     # push arguments to the stack in reverse order
-    output.push(op.calculate_rpn(args[1]))
-    output.push(op.calculate_rpn(args[0]))
+    output.atend(op.calculate_rpn(args[1]))
+    output.atend(op.calculate_rpn(args[0]))
 
     output.add("out", (2, 1), (2, 0))
 
@@ -42,7 +42,7 @@ def blt_out(args: list):
 def blt_in(args: list):
     output = out.output_code()
 
-    output.push(op.calculate_rpn(args[0]))
+    output.atend(op.calculate_rpn(args[0]))
     output.add("in", (0, defs.FUNC_RET_ADDR), (2, 0))
     output.add("pop", (1, 0))
 
@@ -51,7 +51,7 @@ def blt_in(args: list):
 def blt_sleep(args: list):
     output = out.output_code()
 
-    output.push(op.calculate_rpn(args[0]))
+    output.atend(op.calculate_rpn(args[0]))
     output.add("sleep", (2, 0))
     output.add("pop", (1, 0))
 
@@ -60,7 +60,7 @@ def blt_sleep(args: list):
 def blt_dump(args: list):
     output = out.output_code()
 
-    output.push(op.calculate_rpn(args[0]))
+    output.atend(op.calculate_rpn(args[0]))
     output.add("dump", (2, 0))
     output.add("pop", (1, 0))
 

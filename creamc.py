@@ -29,7 +29,7 @@ if not ofile:
 if args.dump_asm:
     main_output.dump()
 
-main_output.resolve_gotos()
+main_output.resolve_labels()
 # main_output.dump(hide_labels = True)
 
 output = output_file()

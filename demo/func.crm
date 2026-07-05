@@ -1,6 +1,12 @@
 func coucou(oui, non) {
-    dump(oui)
-    dump(non)
+    return oui non +
 }
 
-coucou(5, 6)
+: sum
+
+dump(_get_sp())
+
+dump(coucou(1, 2))
+dump(coucou(3, 6))
+
+dump(_get_sp())
