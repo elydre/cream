@@ -25,13 +25,14 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [ ] sub stack scope
 - [ ] structs
 - [ ] some optimizations
+- [ ] multiple source files
 
 ### Extra
 
 - [x] C emulator
 - [x] basic command line interface for compiler
+- [x] add screen to the emulator
 - [ ] langage documentation
-- [ ] add text mode screen to the emulator
 - [ ] create a basic operating system
 
 ## opcode (may be subject to change)
@@ -71,7 +72,7 @@ opcode (8 bit)  sources (4 * 2bit)  [  arg0 (16 bit)   ] ... [ arg3 (16 bit)    
 |  jmpr  | `a` `b`     | `pc += a if b == 0`       |
 |        |             |                           |
 |  out   | `port` `a`  | output `a` to `port`      |
-|  in    | `port` `a`  | input from `port` to `a`  |
+|  in    | `a` `port`  | input from `port` to `a`  |
 |        |             |                           |
 |  sleep | `a`         | sleep for `a` ticks       |
 |        |             |                           |

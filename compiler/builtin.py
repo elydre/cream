@@ -28,9 +28,8 @@ def blt_alloca(args: list):
 def blt_out(args: list):
     output = out.output_code()
 
-    # push arguments to the stack in reverse order
-    output.atend(op.calculate_rpn(args[1]))
     output.atend(op.calculate_rpn(args[0]))
+    output.atend(op.calculate_rpn(args[1]))
 
     output.add("out", (2, 1), (2, 0))
 
@@ -83,11 +82,22 @@ def blt_get_sp(args: list):
 
     return output
 
+def blt_get_screen(args: list):
+    output = out.output_code()
+
+    # copy the current screen pointer value to return memory location
+    output.add("mov",
+            (0, defs.FUNC_RET_ADDR),
+            (1, defs.MEMORY_SIZE))
+
+    return output
+
 def add_builtin_functions():
-    defs.func("alloca",  1, True,  is_builtin=True, blt_handler = blt_alloca, no_rpn=True).add()
-    defs.func("out",     2, False, is_builtin=True, blt_handler = blt_out).add()
-    defs.func("in",      1, True,  is_builtin=True, blt_handler = blt_in).add()
-    defs.func("sleep",   1, False, is_builtin=True, blt_handler = blt_sleep).add()
-    defs.func("dump",    1, False, is_builtin=True, blt_handler = blt_dump).add()
-    defs.func("halt",    0, False, is_builtin=True, blt_handler = blt_halt).add()
-    defs.func("_get_sp", 0, True,  is_builtin=True, blt_handler = blt_get_sp).add()
+    defs.func("alloca",      1, True,  is_builtin=True, blt_handler = blt_alloca, no_rpn=True).add()
+    defs.func("out",         2, False, is_builtin=True, blt_handler = blt_out).add()
+    defs.func("in",          1, True,  is_builtin=True, blt_handler = blt_in).add()
+    defs.func("sleep",       1, False, is_builtin=True, blt_handler = blt_sleep).add()
+    defs.func("dump",        1, False, is_builtin=True, blt_handler = blt_dump).add()
+    defs.func("halt",        0, False, is_builtin=True, blt_handler = blt_halt).add()
+    defs.func("_get_sp",     0, True,  is_builtin=True, blt_handler = blt_get_sp).add()
+    defs.func("_get_screen", 0, True,  is_builtin=True, blt_handler = blt_get_screen).add()

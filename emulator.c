@@ -1,6 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <unistd.h>
+
+#ifdef GUI
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_ttf.h>
+
+#include <sys/time.h>
+#endif
 
 #define MEMORY_SIZE 65536
 
@@ -15,6 +23,192 @@
 
 uint16_t *xmem, *rwmem;
 uint16_t sp; // stack pointer
+
+int use_gui;
+
+#ifdef GUI
+
+#define FPS_TARGET 30
+#define SCREEN_X 80
+#define SCREEN_Y 25
+
+SDL_Window *window;
+SDL_Renderer *renderer;
+TTF_Font *font;
+SDL_Texture *screen_texture;
+
+int font_width, font_height;
+
+static void render_screen_to_current_target(void) {
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+
+    for (int y = 0; y < SCREEN_Y; y++) {
+        for (int x = 0; x < SCREEN_X; x++) {
+            uint16_t addr = (MEMORY_SIZE - (SCREEN_X * SCREEN_Y)) + (y * SCREEN_X) + x;
+
+            char c = (char)(rwmem[addr] & 0xFF);
+            char str[2] = {c, '\0'};
+
+            SDL_Color color = {255, 255, 255, 255};
+            SDL_Surface *surface = TTF_RenderText_Solid(font, str, color);
+            SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+            SDL_Rect dstrect = {x * font_width, y * font_height, font_width, font_height};
+            SDL_RenderCopy(renderer, texture, NULL, &dstrect);
+
+            SDL_FreeSurface(surface);
+            SDL_DestroyTexture(texture);
+        }
+    }
+}
+
+void init_gui(void) {
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        fprintf(stderr, "SDL_Init Error: %s\n", SDL_GetError());
+        exit(1);
+    }
+
+    // Initialize SDL_ttf
+    if (TTF_Init() == -1) {
+        fprintf(stderr, "TTF_Init Error: %s\n", TTF_GetError());
+        SDL_Quit();
+        exit(1);
+    }
+
+    // load a font (using system font for simplicity)
+    font = TTF_OpenFont("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 16);
+    if (font == NULL) {
+        fprintf(stderr, "TTF_OpenFont Error: %s\n", TTF_GetError());
+        TTF_Quit();
+        SDL_Quit();
+        exit(1);
+    }
+
+    if (TTF_SizeText(font, "M", &font_width, NULL) != 0) {
+        fprintf(stderr, "TTF_SizeText Error: %s\n", TTF_GetError());
+        TTF_CloseFont(font);
+        TTF_Quit();
+        SDL_Quit();
+        exit(1);
+    }
+    font_height = TTF_FontHeight(font);
+
+    window = SDL_CreateWindow("Emulator", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, SCREEN_X * font_width, (SCREEN_Y + 1) * font_height, SDL_WINDOW_SHOWN);
+    if (window == NULL) {
+        fprintf(stderr, "SDL_CreateWindow Error: %s\n", SDL_GetError());
+        TTF_CloseFont(font);
+        TTF_Quit();
+        SDL_Quit();
+        exit(1);
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (renderer == NULL) {
+        SDL_DestroyWindow(window);
+        fprintf(stderr, "SDL_CreateRenderer Error: %s\n", SDL_GetError());
+        TTF_CloseFont(font);
+        TTF_Quit();
+        SDL_Quit();
+        exit(1);
+    }
+
+    screen_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, SCREEN_X * font_width, SCREEN_Y * font_height);
+    if (screen_texture == NULL) {
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        fprintf(stderr, "SDL_CreateTexture Error: %s\n", SDL_GetError());
+        TTF_CloseFont(font);
+        TTF_Quit();
+        SDL_Quit();
+        exit(1);
+    }
+}
+
+void cleanup_gui(void) {
+    SDL_DestroyTexture(screen_texture);
+    SDL_DestroyRenderer(renderer);
+    SDL_DestroyWindow(window);
+    TTF_CloseFont(font);
+    TTF_Quit();
+    SDL_Quit();
+}
+
+void update_gui(void) {
+    SDL_Texture *previous_target = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, screen_texture);
+    render_screen_to_current_target();
+    SDL_SetRenderTarget(renderer, previous_target);
+
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_Rect screen_rect = {0, 0, SCREEN_X * font_width, SCREEN_Y * font_height};
+    SDL_RenderCopy(renderer, screen_texture, NULL, &screen_rect);
+    SDL_RenderPresent(renderer);
+}
+
+#define SMOOTHING_FACTOR 20
+
+void gui_loop(uint64_t ips, uint64_t delta_time) {
+    SDL_Event event;
+
+    while (SDL_PollEvent(&event)) {
+        if (event.type == SDL_QUIT) {
+            cleanup_gui();
+            exit(0);
+        }
+    }
+
+    SDL_RenderClear(renderer);
+    SDL_Rect screen_rect = {0, 0, SCREEN_X * font_width, SCREEN_Y * font_height};
+    SDL_RenderCopy(renderer, screen_texture, NULL, &screen_rect);
+
+    // clear the line 26 of the screen
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_Rect clear_rect = {0, SCREEN_Y * font_height, SCREEN_X * font_width, font_height};
+    SDL_RenderFillRect(renderer, &clear_rect);
+
+    // Update the line 26 of the screen with the stack pointer value
+    static double last_ips = 0;
+    static double last_fps = 0.0;
+    static int iter = 0;
+
+    char str[100];
+
+    if (ips == 0) {
+        snprintf(str, sizeof(str), "paused");
+        iter = 0;
+    } else {
+        if (iter < SMOOTHING_FACTOR) {
+            iter++;
+        }
+
+        if (iter < 2) {
+            last_ips = (double)ips;
+            last_fps = 1000.0 / (double)(delta_time + 0.1);
+        } else {
+            last_ips = (last_ips * (iter-1) + (double)ips) / iter; // smooth the IPS value
+            last_fps = (last_fps * (iter-1) + 1000.0 / (double)(delta_time + 0.1)) / iter; // smooth the FPS value
+
+        }
+        snprintf(str, sizeof(str), "CPU: %.1fMHz, FPS: %.1f", last_ips / 1000000, last_fps);
+    }
+
+
+
+    SDL_Color color = {255, 255, 255, 255}; // white color
+    SDL_Surface *surface = TTF_RenderText_Solid(font, str, color);
+    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+
+    SDL_Rect dstrect = {0, SCREEN_Y * font_height, surface->w, surface->h};
+    SDL_RenderCopy(renderer, texture, NULL, &dstrect);
+
+    SDL_FreeSurface(surface);
+    SDL_DestroyTexture(texture);
+
+    SDL_RenderPresent(renderer);
+}
+#endif
 
 static inline uint16_t RVAL(uint8_t source, uint16_t val) {
     if (source == 0)
@@ -95,9 +289,38 @@ char *opcode_to_string(uint8_t opcode) {
     }
 }
 
+uint16_t port_in(uint16_t port) {
+    fprintf(stderr, "Input from port 0x%04X\n", port);
+    return 2 * port; // for now, just return 2*port
+}
+
+void port_out(uint16_t port, uint16_t value) {
+    switch (port) {
+        case 0x1000:
+            fprintf(stderr, "update_gui: port 0x%04X, value 0x%04X\n", port, value);
+            #ifdef GUI
+            if (use_gui) {
+                update_gui();
+            
+            }
+            #endif
+            break;
+        default:
+            fprintf(stderr, "Output to port 0x%04X: %04X\n", port, value);
+            break;
+    }
+}
+
 void execute_program() {
     uint16_t pc; // program counter
     pc = sp = 0;
+
+    #ifdef GUI
+    int icount = 0;
+    int update_interval = 100000;
+    uint64_t last_time = 0;
+    uint64_t sleep_to = 0;
+    #endif
 
     while (1) {
         uint16_t instruction = xmem[pc++];
@@ -190,16 +413,24 @@ void execute_program() {
                     pc += 2;
                 break;
             case 0x12: // out
-                printf("emulator does not support ports yet\n");
+                port_out(RVAL(source0, xmem[pc]), RVAL(source1, xmem[pc + 1]));
                 pc += 2;
                 break;
             case 0x13: // in
-                // simply return 2*port for now
-                WVAL(xmem[pc], source0, 2 * RVAL(source1, xmem[pc + 1]));
+                WVAL(xmem[pc], source0, port_in(RVAL(source1, xmem[pc + 1])));
                 pc += 2;
                 break;
             case 0x14: // sleep
-                printf("emulator does not support sleep yet\n");
+                #ifdef GUI
+                if (use_gui) {
+                    sleep_to = SDL_GetTicks() + RVAL(source0, xmem[pc]) * 50; // minecraft tick
+                } else {
+                #endif
+                    usleep(RVAL(source0, xmem[pc]) * 50000); // minecraft tick
+                #ifdef GUI
+                }
+                #endif
+
                 pc++;
                 break;
             case 0x15: // ssp
@@ -221,13 +452,11 @@ void execute_program() {
                 break;
             }
             case 0x18: // pushs
-                // push but like mss
                 rwmem[sp]--;
                 rwmem[rwmem[sp]] = rwmem[(uint16_t)(RVAL(source0, xmem[pc]) + RVAL(source1, xmem[pc + 1]))];
                 pc += 2;
                 break;
             case 0x19: // pops
-                // pop but like mss
                 rwmem[(uint16_t)(RVAL(source0, xmem[pc]) + RVAL(source1, xmem[pc + 1]))] = rwmem[rwmem[sp]];
                 rwmem[sp]++;
                 pc += 2;
@@ -238,6 +467,41 @@ void execute_program() {
                 DEBUGF("Unknown opcode: 0x%02X\n", opcode);
                 return;
         }
+
+        #ifdef GUI
+        if (use_gui) {
+            uint64_t current_time;
+            icount++;
+
+            while (sleep_to > 0) {
+                current_time = SDL_GetTicks();
+
+                int to_sleep = min((int)(sleep_to - current_time), (int)(current_time - last_time));
+                last_time = current_time;
+
+                if (to_sleep > 0) {
+                    gui_loop(0, 0);
+                    usleep(to_sleep * 1000);
+                } else {
+                    sleep_to = 0;
+                }
+            }
+
+            if (icount >= update_interval) {
+                current_time = SDL_GetTicks();
+                uint64_t delta_time = current_time - last_time;
+                last_time = current_time;
+
+                uint64_t ips = (uint64_t) icount * 1000 / (double)(delta_time + 0.1);
+                gui_loop(ips, delta_time);
+
+                // recalculate the update interval based on the target FPS
+                update_interval = ((update_interval * 9) + (int)(ips / FPS_TARGET)) / 10;
+
+                icount = 0;
+            }
+        }
+        #endif
 
         // print the beginning of the stack
         DEBUGF("\033[90m[ ");
@@ -273,9 +537,30 @@ typedef struct {
 #define SECTION_TYPE_CODE 0
 #define SECTION_TYPE_DATA 1
 
-int main(void) {
 
-    FILE *bytecode = fopen("output.bin", "rb");
+
+int main(int argc, char **argv) {
+    char *filename = NULL;
+
+    if (argc == 3 && strcmp(argv[1], "--gui") == 0) {
+        filename = argv[2];
+        use_gui = 1;
+    } else if (argc == 2) {
+        filename = argv[1];
+        use_gui = 0;
+    } else {
+        fprintf(stderr, "Usage: %s [--gui] <file>\n", argv[0]);
+        return 1;
+    }
+
+    #ifndef GUI
+    if (use_gui) {
+        fprintf(stderr, "Error: GUI support is not compiled in, please recompile with -DGUI\n");
+        return 1;
+    }
+    #endif
+
+    FILE *bytecode = fopen(filename, "rb");
 
     if (bytecode == NULL) {
         perror("Failed to open 'output.bin' you need to run the compiler first");
@@ -363,9 +648,22 @@ int main(void) {
 
     fclose(bytecode);
 
+    #ifdef GUI
+    if (use_gui) {
+        init_gui();
+        update_gui();
+    }
+    #endif
+
     printf("Starting emulation\n");
 
     execute_program();
+
+    #ifdef GUI
+    if (use_gui) {
+        cleanup_gui();
+    }
+    #endif
 
     free(rwmem);
     free(xmem);

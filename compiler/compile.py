@@ -245,8 +245,8 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
     elif tokens[0] == "for":
         # Syntax: for var (debut, fin)
         # debut and fin can be any expression that evaluates to an integer
-        if len(tokens) < 6 or tokens[2] != '(' or tokens[-1] != ')':
-            utl.say_error(f"Bad syntax\nSyntax example: for var (0, 10)")
+        if len(tokens) < 5 or tokens[2] != '(' or tokens[-1] != ')':
+            utl.say_error(f"Bad syntax in for loop\nSyntax example: for var (0, 10)")
 
         if not defs.is_variable(tokens[1]):
             utl.say_error(f"For loop variable must be a declared variable: {tokens[1]}\nSyntax example: :var ; for var (0, 10)")
@@ -258,8 +258,8 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
 
         args = toks.split_func_args(tokens[3:-1])
 
-        if len(args) != 2:
-            utl.say_error(f"For loop must have exactly two arguments: debut and fin\nSyntax example: for var (0, 10)")
+        if len(args) not in (1, 2):
+            utl.say_error(f"Expected 1 or 2 arguments for for loop\nSyntax example: for var (0, 10) OR for var (0)")
 
         # init the loop variable with the debut value
         fast_assignment = op.fast_assign_var(v, args[0])
@@ -278,23 +278,26 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         next_label  = utl.get_new_label()
         fin_label   = utl.get_new_label()
 
-        # push the loop fin value onto the stack
-        output.atend(op.calculate_rpn(args[1]))
+        if len(args) == 2:
+            # push the loop fin value onto the stack
+            output.atend(op.calculate_rpn(args[1]))
 
         output.add_label(debut_label)
+        
+        if len(args) == 2:
+            # compare the loop variable with the fin value
+            output.add("pushs",
+                    (0, defs.STACK_DEBUT_PTR),
+                    (1, utl.to_u16(-v.offset)))
+            output.add("lt",
+                    (2, 0), (2, 1))
+            output.add("pop",
+                    (0, defs.COND_RES_ADDR))
+            
+            output.add_goto(
+                fin_label, (0, defs.COND_RES_ADDR)) # jump if the condition is false
 
-        # compare the loop variable with the fin value
-        output.add("pushs",
-                (0, defs.STACK_DEBUT_PTR),
-                (1, utl.to_u16(-v.offset)))
-        output.add("lt",
-                (2, 0), (2, 1))
-        output.add("pop",
-                (0, defs.COND_RES_ADDR))
-        
-        output.add_goto(
-            fin_label, (0, defs.COND_RES_ADDR)) # jump if the condition is false
-        
+
         # compile the lines inside the for block
         closing_line = toks.locate_braces(lines, current_line)
         inner_output = compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, (next_label, fin_label))
@@ -316,7 +319,9 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
             debut_label, (1, 0)) # unconditional jump to the beginning of the for loop
         
         output.add_label(fin_label)
-        output.add("pop", (1, 0)) # pop the fin value from the stack
+
+        if len(args) == 2:
+            output.add("pop", (1, 0)) # pop the fin value from the stack
 
         return (output, closing_line - current_line + 1) # return the number of lines to skip
 
@@ -345,13 +350,18 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
         
         # compile the lines inside the function block
         closing_line = toks.locate_braces(lines, current_line)
+        func_lines = lines[current_line + 2:closing_line]
+
+        # check if the function has a return statement, if not add a return at the end
+        if func_lines[-1][1][0] != "return":
+            func_lines.append((func_lines[-1][0], ["return"]))
 
         f = defs.func(tokens[1], len(args))
         f.add()
 
         inner_output = out.output_code()
         inner_output.add_label(new_scope)
-        inner_output.atend(compile_lines(lines[current_line + 2:closing_line], closing_line - current_line - 2, new_scope = new_scope))
+        inner_output.atend(compile_lines(func_lines, len(func_lines), new_scope = new_scope))
 
         f.opcodes = inner_output
 

@@ -1,0 +1,27 @@
+:str c
+:screen
+:i b
+
+for i (0, 60000) {
+    for b (0, 1000) {
+    }
+}
+
+str = "hello world!"
+screen = _get_screen()
+dump(screen)
+
+for i (0) {
+    c = [str i +]
+    if c 0 == {
+        break
+    }
+    [screen i +] = c
+}
+
+out(0x1000, 0)
+
+sleep(20)
+
+while 1 {
+}

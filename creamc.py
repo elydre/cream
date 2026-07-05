@@ -1,11 +1,8 @@
 from compiler.output import output_file
 from compiler.compile import compile
 import compiler.defs as defs
-import compiler.utils as utl
 
 import argparse
-
-
 
 
 parser = argparse.ArgumentParser(description="Cream Compiler")
