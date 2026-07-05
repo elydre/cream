@@ -39,6 +39,14 @@ SDL_Texture *screen_texture;
 
 int font_width, font_height;
 
+typedef struct {
+    uint16_t type;
+    uint16_t value;
+} keyboard_event_t;
+
+keyboard_event_t keyboard_buffer[256];
+int keyboard_buffer_size = 0;
+
 static void render_screen_to_current_target(void) {
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
@@ -123,6 +131,8 @@ void init_gui(void) {
         SDL_Quit();
         exit(1);
     }
+
+    memset(keyboard_buffer, 0, sizeof(keyboard_buffer));
 }
 
 void cleanup_gui(void) {
@@ -156,6 +166,14 @@ void gui_loop(uint64_t ips, uint64_t delta_time) {
         if (event.type == SDL_QUIT) {
             cleanup_gui();
             exit(0);
+        } else if (event.type == SDL_KEYDOWN || event.type == SDL_KEYUP) {
+            keyboard_event_t kevent;
+            kevent.type = (event.type == SDL_KEYDOWN) ? 1 : 2;
+            kevent.value = event.key.keysym.sym;
+
+            if (keyboard_buffer_size < (int)(sizeof(keyboard_buffer) / sizeof(keyboard_event_t))) {
+                keyboard_buffer[keyboard_buffer_size++] = kevent;
+            }
         }
     }
 
@@ -290,18 +308,61 @@ char *opcode_to_string(uint8_t opcode) {
 }
 
 uint16_t port_in(uint16_t port) {
-    fprintf(stderr, "Input from port 0x%04X\n", port);
-    return 2 * port; // for now, just return 2*port
+    switch (port) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            fprintf(stderr, "Redstone input from port 0x%04X\n", port);
+            return 0;
+        case 0x1010:
+        #ifdef GUI
+        if (use_gui) {
+            if (keyboard_buffer_size == 0)
+                return 0;
+
+            keyboard_event_t kevent = keyboard_buffer[0];
+            return kevent.type;
+        }
+        #endif
+        fprintf(stderr, "Keyboard input requested but GUI is not enabled\n");
+        return 0;
+        case 0x1011:
+        #ifdef GUI
+        if (use_gui) {
+            if (keyboard_buffer_size == 0)
+                return 0;
+
+            keyboard_event_t kevent = keyboard_buffer[0];
+            // shift the buffer
+            for (int i = 1; i < keyboard_buffer_size; i++) {
+                keyboard_buffer[i - 1] = keyboard_buffer[i];
+            }
+            keyboard_buffer_size--;
+            return kevent.value;
+        }
+        #endif
+        fprintf(stderr, "Keyboard input requested but GUI is not enabled\n");
+        return 0;
+        default:
+            fprintf(stderr, "Input from port 0x%04X\n", port);
+            return 0;
+    }
 }
 
 void port_out(uint16_t port, uint16_t value) {
     switch (port) {
+        case 0:
+        case 1:
+        case 2:
+        case 3:
+            fprintf(stderr, "Redstone output to port 0x%04X: %04X\n", port, value);
+            break;
         case 0x1000:
             fprintf(stderr, "update_gui: port 0x%04X, value 0x%04X\n", port, value);
             #ifdef GUI
             if (use_gui) {
                 update_gui();
-            
             }
             #endif
             break;
@@ -568,7 +629,7 @@ int main(int argc, char **argv) {
     }
 
     file_header_t header;
-    
+
     if (fread(&header, sizeof(file_header_t), 1, bytecode) != 1) {
         perror("Failed to read file header");
         fclose(bytecode);
@@ -616,7 +677,7 @@ int main(int argc, char **argv) {
             fclose(bytecode);
             return 1;
         }
-    
+
         if (sections[i].size % sizeof(uint16_t) != 0) {
             fprintf(stderr, "Error: Section %d size is not a multiple of 2\n", i);
             fclose(bytecode);
@@ -628,7 +689,7 @@ int main(int argc, char **argv) {
             fclose(bytecode);
             return 1;
         }
-    
+
         if (sections[i].type == SECTION_TYPE_CODE) {
             if (fseek(bytecode, sections[i].debut, SEEK_SET) || fread(&xmem[sections[i].dest_addr], 1, sections[i].size, bytecode) != sections[i].size) {
                 perror("Failed to read code section");

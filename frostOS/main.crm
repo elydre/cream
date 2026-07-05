@@ -1,5 +1,5 @@
 $screen
-:str
+:str type chr
 
 screen = _get_screen()
 
@@ -49,7 +49,23 @@ str = "hello world!\noui "
 
 print(str)
 putnbr(123)
+print("\n")
 
 while 1 {
-    sleep(1)
+    type = in(0x1010)
+    if type 0 == {
+        // nothing for now
+        sleep(1)
+        continue
+    }
+    if type 2 == {
+        // keyboard release
+        in(0x1011) // consume the keycode
+        continue
+    }
+
+    chr = in(0x1011)
+
+    putnbr(chr)
+    print("\n")
 }
