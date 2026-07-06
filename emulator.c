@@ -39,6 +39,7 @@ SDL_Texture *screen_texture;
 SDL_Texture *info_texture;
 
 int font_width, font_height;
+int cursor_pos = 0;
 
 typedef struct {
     uint16_t type;
@@ -73,6 +74,14 @@ void render_screen(void) {
             SDL_DestroyTexture(texture);
         }
     }
+
+    // Render the cursor
+    int cursor_x = cursor_pos % SCREEN_X;
+    int cursor_y = cursor_pos / SCREEN_X;
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_Rect cursor_rect = {cursor_x * font_width, cursor_y * font_height, font_width, font_height};
+    SDL_RenderDrawRect(renderer, &cursor_rect);
 
     SDL_SetRenderTarget(renderer, previous_target);
 }
@@ -376,13 +385,23 @@ void port_out(uint16_t port, uint16_t value) {
             putchar(value & 0xFF);
             break;
         case 0x1020:
-            fprintf(stderr, "update_gui: port 0x%04X, value 0x%04X\n", port, value);
             #ifdef GUI
             if (use_gui) {
                 render_screen();
                 update_gui();
+                break;
             }
             #endif
+            fprintf(stderr, "Screen update requested but GUI is not enabled\n");
+            break;
+        case 0x1021:
+            #ifdef GUI
+            if (use_gui) {
+                cursor_pos = value;
+                break;
+            }
+            #endif
+            fprintf(stderr, "Cursor position update requested but GUI is not enabled\n");
             break;
         default:
             fprintf(stderr, "Output to port 0x%04X: %04X\n", port, value);

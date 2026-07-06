@@ -1,6 +1,6 @@
 $screen
-:str type chr i
-:buffer buffer_i
+:str i
+:buffer
 
 screen = _get_screen()
 
@@ -19,6 +19,17 @@ func print(str) {
             y = y 1 +
             continue
         }
+        if c '\r' == {
+            x = 0
+            continue
+        }
+        if c '\b' == {
+            if x 0 > {
+                x = x 1 -
+            }
+            [screen 80 y * + x +] = ' '
+            continue
+        }
         if x 79 > {
             x = 0
             y = y 1 +
@@ -32,60 +43,85 @@ func print(str) {
         x = x 1 +
     }
 
+    out(0x1021, y 80 * x +)
     out(0x1020, 0)
 }
 
-func putnbr(n) {
-    :str
-    str = "x"
+func putchar(c) {
+    : str
+    str = alloca(2)
+    [str] = c
+    [str 1 +] = 0
+    print(str)
+}
 
+func putnbr(n) {
     if n 9 > {
         putnbr(n 10 /)
     }
 
-    [str] = n 10 % '0' +
-
-    print(str)
+    putchar(n 10 % '0' +)
 }
 
 str = "hello world!\noui "
 
-print(str)
-putnbr(123)
-print("\n")
+print("is this working?\n\n")
 
-buffer = alloca(10)
-memset(buffer, 0, 10)
+func input(buffer, size) {
+    :buffer_i type chr
+    buffer_i = 0
 
-buffer_i = 0
-
-while 1 {
-    type = in(0x1010)
-    if type 0 == {
-        // nothing for now
-        sleep(1)
-        continue
-    }
-    if type 2 == {
-        // keyboard release
-        in(0x1011) // consume the keycode
-        continue
-    }
-
-    chr = in(0x1011)
-
-
-    if chr 8 == {
-        if buffer_i 0 > {
-            buffer_i = buffer_i 1 -
-            [buffer buffer_i +] = 0
+    while 1 {
+        type = in(0x1010)
+        if type 0 == {
+            // nothing for now
+            sleep(1)
+            continue
         }
-    } elif buffer_i 9 < {
-        [buffer buffer_i +] = chr
-        buffer_i = buffer_i 1 +
-    }
+        if type 2 == {
+            // keyboard release
+            in(0x1011) // consume the keycode
+            continue
+        }
 
-    print("buffer: ")
-    print(buffer)
-    print("\n")
+        chr = in(0x1011)
+
+        if chr '\b' == {
+            if buffer_i 0 > {
+                buffer_i = buffer_i 1 -
+                print("\b")
+            }
+            continue
+        }
+
+        if chr '\r' == {
+            print("\n")
+            [buffer buffer_i +] = 0
+            return buffer_i
+        }
+
+        if buffer_i 19 < {
+            [buffer buffer_i +] = chr
+            putchar(chr)
+            buffer_i = buffer_i 1 +
+        }
+    }
 }
+
+func shell() {
+    : buffer
+    
+    buffer = alloca(20)
+
+    while 1 {
+        print("> ")
+        if input(buffer, 20) {
+            print("you said: ")
+            print(buffer)
+            print("\n")
+        }
+
+    }
+}
+
+shell()
