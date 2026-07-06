@@ -85,7 +85,7 @@ opcode (8 bit)  sources (4 * 2bit)  [  arg0 (16 bit)   ] ... [ arg3 (16 bit)    
 (arguments quantity is determined by the opcode)
 ```
 
-| opcode | arguments   | description                |
+| OPCODE | ARGUMENTS   | DESCRIPTION                |
 | ------ | ----------- | ---------------------------|
 |  nop   |             | no operation               |
 |        |             |                            |
@@ -130,7 +130,7 @@ opcode (8 bit)  sources (4 * 2bit)  [  arg0 (16 bit)   ] ... [ arg3 (16 bit)    
 
 each argument can be one of the following:
 
-| source | description | explanation     |
+| SOURCE | DESCRIPTION | EXPLANATION     |
 | ------ | ----------- | --------------- |
 |  0     | `[a]`       | memory address  |
 |  1     | `a`         | value           |
@@ -139,7 +139,7 @@ each argument can be one of the following:
 
 ### Used ports
 
-| port         | direction | description                                    |
+| PORT         | DIRECTION | DESCRIPTION                                    |
 | ------------ | --------- | ---------------------------------------------- |
 | **redstone** |           |                                                |
 | `0`          | in/out    | 4 bit **front** redstone signal                |
