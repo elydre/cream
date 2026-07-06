@@ -356,7 +356,20 @@ uint16_t port_in(uint16_t port) {
             }
             #endif
             fprintf(stderr, "Keyboard input requested but GUI is not enabled\n");
-        return 0;
+            return 0;
+        case 0x1030:
+            // get minecraft time (24h) in ticks
+            {
+                time_t now = time(NULL);
+                struct tm *tm_info = localtime(&now);
+                int hours = tm_info->tm_hour;
+                int minutes = tm_info->tm_min;
+                int seconds = tm_info->tm_sec;
+
+                double total_seconds = (hours + 18) * 3600 + minutes * 60 + seconds;
+                total_seconds /= 3.6;
+                return ((uint16_t) total_seconds) % 24000;
+            }
         default:
             fprintf(stderr, "Input from port 0x%04X\n", port);
             return 0;
@@ -369,10 +382,10 @@ void port_out(uint16_t port, uint16_t value) {
             fprintf(stderr, "Redstone output to port 0x%04X: %04X\n", port, value);
             break;
         case 0x1000:
-            printf(stderr, "0x%x\n", value);
+            printf("0x%x\n", value);
             break;
         case 0x1001:
-            printf(stderr, "%d\n", value);
+            printf("%d\n", value);
             break;
         case 0x1002:
             putchar(value & 0xFF);
