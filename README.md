@@ -141,7 +141,7 @@ each argument can be one of the following:
 
 | PORT         | DIRECTION | DESCRIPTION                                    |
 | ------------ | --------- | ---------------------------------------------- |
-| **redstone** |           |                                                |
+| **redstone** | -         | -                                              |
 | `0`          | in/out    | 4 bit **front** redstone signal                |
 | `1`          | in/out    | 4 bit **left** redstone signal                 |
 | `2`          | in/out    | 4 bit **back** redstone signal                 |
