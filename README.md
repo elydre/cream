@@ -87,25 +87,25 @@ opcode (8 bit)  sources (4 * 2bit)  [  arg0 (16 bit)   ] ... [ arg3 (16 bit)    
 | ------ | ----------- | ---------------------------|
 |  nop   |             | no operation               |
 |        |             |                            |
-|  mov   | `a` `b`     | `a <= b`                   |
+|  mov   | `a` `b`     | `a <- b`                   |
 |        |             |                            |
-|  push  | `a`         | `sp--`, `[sp] <= a`        |
-|  pop   | `a`         | `a <= [sp]`, `sp++`        |
+|  push  | `a`         | `sp--`, `[sp] <- a`        |
+|  pop   | `a`         | `a <- [sp]`, `sp++`        |
 |        |             |                            |
-|  sub   | `a` `b`     | `a <= a - b`               |
-|  add   | `a` `b`     | `a <= a + b`               |
-|  mul   | `a` `b`     | `a <= a * b`               |
-|  div   | `a` `b`     | `a <= a / b`               |
-|  mod   | `a` `b`     | `a <= a % b`               |
+|  sub   | `a` `b`     | `a <- a - b`               |
+|  add   | `a` `b`     | `a <- a + b`               |
+|  mul   | `a` `b`     | `a <- a * b`               |
+|  div   | `a` `b`     | `a <- a / b`               |
+|  mod   | `a` `b`     | `a <- a % b`               |
 |        |             |                            |
-|  eq    | `a` `b`     | `a <= a == b`              |
-|  neq   | `a` `b`     | `a <= a != b`              |
-|  lt    | `a` `b`     | `a <= a < b`               |
-|  gt    | `a` `b`     | `a <= a > b`               |
+|  eq    | `a` `b`     | `a <- a == b`              |
+|  neq   | `a` `b`     | `a <- a != b`              |
+|  lt    | `a` `b`     | `a <- a < b`               |
+|  gt    | `a` `b`     | `a <- a > b`               |
 |        |             |                            |
-|  and   | `a` `b`     | `a <= a && b`              |
-|  band  | `a` `b`     | `a <= a & b`               |
-|  bor   | `a` `b`     | `a <= a bor b` (md sorry)  |
+|  and   | `a` `b`     | `a <- a && b`              |
+|  band  | `a` `b`     | `a <- a & b`               |
+|  bor   | `a` `b`     | `a <- a bor b` (md sorry)  |
 |        |             |                            |
 |  jmp   | `a` `b`     | `pc  = a if b == 0`        |
 |  jmpr  | `a` `b`     | `pc += a if b == 0`        |
@@ -115,11 +115,11 @@ opcode (8 bit)  sources (4 * 2bit)  [  arg0 (16 bit)   ] ... [ arg3 (16 bit)    
 |        |             |                            |
 |  sleep | `a`         | sleep for `a` ticks        |
 |        |             |                            |
-|  ssp   | `a`         | `sp <= a`                  |
+|  ssp   | `a`         | `sp <- a`                  |
 |        |             |                            |
-|  mss   | `A` `a` `B` `b` | `[A + a] <= [B + b]`   |
-|  pushs | `A` `a`     | `sp--`, `[sp] <= [A + a]`  |
-|  pops  | `A` `a`     | `[A + a] <= [sp]`, `sp++`  |
+|  mss   | `A` `a` `B` `b` | `[A + a] <- [B + b]`   |
+|  pushs | `A` `a`     | `sp--`, `[sp] <- [A + a]`  |
+|  pops  | `A` `a`     | `[A + a] <- [sp]`, `sp++`  |
 |        |             |                            |
 | memset | `a` `b` `c` | `memset(addr=a val=b s=c)` |
 | memmov | `a` `b` `c` | `memmov(dest=a src=b s=c)` |
