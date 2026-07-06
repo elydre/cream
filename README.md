@@ -21,6 +21,7 @@ custom instruction set, esoteric programming language, compiler, and emulator
 - [x] heap strings
 - [x] comments
 - [x] functions
+- [ ] preprocessor
 - [ ] heap arrays
 - [ ] sub stack scope
 - [ ] structs
@@ -44,47 +45,48 @@ opcode (8 bit)  sources (4 * 2bit)  [  arg0 (16 bit)   ] ... [ arg3 (16 bit)    
 (arguments quantity is determined by the opcode)
 ```
 
-| opcode | arguments   | description               |
-| ------ | ----------- | ------------------------- |
-|  nop   |             | no operation              |
-|        |             |                           |
-|  mov   | `a` `b`     | `a <= b`                  |
-|        |             |                           |
-|  push  | `a`         | `sp--`, `[sp] <= a`       |
-|  pop   | `a`         | `a <= [sp]`, `sp++`       |
-|        |             |                           |
-|  sub   | `a` `b`     | `a <= a - b`              |
-|  add   | `a` `b`     | `a <= a + b`              |
-|  mul   | `a` `b`     | `a <= a * b`              |
-|  div   | `a` `b`     | `a <= a / b`              |
-|  mod   | `a` `b`     | `a <= a % b`              |
-|        |             |                           |
-|  eq    | `a` `b`     | `a <= a == b`             |
-|  neq   | `a` `b`     | `a <= a != b`             |
-|  lt    | `a` `b`     | `a <= a < b`              |
-|  gt    | `a` `b`     | `a <= a > b`              |
-|        |             |                           |
-|  and   | `a` `b`     | `a <= a & b`              |
-|  or    | `a` `b`     | `a <= a bor b` (md sorry) |
-|  not   | `a`         | `a <= !a`                 |
-|        |             |                           |
-|  jmp   | `a` `b`     | `pc  = a if b == 0`       |
-|  jmpr  | `a` `b`     | `pc += a if b == 0`       |
-|        |             |                           |
-|  out   | `port` `a`  | output `a` to `port`      |
-|  in    | `a` `port`  | input from `port` to `a`  |
-|        |             |                           |
-|  sleep | `a`         | sleep for `a` ticks       |
-|        |             |                           |
-|  ssp   | `a`         | `sp <= a`                 |
-|        |             |                           |
-|  dump  | `a`         | print `a` to stdout       |
-|        |             |                           |
-|  mss   | `A` `a` `B` `b` | `[A + a] <= [B + b]`  |
-|  pushs | `A` `a`     | `sp--`, `[sp] <= [A + a]` |
-|  pops  | `A` `a`     | `[A + a] <= [sp]`, `sp++` |
-|        |             |                           |
-|  hlt   |             | halt the computer         |
+| opcode | arguments   | description                |
+| ------ | ----------- | ---------------------------|
+|  nop   |             | no operation               |
+|        |             |                            |
+|  mov   | `a` `b`     | `a <= b`                   |
+|        |             |                            |
+|  push  | `a`         | `sp--`, `[sp] <= a`        |
+|  pop   | `a`         | `a <= [sp]`, `sp++`        |
+|        |             |                            |
+|  sub   | `a` `b`     | `a <= a - b`               |
+|  add   | `a` `b`     | `a <= a + b`               |
+|  mul   | `a` `b`     | `a <= a * b`               |
+|  div   | `a` `b`     | `a <= a / b`               |
+|  mod   | `a` `b`     | `a <= a % b`               |
+|        |             |                            |
+|  eq    | `a` `b`     | `a <= a == b`              |
+|  neq   | `a` `b`     | `a <= a != b`              |
+|  lt    | `a` `b`     | `a <= a < b`               |
+|  gt    | `a` `b`     | `a <= a > b`               |
+|        |             |                            |
+|  and   | `a` `b`     | `a <= a & b`               |
+|  or    | `a` `b`     | `a <= a bor b` (md sorry)  |
+|  not   | `a`         | `a <= !a`                  |
+|        |             |                            |
+|  jmp   | `a` `b`     | `pc  = a if b == 0`        |
+|  jmpr  | `a` `b`     | `pc += a if b == 0`        |
+|        |             |                            |
+|  out   | `port` `a`  | output `a` to `port`       |
+|  in    | `a` `port`  | input from `port` to `a`   |
+|        |             |                            |
+|  sleep | `a`         | sleep for `a` ticks        |
+|        |             |                            |
+|  ssp   | `a`         | `sp <= a`                  |
+|        |             |                            |
+|  mss   | `A` `a` `B` `b` | `[A + a] <= [B + b]`   |
+|  pushs | `A` `a`     | `sp--`, `[sp] <= [A + a]`  |
+|  pops  | `A` `a`     | `[A + a] <= [sp]`, `sp++`  |
+|        |             |                            |
+| memset | `a` `b` `c` | `memset(addr=a val=b s=c)` |
+| memmov | `a` `b` `c` | `memmov(dest=a src=b s=c)` |
+|        |             |                            |
+|  hlt   |             | halt the computer          |
 
 each argument can be one of the following:
 

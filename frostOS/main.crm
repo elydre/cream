@@ -1,5 +1,6 @@
 $screen
-:str type chr
+:str type chr i
+:buffer buffer_i
 
 screen = _get_screen()
 
@@ -23,13 +24,15 @@ func print(str) {
             y = y 1 +
         }
         if y 24 > {
-            break
+            memmov(screen, screen 80 +, 80 24 *)
+            memset(screen 80 24 * +, ' ', 80)
+            y = 24
         }
         [screen 80 y * + x +] = c 
         x = x 1 +
     }
 
-    out(0x1000, 0)
+    out(0x1020, 0)
 }
 
 func putnbr(n) {
@@ -51,6 +54,11 @@ print(str)
 putnbr(123)
 print("\n")
 
+buffer = alloca(10)
+memset(buffer, 0, 10)
+
+buffer_i = 0
+
 while 1 {
     type = in(0x1010)
     if type 0 == {
@@ -66,6 +74,18 @@ while 1 {
 
     chr = in(0x1011)
 
-    putnbr(chr)
+
+    if chr 8 == {
+        if buffer_i 0 > {
+            buffer_i = buffer_i 1 -
+            [buffer buffer_i +] = 0
+        }
+    } elif buffer_i 9 < {
+        [buffer buffer_i +] = chr
+        buffer_i = buffer_i 1 +
+    }
+
+    print("buffer: ")
+    print(buffer)
     print("\n")
 }
