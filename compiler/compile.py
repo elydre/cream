@@ -1,3 +1,4 @@
+import compiler.preproc as preproc
 import compiler.builtin as blt
 import compiler.tokens as toks
 import compiler.output as out
@@ -424,17 +425,11 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
     return (output, 1)
 
 
-def compile(lines: str):
-    tokens_lines = []
-
-    for lno, line in enumerate(lines.splitlines(), start=1):
-        defs.CURRENT_LNO = lno
-
-        line = line.strip()
-        for t in toks.tokenize_line(line):
-            tokens_lines.append((lno, t))
-
+def compile(lines: str, path: str = None):
     blt.add_builtin_functions()
+
+    tokens_lines = toks.tokenize_lines(lines)
+    tokens_lines = preproc.preprocess(tokens_lines, path if path else "")
 
     output = out.output_code()
     output.atend(compile_lines(tokens_lines, len(tokens_lines), new_scope="global"))

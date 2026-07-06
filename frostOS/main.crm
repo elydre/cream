@@ -1,112 +1,8 @@
-$screen
-:str i
-:buffer
+: i buffer
 
-screen = _get_screen()
-
-func print(str) {
-    $ x
-    $ y
-    : i c
-
-    for i (0) {
-        c = [str i +]
-        if c 0 == {
-            break
-        }
-        if c '\n' == {
-            x = 0
-            y = y 1 +
-            continue
-        }
-        if c '\r' == {
-            x = 0
-            continue
-        }
-        if c '\b' == {
-            if x 0 > {
-                x = x 1 -
-            }
-            [screen 80 y * + x +] = ' '
-            continue
-        }
-        if x 79 > {
-            x = 0
-            y = y 1 +
-        }
-        if y 24 > {
-            memmov(screen, screen 80 +, 80 24 *)
-            memset(screen 80 24 * +, ' ', 80)
-            y = 24
-        }
-        [screen 80 y * + x +] = c 
-        x = x 1 +
-    }
-
-    out(0x1021, y 80 * x +)
-    out(0x1020, 0)
-}
-
-func putchar(c) {
-    : str
-    str = alloca(2)
-    [str] = c
-    [str 1 +] = 0
-    print(str)
-}
-
-func putnbr(n) {
-    if n 9 > {
-        putnbr(n 10 /)
-    }
-
-    putchar(n 10 % '0' +)
-}
-
-str = "hello world!\noui "
+#include "klib/klib.crm"
 
 print("is this working?\n\n")
-
-func input(buffer, size) {
-    :buffer_i type chr
-    buffer_i = 0
-
-    while 1 {
-        type = in(0x1010)
-        if type 0 == {
-            // nothing for now
-            sleep(1)
-            continue
-        }
-        if type 2 == {
-            // keyboard release
-            in(0x1011) // consume the keycode
-            continue
-        }
-
-        chr = in(0x1011)
-
-        if chr '\b' == {
-            if buffer_i 0 > {
-                buffer_i = buffer_i 1 -
-                print("\b")
-            }
-            continue
-        }
-
-        if chr '\r' == {
-            print("\n")
-            [buffer buffer_i +] = 0
-            return buffer_i
-        }
-
-        if buffer_i 19 < {
-            [buffer buffer_i +] = chr
-            putchar(chr)
-            buffer_i = buffer_i 1 +
-        }
-    }
-}
 
 func shell() {
     : buffer
@@ -120,7 +16,6 @@ func shell() {
             print(buffer)
             print("\n")
         }
-
     }
 }
 

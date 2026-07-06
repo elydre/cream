@@ -1,0 +1,40 @@
+func input(buffer, size) {
+    :buffer_i type chr
+    buffer_i = 0
+
+    while 1 {
+        type = in(0x1010)
+        if type 0 == {
+            // nothing for now
+            sleep(1)
+            continue
+        }
+        if type 2 == {
+            // keyboard release
+            in(0x1011) // consume the keycode
+            continue
+        }
+
+        chr = in(0x1011)
+
+        if chr '\b' == {
+            if buffer_i 0 > {
+                buffer_i = buffer_i 1 -
+                print("\b")
+            }
+            continue
+        }
+
+        if chr '\r' == {
+            print("\n")
+            [buffer buffer_i +] = 0
+            return buffer_i
+        }
+
+        if buffer_i 19 < {
+            [buffer buffer_i +] = chr
+            putchar(chr)
+            buffer_i = buffer_i 1 +
+        }
+    }
+}

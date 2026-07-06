@@ -1,0 +1,58 @@
+func print(str) {
+    $ x
+    $ y
+    : i c
+
+    for i (0) {
+        c = [str i +]
+        if c 0 == {
+            break
+        }
+        if c '\n' == {
+            x = 0
+            y = y 1 +
+            continue
+        }
+        if c '\r' == {
+            x = 0
+            continue
+        }
+        if c '\b' == {
+            if x 0 > {
+                x = x 1 -
+            }
+            [screen 80 y * + x +] = ' '
+            continue
+        }
+        if x 79 > {
+            x = 0
+            y = y 1 +
+        }
+        if y 24 > {
+            memmov(screen, screen 80 +, 80 24 *)
+            memset(screen 80 24 * +, ' ', 80)
+            y = 24
+        }
+        [screen 80 y * + x +] = c 
+        x = x 1 +
+    }
+
+    out(0x1021, y 80 * x +)
+    out(0x1020, 0)
+}
+
+func putchar(c) {
+    : str
+    str = alloca(2)
+    [str] = c
+    [str 1 +] = 0
+    print(str)
+}
+
+func putnbr(n) {
+    if n 9 > {
+        putnbr(n 10 /)
+    }
+
+    putchar(n 10 % '0' +)
+}

@@ -11,12 +11,13 @@ parser.add_argument("-o", "--output", help="Output file name", default="output.b
 parser.add_argument("-a", "--dump-asm", help="Dump assembly code to stdout", action="store_true", dest="dump_asm")
 args = parser.parse_args()
 
-with open(args.input_file, "r") as ifile:
-    if not ifile:
-        exit("Could not open input file")
-    lines = ifile.read()
+try:
+    with open(args.input_file, "r") as ifile:
+        lines = ifile.read()
+except FileNotFoundError:
+    exit(f"Could not open input file: {args.input_file}")
 
-main_output = compile(lines)
+main_output = compile(lines, args.input_file)
 
 ofile = open(args.output_file, "wb")
 

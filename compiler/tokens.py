@@ -1,14 +1,14 @@
 import compiler.utils as utl
 import compiler.defs as defs
 
-def find_longest_match(string):
+def find_longest_match(string: str):
     longest_match = ""
     for match in defs.CHARS_SPE:
         if string.startswith(match) and len(match) > len(longest_match):
             longest_match = match
     return longest_match
 
-def tokenize_line(line):
+def tokenize_line(line: str):
     tokens = []
     lines = []
 
@@ -72,6 +72,18 @@ def tokenize_line(line):
         lines.remove([])
 
     return lines
+
+def tokenize_lines(lines: str):
+    tokens_lines = []
+
+    for lno, line in enumerate(lines.splitlines(), start=1):
+        defs.CURRENT_LNO = lno
+
+        line = line.strip()
+        for t in tokenize_line(line):
+            tokens_lines.append((lno, t))
+    
+    return tokens_lines
 
 def locate_braces(lines: list, current_line: int):
      # find the opening brace '{'
