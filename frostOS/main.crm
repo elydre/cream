@@ -62,7 +62,7 @@ func interpret(buffer) {
     } elif streq([args], "sp") {
         shell_sp(arg_count, args)
     } else {
-        print("Unknown command: ")
+        print("unknown command: ")
         print([args])
         print("\ntype 'help' for a list of available commands\n")
     }

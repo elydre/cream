@@ -74,7 +74,9 @@ ptr = alloca(10)  // allocate 10 bytes on the stack
 [ptr] = 3         // assign 3 to the first byte of the allocation
 ```
 
-## opcode (may be subject to change)
+## Computer architecture
+
+### opcode (may be subject to change)
 
 ```
 opcode (8 bit)  sources (4 * 2bit)  [  arg0 (16 bit)   ] ... [ arg3 (16 bit)    ]
@@ -134,6 +136,32 @@ each argument can be one of the following:
 |  1     | `a`         | value           |
 |  2     | `sp+a`      | stack address   |
 |  3     | `?`         | unused          |
+
+### Used ports
+
+| port     | direction | description                                    |
+| -------- | --------- | ---------------------------------------------- |
+| `0`      | in/out    | 4 bit **front** redstone signal                |
+| `1`      | in/out    | 4 bit **left** redstone signal                 |
+| `2`      | in/out    | 4 bit **back** redstone signal                 |
+| `3`      | in/out    | 4 bit **right** redstone signal                |
+| `4`      | in/out    | 4 bit **north** redstone signal                |
+| `5`      | in/out    | 4 bit **east** redstone signal                 |
+| `6`      | in/out    | 4 bit **south** redstone signal                |
+| `7`      | in/out    | 4 bit **west** redstone signal                 |
+|          |           |                                                |
+| `0x1000` | out       | print hexadecimal value (emulator stdout)      |
+| `0x1001` | out       | print decimal value (emulator stdout)          |
+| `0x1002` | out       | print character (emulator stdout)              |      
+|          |           |                                                |
+| `0x1010` | in        | get kb state (0 noting, 1 pressed, 2 released) |
+| `0x1011` | in        | get kb char and pop it from the buffer         |
+|          |           |                                                |
+| `0x1020` | out       | flush the screen from memory                   |
+| `0x1021` | out       | set cursor position (`x + y*80`)               |
+|          |           |                                                |
+| `0x1030` | in        | get ingame time in ticks                       |
+
 
 ## Compiled file format
 

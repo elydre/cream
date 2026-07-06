@@ -2,12 +2,11 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <time.h>
 
 #ifdef GUI
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
-
-#include <sys/time.h>
 #endif
 
 #define MEMORY_SIZE 65536
@@ -326,10 +325,7 @@ char *opcode_to_string(uint8_t opcode) {
 
 uint16_t port_in(uint16_t port) {
     switch (port) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
+        case 0 ... 8:
             fprintf(stderr, "Redstone input from port 0x%04X\n", port);
             return 0;
         case 0x1010:
@@ -369,17 +365,14 @@ uint16_t port_in(uint16_t port) {
 
 void port_out(uint16_t port, uint16_t value) {
     switch (port) {
-        case 0:
-        case 1:
-        case 2:
-        case 3:
+        case 0 ... 8:
             fprintf(stderr, "Redstone output to port 0x%04X: %04X\n", port, value);
             break;
         case 0x1000:
-            fprintf(stderr, "0x%x\n", value);
+            printf(stderr, "0x%x\n", value);
             break;
         case 0x1001:
-            fprintf(stderr, "%d\n", value);
+            printf(stderr, "%d\n", value);
             break;
         case 0x1002:
             putchar(value & 0xFF);
