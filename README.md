@@ -150,17 +150,17 @@ each argument can be one of the following:
 | `5`      | in/out    | 4 bit **east** redstone signal                 |
 | `6`      | in/out    | 4 bit **south** redstone signal                |
 | `7`      | in/out    | 4 bit **west** redstone signal                 |
-| debug    |           |                                                |
+| debug    | -         | -                                              |
 | `0x1000` | out       | print hexadecimal value (emulator stdout)      |
 | `0x1001` | out       | print decimal value (emulator stdout)          |
 | `0x1002` | out       | print character (emulator stdout)              |      
-| keyboard |           |                                                |
+| keyboard | -         | -                                              |
 | `0x1010` | in        | get kb state (0 noting, 1 pressed, 2 released) |
 | `0x1011` | in        | get kb char and pop it from the buffer         |
-| screen   |           |                                                |
+| screen   | -         | -                                              |
 | `0x1020` | out       | flush the screen from memory                   |
 | `0x1021` | out       | set cursor position (`x + y*80`)               |
-| clock    |           |                                                |
+| clock    | -         | -                                              |
 | `0x1030` | in        | get ingame time in ticks                       |
 
 
