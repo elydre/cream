@@ -31,7 +31,7 @@ func input(buffer, size) {
             return buffer_i
         }
 
-        if buffer_i 19 < {
+        if buffer_i size 1 - < {
             [buffer buffer_i +] = chr
             putchar(chr)
             buffer_i = buffer_i 1 +

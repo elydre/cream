@@ -1,8 +1,72 @@
-: i buffer
-
 #include "klib/klib.crm"
 
 print("is this working?\n\n")
+
+func shell_clear(argc, argv) {
+    screen_clear()
+}
+
+func shell_help(argc, argv) {
+    print("clear   clear the screen\n")
+    print("echo    echo the input arguments\n")
+    print("halt    halt the system\n")
+    print("help    display this help message\n")
+    print("sp      print the stack pointer\n")
+}
+
+func shell_halt(argc, argv) {
+    halt()
+}
+
+func shell_echo(argc, argv) {
+    : i
+
+    for i (1, argc) {
+        print([argv i +])
+        print(" ")
+    }
+    print("\n")
+}
+
+func shell_sp(argc, argv) {
+    : sp
+    sp = _get_sp()
+    print("Stack pointer: ")
+    putnbr(sp)
+    print("\n")
+}
+
+func interpret(buffer) {
+    : arg_count
+    : args i
+
+    arg_count = strsplit_count(buffer, ' ')
+
+    if arg_count 0 == {
+        return
+    }
+
+    args = alloca(arg_count 1 +)
+    [args arg_count +] = 0
+
+    strsplit(buffer, args)
+
+    if streq([args], "clear") {
+        shell_clear(arg_count, args)
+    } elif streq([args], "help") {
+        shell_help(arg_count, args)
+    } elif streq([args], "halt") {
+        shell_halt(arg_count, args)
+    } elif streq([args], "echo") {
+        shell_echo(arg_count, args)
+    } elif streq([args], "sp") {
+        shell_sp(arg_count, args)
+    } else {
+        print("Unknown command: ")
+        print([args])
+        print("\ntype 'help' for a list of available commands\n")
+    }
+}
 
 func shell() {
     : buffer
@@ -11,12 +75,9 @@ func shell() {
 
     while 1 {
         print("> ")
-        if input(buffer, 20) 0 == {
-            continue
+        if input(buffer, 20) {
+            interpret(buffer)    
         }
-        print("you said: ")
-        print(buffer)
-        print("\n")
     }
 }
 

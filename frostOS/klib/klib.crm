@@ -1,4 +1,7 @@
-$screen
+$ screen
+$ screen_x
+$ screen_y
+
 screen = _get_screen()
 
 #include "screen.crm"
