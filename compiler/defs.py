@@ -97,33 +97,34 @@ def is_valid_name(s):
     return True
 
 OPCODES = [
-    opcode("nop",   0x00, 0),
-    opcode("mov",   0x01, 2),
-    opcode("push",  0x02, 1),
-    opcode("pop",   0x03, 1),
-    opcode("sub",   0x04, 2),
-    opcode("add",   0x05, 2),
-    opcode("mul",   0x06, 2),
-    opcode("div",   0x07, 2),
-    opcode("mod",   0x08, 2),
-    opcode("eq",    0x09, 2),
-    opcode("neq",   0x0A, 2),
-    opcode("lt",    0x0B, 2),
-    opcode("gt",    0x0C, 2),
-    opcode("and",   0x0D, 2),
-    opcode("or",    0x0E, 2),
-    opcode("not",   0x0F, 1),
-    opcode("jmp",   0x10, 2),
-    opcode("jmpr",  0x11, 2),
-    opcode("out",   0x12, 2),
-    opcode("in",    0x13, 2),
-    opcode("sleep", 0x14, 1),
-    opcode("ssp",   0x15, 1),
-    opcode("dump",  0x16, 1),
-    opcode("mss",   0x17, 4),
-    opcode("pushs", 0x18, 2),
-    opcode("pops",  0x19, 2),
-    opcode("hlt",   0xFF, 0),
+    opcode("nop",    0x00, 0),
+    opcode("mov",    0x01, 2),
+    opcode("push",   0x02, 1),
+    opcode("pop",    0x03, 1),
+    opcode("sub",    0x04, 2),
+    opcode("add",    0x05, 2),
+    opcode("mul",    0x06, 2),
+    opcode("div",    0x07, 2),
+    opcode("mod",    0x08, 2),
+    opcode("eq",     0x09, 2),
+    opcode("neq",    0x0A, 2),
+    opcode("lt",     0x0B, 2),
+    opcode("gt",     0x0C, 2),
+    opcode("and",    0x0D, 2),
+    opcode("or",     0x0E, 2),
+    opcode("not",    0x0F, 1),
+    opcode("jmp",    0x10, 2),
+    opcode("jmpr",   0x11, 2),
+    opcode("out",    0x12, 2),
+    opcode("in",     0x13, 2),
+    opcode("sleep",  0x14, 1),
+    opcode("ssp",    0x15, 1),
+    opcode("mss",    0x16, 4),
+    opcode("pushs",  0x17, 2),
+    opcode("pops",   0x18, 2),
+    opcode("memset", 0x19, 3),
+    opcode("memmov", 0x1A, 3),    
+    opcode("hlt",    0xFF, 0),
 ]
 
 MEMORY_SIZE = 65536 - (80 * 25)
@@ -131,7 +132,7 @@ MEMORY_SIZE = 65536 - (80 * 25)
 MAGIC_NUMBER = 0xF057
 ARCH_VERSION = 0x0001
 
-CHARS_SPE = [",", "(", ")", ":", "=", "{", "}", "[", "]", "&", "$", "!", "//"]
+CHARS_SPE = [",", "(", ")", ":", "=", "{", "}", "[", "]", "&", "$", "!", "//", "' '"]
 CHARS_OPR = ["+", "-", "*", "/", "%", "==", "!=", "<", ">"]
 CHARS_SPE += CHARS_OPR
 

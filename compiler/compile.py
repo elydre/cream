@@ -171,32 +171,7 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
                 fin_label, (1, 0)) # unconditional jump to the end of the if block
             output.add_label(next_label)
 
-            next_label = utl.get_new_label()
-
-            if next_tokens[0] == "elif":
-                if len(next_tokens) < 2:
-                    utl.say_error(f"Bad syntax\nSyntax example: elif var == 0")
-
-                # reverse polish notation (RPN) expression
-                output.atend(op.calculate_rpn(next_tokens[1:]))
-
-                # pop the result from the stack to the conditional result memory location
-                output.add("pop",
-                    (0, defs.COND_RES_ADDR))
-
-                # compile the lines inside the elif block
-                tmp = toks.locate_braces(lines, closing_line + 1)
-                inner_output = compile_lines(lines[closing_line + 3:tmp], tmp - closing_line - 3, labels)
-                closing_line = tmp
-
-                # add a jump instruction to skip the elif block if the condition is false
-                output.add_goto(
-                    next_label,
-                    (0, defs.COND_RES_ADDR)) # jump if the condition is false
-
-                output.atend(inner_output)
-
-            elif next_tokens[0] == "else":
+            if next_tokens[0] == "else":
                 if len(next_tokens) != 1:
                     utl.say_error(f"Unexpected token {next_tokens[1]} after else\nSyntax example: else " + "{ ... }")
                 # compile the lines inside the else block
@@ -206,6 +181,36 @@ def compile_line(lines: list, current_line: int, labels: tuple = None):
                 
                 output.atend(inner_output)
                 break
+    
+            # elif block
+
+            if len(next_tokens) < 2:
+                utl.say_error(f"Bad syntax\nSyntax example: elif var == 0")
+
+            # reverse polish notation (RPN) expression
+            output.atend(op.calculate_rpn(next_tokens[1:]))
+
+            # pop the result from the stack to the conditional result memory location
+            output.add("pop",
+                (0, defs.COND_RES_ADDR))
+
+            # compile the lines inside the elif block
+            tmp = toks.locate_braces(lines, closing_line + 1)
+            inner_output = compile_lines(lines[closing_line + 3:tmp], tmp - closing_line - 3, labels)
+            closing_line = tmp
+
+            if closing_line + 1 < len(lines) and lines[closing_line + 1][1][0] in ("elif", "else"):
+                next_label = utl.get_new_label()
+            else:
+                next_label = fin_label
+    
+            # add a jump instruction to skip the elif block if the condition is false
+            output.add_goto(
+                next_label,
+                (0, defs.COND_RES_ADDR)) # jump if the condition is false
+
+            output.atend(inner_output)
+
 
         if next_line is None:
             output.add_label(next_label)

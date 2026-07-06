@@ -28,7 +28,7 @@ int use_gui;
 
 #ifdef GUI
 
-#define FPS_TARGET 30
+#define FPS_TARGET 10
 #define SCREEN_X 80
 #define SCREEN_Y 25
 
@@ -36,6 +36,7 @@ SDL_Window *window;
 SDL_Renderer *renderer;
 TTF_Font *font;
 SDL_Texture *screen_texture;
+SDL_Texture *info_texture;
 
 int font_width, font_height;
 
@@ -47,7 +48,10 @@ typedef struct {
 keyboard_event_t keyboard_buffer[256];
 int keyboard_buffer_size = 0;
 
-static void render_screen_to_current_target(void) {
+void render_screen(void) {
+    SDL_Texture *previous_target = SDL_GetRenderTarget(renderer);
+    SDL_SetRenderTarget(renderer, screen_texture);
+
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
 
@@ -69,6 +73,8 @@ static void render_screen_to_current_target(void) {
             SDL_DestroyTexture(texture);
         }
     }
+
+    SDL_SetRenderTarget(renderer, previous_target);
 }
 
 void init_gui(void) {
@@ -132,11 +138,24 @@ void init_gui(void) {
         exit(1);
     }
 
+    info_texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_TARGET, SCREEN_X * font_width, font_height);
+    if (info_texture == NULL) {
+        SDL_DestroyTexture(screen_texture);
+        SDL_DestroyRenderer(renderer);
+        SDL_DestroyWindow(window);
+        fprintf(stderr, "SDL_CreateTexture Error: %s\n", SDL_GetError());
+        TTF_CloseFont(font);
+        TTF_Quit();
+        SDL_Quit();
+        exit(1);
+    }
+
     memset(keyboard_buffer, 0, sizeof(keyboard_buffer));
 }
 
 void cleanup_gui(void) {
     SDL_DestroyTexture(screen_texture);
+    SDL_DestroyTexture(info_texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     TTF_CloseFont(font);
@@ -145,15 +164,15 @@ void cleanup_gui(void) {
 }
 
 void update_gui(void) {
-    SDL_Texture *previous_target = SDL_GetRenderTarget(renderer);
-    SDL_SetRenderTarget(renderer, screen_texture);
-    render_screen_to_current_target();
-    SDL_SetRenderTarget(renderer, previous_target);
-
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
     SDL_RenderClear(renderer);
+
     SDL_Rect screen_rect = {0, 0, SCREEN_X * font_width, SCREEN_Y * font_height};
     SDL_RenderCopy(renderer, screen_texture, NULL, &screen_rect);
+ 
+    SDL_Rect info_rect = {0, SCREEN_Y * font_height, SCREEN_X * font_width, font_height};
+    SDL_RenderCopy(renderer, info_texture, NULL, &info_rect);
+
     SDL_RenderPresent(renderer);
 }
 
@@ -181,11 +200,6 @@ void gui_loop(uint64_t ips, uint64_t delta_time) {
     SDL_Rect screen_rect = {0, 0, SCREEN_X * font_width, SCREEN_Y * font_height};
     SDL_RenderCopy(renderer, screen_texture, NULL, &screen_rect);
 
-    // clear the line 26 of the screen
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-    SDL_Rect clear_rect = {0, SCREEN_Y * font_height, SCREEN_X * font_width, font_height};
-    SDL_RenderFillRect(renderer, &clear_rect);
-
     // Update the line 26 of the screen with the stack pointer value
     static double last_ips = 0;
     static double last_fps = 0.0;
@@ -200,31 +214,24 @@ void gui_loop(uint64_t ips, uint64_t delta_time) {
         if (iter < SMOOTHING_FACTOR) {
             iter++;
         }
-
         if (iter < 2) {
             last_ips = (double)ips;
             last_fps = 1000.0 / (double)(delta_time + 0.1);
         } else {
             last_ips = (last_ips * (iter-1) + (double)ips) / iter; // smooth the IPS value
             last_fps = (last_fps * (iter-1) + 1000.0 / (double)(delta_time + 0.1)) / iter; // smooth the FPS value
-
         }
         snprintf(str, sizeof(str), "CPU: %.1fMHz, FPS: %.1f", last_ips / 1000000, last_fps);
     }
-
-
+    while (strlen(str) < 80) {
+        strcat(str, " ");
+    }
 
     SDL_Color color = {255, 255, 255, 255}; // white color
     SDL_Surface *surface = TTF_RenderText_Solid(font, str, color);
-    SDL_Texture *texture = SDL_CreateTextureFromSurface(renderer, surface);
+    info_texture = SDL_CreateTextureFromSurface(renderer, surface);
 
-    SDL_Rect dstrect = {0, SCREEN_Y * font_height, surface->w, surface->h};
-    SDL_RenderCopy(renderer, texture, NULL, &dstrect);
-
-    SDL_FreeSurface(surface);
-    SDL_DestroyTexture(texture);
-
-    SDL_RenderPresent(renderer);
+    update_gui();
 }
 #endif
 
@@ -296,10 +303,11 @@ char *opcode_to_string(uint8_t opcode) {
         case 0x13: return "in";
         case 0x14: return "sleep";
         case 0x15: return "ssp";
-        case 0x16: return "dump";
-        case 0x17: return "mss";
-        case 0x18: return "pushs";
-        case 0x19: return "pops";
+        case 0x16: return "mss";
+        case 0x17: return "pushs";
+        case 0x18: return "pops";
+        case 0x19: return "memset";
+        case 0x1A: return "memmov";
         case 0xFF: return "halt";
         default:
             fprintf(stderr, "Error: Unknown opcode 0x%02X\n", opcode);
@@ -316,33 +324,33 @@ uint16_t port_in(uint16_t port) {
             fprintf(stderr, "Redstone input from port 0x%04X\n", port);
             return 0;
         case 0x1010:
-        #ifdef GUI
-        if (use_gui) {
-            if (keyboard_buffer_size == 0)
-                return 0;
+            #ifdef GUI
+            if (use_gui) {
+                if (keyboard_buffer_size == 0)
+                    return 0;
 
-            keyboard_event_t kevent = keyboard_buffer[0];
-            return kevent.type;
-        }
-        #endif
-        fprintf(stderr, "Keyboard input requested but GUI is not enabled\n");
-        return 0;
-        case 0x1011:
-        #ifdef GUI
-        if (use_gui) {
-            if (keyboard_buffer_size == 0)
-                return 0;
-
-            keyboard_event_t kevent = keyboard_buffer[0];
-            // shift the buffer
-            for (int i = 1; i < keyboard_buffer_size; i++) {
-                keyboard_buffer[i - 1] = keyboard_buffer[i];
+                keyboard_event_t kevent = keyboard_buffer[0];
+                return kevent.type;
             }
-            keyboard_buffer_size--;
-            return kevent.value;
-        }
-        #endif
-        fprintf(stderr, "Keyboard input requested but GUI is not enabled\n");
+            #endif
+            fprintf(stderr, "Keyboard input requested but GUI is not enabled\n");
+            return 0;
+        case 0x1011:
+            #ifdef GUI
+            if (use_gui) {
+                if (keyboard_buffer_size == 0)
+                    return 0;
+
+                keyboard_event_t kevent = keyboard_buffer[0];
+                // shift the buffer
+                for (int i = 1; i < keyboard_buffer_size; i++) {
+                    keyboard_buffer[i - 1] = keyboard_buffer[i];
+                }
+                keyboard_buffer_size--;
+                return kevent.value;
+            }
+            #endif
+            fprintf(stderr, "Keyboard input requested but GUI is not enabled\n");
         return 0;
         default:
             fprintf(stderr, "Input from port 0x%04X\n", port);
@@ -359,9 +367,19 @@ void port_out(uint16_t port, uint16_t value) {
             fprintf(stderr, "Redstone output to port 0x%04X: %04X\n", port, value);
             break;
         case 0x1000:
+            fprintf(stderr, "0x%x\n", value);
+            break;
+        case 0x1001:
+            fprintf(stderr, "%d\n", value);
+            break;
+        case 0x1002:
+            putchar(value & 0xFF);
+            break;
+        case 0x1020:
             fprintf(stderr, "update_gui: port 0x%04X, value 0x%04X\n", port, value);
             #ifdef GUI
             if (use_gui) {
+                render_screen();
                 update_gui();
             }
             #endif
@@ -378,7 +396,7 @@ void execute_program() {
 
     #ifdef GUI
     int icount = 0;
-    int update_interval = 100000;
+    int update_interval = 1000000;
     uint64_t last_time = 0;
     uint64_t sleep_to = 0;
     #endif
@@ -498,11 +516,7 @@ void execute_program() {
                 sp = RVAL(source0, xmem[pc]);
                 pc++;
                 break;
-            case 0x16: // dump
-                fprintf(stderr, "0x%x (%d)\n", RVAL(source0, xmem[pc]), RVAL(source0, xmem[pc]));
-                pc++;
-                break;
-            case 0x17: // mss
+            case 0x16: // mss
             {
                 uint16_t dest = RVAL(source0, xmem[pc])     + RVAL(source1, xmem[pc + 1]);
                 uint16_t src  = RVAL(source2, xmem[pc + 2]) + RVAL(source3, xmem[pc + 3]);
@@ -512,16 +526,52 @@ void execute_program() {
                 pc += 4;
                 break;
             }
-            case 0x18: // pushs
+            case 0x17: // pushs
                 rwmem[sp]--;
                 rwmem[rwmem[sp]] = rwmem[(uint16_t)(RVAL(source0, xmem[pc]) + RVAL(source1, xmem[pc + 1]))];
                 pc += 2;
                 break;
-            case 0x19: // pops
+            case 0x18: // pops
                 rwmem[(uint16_t)(RVAL(source0, xmem[pc]) + RVAL(source1, xmem[pc + 1]))] = rwmem[rwmem[sp]];
                 rwmem[sp]++;
                 pc += 2;
                 break;
+            case 0x19: // memset
+            {
+                uint16_t addr = RVAL(source0, xmem[pc]);
+                uint16_t val  = RVAL(source1, xmem[pc + 1]);
+                uint16_t size = RVAL(source2, xmem[pc + 2]);
+
+                DEBUGF("memset: [%04X] = %04X, size = %04X\n", addr, val, size);
+                for (uint16_t i = 0; i < size && (addr + i) < MEMORY_SIZE; i++) {
+                    rwmem[addr + i] = val;
+                }
+                pc += 3;
+                break;
+            }
+            case 0x1A: // memmov
+            {
+                uint16_t dest = RVAL(source0, xmem[pc]);
+                uint16_t src  = RVAL(source1, xmem[pc + 1]);
+                uint16_t size = RVAL(source2, xmem[pc + 2]);
+
+                DEBUGF("memmov: [%04X] = [%04X], size = %04X\n", dest, src, size);
+                if (src < dest) {
+                    for (int i = size - 1; i >= 0; i--) {
+                        if ((src + i) < MEMORY_SIZE && (dest + i) < MEMORY_SIZE) {
+                            rwmem[dest + i] = rwmem[src + i];
+                        }
+                    }
+                } else {
+                    for (uint16_t i = 0; i < size; i++) {
+                        if ((src + i) < MEMORY_SIZE && (dest + i) < MEMORY_SIZE) {
+                            rwmem[dest + i] = rwmem[src + i];
+                        }
+                    }
+                }
+                pc += 3;
+                break;
+            }
             case 0xFF: // halt
                 return;
             default:

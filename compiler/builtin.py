@@ -60,7 +60,39 @@ def blt_dump(args: list):
     output = out.output_code()
 
     output.atend(op.calculate_rpn(args[0]))
-    output.add("dump", (2, 0))
+
+    output.add("out", (1, 0x1001), (2, 0))
+
+    output.add("pop", (1, 0))
+
+    return output
+
+def blt_memset(args: list):
+    output = out.output_code()
+
+    output.atend(op.calculate_rpn(args[0]))
+    output.atend(op.calculate_rpn(args[1]))
+    output.atend(op.calculate_rpn(args[2]))
+
+    output.add("memset", (2, 2), (2, 1), (2, 0))
+
+    output.add("pop", (1, 0))
+    output.add("pop", (1, 0))
+    output.add("pop", (1, 0))
+
+    return output
+
+def blt_memmov(args: list):
+    output = out.output_code()
+
+    output.atend(op.calculate_rpn(args[0]))
+    output.atend(op.calculate_rpn(args[1]))
+    output.atend(op.calculate_rpn(args[2]))
+
+    output.add("memmov", (2, 2), (2, 1), (2, 0))
+
+    output.add("pop", (1, 0))
+    output.add("pop", (1, 0))
     output.add("pop", (1, 0))
 
     return output
@@ -98,6 +130,8 @@ def add_builtin_functions():
     defs.func("in",          1, True,  is_builtin=True, blt_handler = blt_in).add()
     defs.func("sleep",       1, False, is_builtin=True, blt_handler = blt_sleep).add()
     defs.func("dump",        1, False, is_builtin=True, blt_handler = blt_dump).add()
+    defs.func("memset",      3, False, is_builtin=True, blt_handler = blt_memset).add()
+    defs.func("memmov",      3, False, is_builtin=True, blt_handler = blt_memmov).add()
     defs.func("halt",        0, False, is_builtin=True, blt_handler = blt_halt).add()
     defs.func("_get_sp",     0, True,  is_builtin=True, blt_handler = blt_get_sp).add()
     defs.func("_get_screen", 0, True,  is_builtin=True, blt_handler = blt_get_screen).add()
