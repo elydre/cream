@@ -41,7 +41,10 @@ custom instruction set, esoteric programming language, single pass compiler, and
 ```c
 // this is a comment
 
-/* everything is a u16, the language is not typed
+/* Everything is a 16-bit word.
+** The language has no type system.
+** Values, pointers and characters are all
+** represented by the same 16-bit value.
 */
 : var             // variable declaration
 : ptr str i       // multiple variable declaration
@@ -49,26 +52,26 @@ custom instruction set, esoteric programming language, single pass compiler, and
 $ hello           // static variable declaration (set to 0)
 $ var = 3         // static variable declaration with initialization
 
-/* the language use RPN (Reverse Polish Notation)
+/* The language use RPN (Reverse Polish Notation).
 */
 var = 3           // variable assignment
 var = 3 4 +       // assignment from RPN expression (3 + 4)
 var = i           // assignment from another variable
 
-/* strings are stored in the heap
-** the variable is a pointer to the string
+/* Strings are stored in the heap, the variable
+** is a pointer to the string.
 */
 str = "hello"     // string assignment
 
-/* pointers are memory accesses to an address
+/* Pointers are memory accesses to an address.
 */
 var = [0]         // variable assignment from memory address 0
 [0] = var         // memory address 0 assignment from variable
 var = [str]       // variable assignment from string pointer
 var = [str 1 +]   // assignment from string pointer + 1 (next character)
 
-/* the built-in function alloca() allocates memory
-** on the stack and returns a pointer to it
+/* The built-in function alloca() allocates memory
+** on the stack and returns a pointer to it.
 */
 ptr = alloca(10)  // allocate 10 bytes on the stack
 [ptr] = 3         // assign 3 to the first byte of the allocation

@@ -36,6 +36,14 @@ func shell_sp(argc, argv) {
     print("\n")
 }
 
+func shell_time(argc, argv) {
+    : t
+    t = in(0x1030)
+    print("Current time: ")
+    putnbr(t)
+    print("\n")
+}
+
 func interpret(buffer) {
     : arg_count
     : args i
@@ -61,6 +69,8 @@ func interpret(buffer) {
         shell_echo(arg_count, args)
     } elif streq([args], "sp") {
         shell_sp(arg_count, args)
+    } elif streq([args], "time") {
+        shell_time(arg_count, args)
     } else {
         print("unknown command: ")
         print([args])
