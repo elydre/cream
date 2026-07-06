@@ -11,11 +11,12 @@ func shell() {
 
     while 1 {
         print("> ")
-        if input(buffer, 20) {
-            print("you said: ")
-            print(buffer)
-            print("\n")
+        if input(buffer, 20) 0 == {
+            continue
         }
+        print("you said: ")
+        print(buffer)
+        print("\n")
     }
 }
 

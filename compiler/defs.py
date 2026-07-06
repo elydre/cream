@@ -111,8 +111,8 @@ OPCODES = [
     opcode("lt",     0x0B, 2),
     opcode("gt",     0x0C, 2),
     opcode("and",    0x0D, 2),
-    opcode("or",     0x0E, 2),
-    opcode("not",    0x0F, 1),
+    opcode("band",   0x0E, 2),
+    opcode("bor",    0x0F, 2),
     opcode("jmp",    0x10, 2),
     opcode("jmpr",   0x11, 2),
     opcode("out",    0x12, 2),
@@ -133,7 +133,7 @@ MAGIC_NUMBER = 0xF057
 ARCH_VERSION = 0x0001
 
 CHARS_SPE = [",", "(", ")", ":", "=", "{", "}", "[", "]", "&", "$", "!", "//", "' '", "#"]
-CHARS_OPR = ["+", "-", "*", "/", "%", "==", "!=", "<", ">"]
+CHARS_OPR = ["+", "-", "*", "/", "%", "==", "!=", "<", ">", "&&", "|"]
 CHARS_SPE += CHARS_OPR
 
 KEYWORDS = ["if", "elif", "else", "while", "func", "return", "break", "continue", "for"]

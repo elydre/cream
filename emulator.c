@@ -304,8 +304,8 @@ char *opcode_to_string(uint8_t opcode) {
         case 0x0B: return "lt";
         case 0x0C: return "gt";
         case 0x0D: return "and";
-        case 0x0E: return "or";
-        case 0x0F: return "not";
+        case 0x0E: return "band";
+        case 0x0F: return "bor";
         case 0x10: return "jmp";
         case 0x11: return "jmpr";
         case 0x12: return "out";
@@ -487,16 +487,16 @@ void execute_program() {
                 pc += 2;
                 break;
             case 0x0D: // and
+                WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) && RVAL(source1, xmem[pc + 1]));
+                pc += 2;
+                break;
+            case 0x0E: // band
                 WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) & RVAL(source1, xmem[pc + 1]));
                 pc += 2;
                 break;
-            case 0x0E: // or
+            case 0x0F: // bor
                 WVAL(xmem[pc], source0, RVAL(source0, xmem[pc]) | RVAL(source1, xmem[pc + 1]));
                 pc += 2;
-                break;
-            case 0x0F: // not
-                WVAL(xmem[pc], source0, ~RVAL(source0, xmem[pc]));
-                pc++;
                 break;
             case 0x10: // jmp
                 if (RVAL(source1, xmem[pc + 1]) == 0)

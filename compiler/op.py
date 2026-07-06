@@ -136,7 +136,7 @@ def calculate_rpn(rpn: list):
             stack_size += 1
 
 
-        elif token in ['+', '-', '*', '/', '%', '==', '!=', '<', '>']:
+        elif token in defs.CHARS_OPR:
 
             if tmp_number is not None:
                 a = (2, 0)
@@ -164,6 +164,10 @@ def calculate_rpn(rpn: list):
                 output.add("lt", a, b)
             elif token == '>':
                 output.add("gt", a, b)
+            elif token == '&&':
+                output.add("and", a, b)
+            elif token == '|':
+                output.add("bor", a, b)
 
             if tmp_number is None:
                 output.add("pop",
@@ -176,6 +180,9 @@ def calculate_rpn(rpn: list):
 
         if stack_size < 1:
             utl.say_error("Invalid RPN expression: not enough values on the stack")
+
+    if have_ampersand:
+        utl.say_error("Invalid RPN expression: unexpected '&' at the end of the expression")
 
     if stack_size > 1:
         utl.say_error("Invalid RPN expression: too many values on the stack after evaluation")

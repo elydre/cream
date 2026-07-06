@@ -2,4 +2,5 @@ $screen
 screen = _get_screen()
 
 #include "screen.crm"
+#include "string.crm"
 #include "input.crm"
