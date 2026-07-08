@@ -1,0 +1,9 @@
+$ screen
+$ screen_x
+$ screen_y
+
+screen = _get_screen()
+
+#include "screen.li"
+#include "string.li"
+#include "input.li"

@@ -1,6 +1,6 @@
-# cream
+# cream & ancolie
 
-custom instruction set, esoteric programming language, single pass compiler, and emulator
+custom instruction set, esoteric programming language (`ancolie`), single pass compiler (`llc`), and emulator
 
 ## Todo
 
@@ -22,9 +22,11 @@ custom instruction set, esoteric programming language, single pass compiler, and
 - [x] comments
 - [x] functions
 - [ ] preprocessor
+- [ ] function with variable arguments
 - [ ] heap arrays
 - [ ] sub stack scope
 - [ ] structs
+- [ ] asm statements
 - [ ] some optimizations
 - [ ] multiple source files
 
@@ -36,7 +38,7 @@ custom instruction set, esoteric programming language, single pass compiler, and
 - [ ] langage documentation
 - [ ] create a basic operating system
 
-## programing language
+## ancolie language
 
 ```c
 // this is a comment

@@ -1,4 +1,4 @@
-#include "klib/klib.crm"
+#include "klib/klib.li"
 
 print("is this working?\n\n")
 
@@ -12,6 +12,7 @@ func shell_help(argc, argv) {
     print("halt    halt the system\n")
     print("help    display this help message\n")
     print("sp      print the stack pointer\n")
+    print("time    print the current time\n")
 }
 
 func shell_halt(argc, argv) {
@@ -39,8 +40,11 @@ func shell_sp(argc, argv) {
 func shell_time(argc, argv) {
     : t
     t = in(0x1030)
-    print("Current time: ")
-    putnbr(t)
+
+    print("it is ")
+    putnbr(t 1000 / 6 +)
+    print(":")
+    putnbr(t 1000 % 50 * 833 /)
     print("\n")
 }
 
