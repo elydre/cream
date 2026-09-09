@@ -20,12 +20,12 @@ public class aledblock extends Block {
         super(BlockBehaviour.Properties.of().setId(ModBlocks.keyOfBlock("plate")).sound(SoundType.DEEPSLATE).noOcclusion());
     }
 
-
-
     @Override
     protected InteractionResult useItemOn(ItemStack itemStack, BlockState state, Level level, BlockPos pos,
             Player player, InteractionHand hand, BlockHitResult hitResult) {
-        // please stfu copilot
+        if (level.isClientSide())
+            return InteractionResult.SUCCESS;
+
         player.getInventory().add(new ItemStack(Items.DIAMOND, 3));
         System.out.println("AAAAAAAAAAAAAAAAAAAAAAAAAAAA");
         return InteractionResult.SUCCESS;
