@@ -1,6 +1,6 @@
 {
   "model": {
     "type": "minecraft:model",
-    "model": "aled:block/aled"
+    "model": "aled:block/aledblock"
   }
 }

@@ -7,6 +7,10 @@ import net.minecraft.resources.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.example.networking.ComputerScreenPayload;
+import com.example.networking.OpenComputerPayload;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+
 public class ExampleMod implements ModInitializer {
 	public static final String MOD_ID = "aled";
 
@@ -22,6 +26,15 @@ public class ExampleMod implements ModInitializer {
 		// Proceed with mild caution.
 
 		// LOGGER.info("Hello Fabric world!");
+        PayloadTypeRegistry.clientboundPlay().register(
+                OpenComputerPayload.TYPE,
+                OpenComputerPayload.CODEC
+        );
+
+        PayloadTypeRegistry.clientboundPlay().register(
+            ComputerScreenPayload.TYPE,
+            ComputerScreenPayload.CODEC
+    );
 
         ModBlocks.initialize();
         ModItems.initialize();

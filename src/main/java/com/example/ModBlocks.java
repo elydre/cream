@@ -20,7 +20,7 @@ public class ModBlocks {
 		return Registry.register(BuiltInRegistries.BLOCK, blockKey, block);
 	}
 
-	public static final Block ALED_BLOCK = register("aled", aledblock::new);
+	public static final Block ALED_BLOCK = register("aledblock", aledblock::new);
 
 	public static ResourceKey<Block> keyOfBlock(String name) {
 		return ResourceKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(ExampleMod.MOD_ID, name));

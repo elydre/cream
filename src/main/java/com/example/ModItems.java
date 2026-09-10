@@ -1,11 +1,5 @@
 package com.example;
 
-import com.google.common.base.Supplier;
-
-import com.example.blocks.aledblock;
-
-import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
-import net.fabricmc.fabric.api.event.player.ItemEvents;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
@@ -27,7 +21,7 @@ public class ModItems {
 	}
 
     // public static final Item GREAT_SWORD = register("great_sword", great_sword::new);
-	public static final Item ALED_BLOCK = register_block("aled", ModBlocks.ALED_BLOCK);
+	public static final Item ALED_BLOCK = register_block("aledblock", ModBlocks.ALED_BLOCK);
 
 	public static ResourceKey<Item> keyOfItem(String name) {
 		return ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(ExampleMod.MOD_ID, name));

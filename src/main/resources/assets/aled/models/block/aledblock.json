@@ -2,7 +2,7 @@
   "parent": "minecraft:block/cube_all",
   "ambientocclusion": true,
   "textures": {
-    "all": "aled:block/aled",
-    "particle": "aled:block/aled"
+    "all": "aled:block/aledblock",
+    "particle": "aled:block/aledblock"
   }
 }
