@@ -19,27 +19,25 @@ public class ComputerScreen extends Screen {
         byte[] screen =
             ComputerClientState.getScreen(computerPos);
 
-        if (screen != null) {
-            for (int y = 0; y < 25; y++) {
+        if (screen == null) {
+            return;
+        }
 
-                StringBuilder line = new StringBuilder(80);
+        for (int y = 0; y < 25; y++) {
+            StringBuilder line = new StringBuilder();
 
-                for (int x = 0; x < 80; x++) {
-                    int index = y * 80 + x;
-
-                    char c = (char) (screen[index] & 0xFF);
-                    line.append(c);
-                }
-
-                graphics.text(
-                        font,
-                        line.toString(),
-                        20,
-                        20 + y * font.lineHeight,
-                        0xFFFFFFFF,
-                        false
-                );
+            for (int x = 0; x < 80; x++) {
+                line.append((char) screen[y * 80 + x]);
             }
+
+            graphics.text(
+                    font,
+                    line.toString(),
+                    10,
+                    10 + y * font.lineHeight,
+                    0xFFFFFFFF,
+                    false
+            );
         }
     }
 
