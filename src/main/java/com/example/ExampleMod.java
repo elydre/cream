@@ -38,6 +38,7 @@ public class ExampleMod implements ModInitializer {
 
         ModBlocks.initialize();
         ModItems.initialize();
+        ModBlockEntities.initialize();
 	}
 
 	public static Identifier id(String path) {
