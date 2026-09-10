@@ -49,7 +49,9 @@ public class Cpu {
         return 0;
     }
 
-    public void tick() {
+    public int tick() {
+        // return the "cost" of the instruction executed
+    
         int instruction = xmem.read(pc++);
 
         int opcode = instruction & 0xFF00 >> 8;
@@ -61,98 +63,98 @@ public class Cpu {
 
         switch (opcode) {
             case 0x00: // nop
-                break;
+                return 1;
             case 0x01: // mov
                 WVAL(xmem.read(pc), source0, RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
-                break;
+                return 2;
             case 0x02: // push
                 int v = RVAL(source0, xmem.read(pc));
                 rwmem.write(sp, rwmem.read(sp) - 1);
                 rwmem.write(rwmem.read(sp), v);
                 pc++;
-                break;
+                return 2;
             case 0x03: // pop
                 WVAL(xmem.read(pc), source0, rwmem.read(rwmem.read(sp)));
                 rwmem.write(sp, rwmem.read(sp) + 1);
                 pc++;
-                break;
+                return 2;
             case 0x04: // sub
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) - RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
-                break;
+                return 2;
             case 0x05: // add
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
-                break;
+                return 2;
             case 0x06: // mul
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) * RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
-                break;
+                return 2;
             case 0x07: // div
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) / RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
-                break;
+                return 2;
             case 0x08: // mod
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) % RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
-                break;
+                return 2;
             case 0x09: // eq
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) == RVAL(source1, xmem.read(pc + 1)) ? 1 : 0);
                 pc += 2;
-                break;
+                return 2;
             case 0x0A: // neq
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) != RVAL(source1, xmem.read(pc + 1)) ? 1 : 0);
                 pc += 2;
-                break;
+                return 2;
             case 0x0B: // lt
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) < RVAL(source1, xmem.read(pc + 1)) ? 1 : 0);
                 pc += 2;
-                break;
+                return 2;
             case 0x0C: // gt
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) > RVAL(source1, xmem.read(pc + 1)) ? 1 : 0);
                 pc += 2;
-                break;
+                return 2;
             case 0x0D: // and
                 WVAL(xmem.read(pc), source0, (RVAL(source0, xmem.read(pc)) != 0) && (RVAL(source1, xmem.read(pc + 1)) != 0) ? 1 : 0);
                 pc += 2;
-                break;
+                return 2;
             case 0x0E: // band
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) & RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
-                break;
+                return 2;
             case 0x0F: // bor
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) | RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
-                break;
+                return 2;
             case 0x10: // jmp
                 if (RVAL(source1, xmem.read(pc + 1)) == 0)
                     pc = RVAL(source0, xmem.read(pc));
                 else
                     pc += 2;
-                break;
+                return 2;
             case 0x11: // jmpr
                 if (RVAL(source1, xmem.read(pc + 1)) == 0)
                     pc += RVAL(source0, xmem.read(pc));
                 else
                     pc += 2;
-                break;
+                return 2;
             case 0x12: // out
                 port_out(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
-                break;
+                return 10;
             case 0x13: // in
                 WVAL(xmem.read(pc), source0, port_in(RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
-                break;
+                return 10;
             case 0x14: // sleep
                 // todo
                 pc++;
-                break;
+                return 2;
             case 0x15: // ssp
                 sp = RVAL(source0, xmem.read(pc));
                 pc++;
-                break;
+                return 1;
             case 0x16: // mss
             {
                 int dest = RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1));
@@ -160,18 +162,18 @@ public class Cpu {
 
                 rwmem.write(dest, rwmem.read(src));
                 pc += 4;
-                break;
+                return 4;
             }
             case 0x17: // pushs
                 rwmem.write(sp, rwmem.read(sp) - 1);
                 rwmem.write(rwmem.read(sp), rwmem.read(RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
-                break;
+                return 4;
             case 0x18: // pops
                 rwmem.write(RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1)), rwmem.read(rwmem.read(sp)));
                 rwmem.write(sp, rwmem.read(sp) + 1);
                 pc += 2;
-                break;
+                return 4;
             case 0x19: // memset
             {
                 int addr = RVAL(source0, xmem.read(pc));
@@ -182,7 +184,7 @@ public class Cpu {
                     rwmem.write(addr + i, val);
                 }
                 pc += 3;
-                break;
+                return 10 + size / 10;
             }
 
             case 0x1A: // memmov
@@ -205,19 +207,20 @@ public class Cpu {
                     }
                 }
                 pc += 3;
-                break;
+                return 10 + size / 20;
             }
             case 0xFF: // halt
-                return;
+                return 1;
             default:
-                return;
+                return 1;
         }
-
-        if (pc >= XMem.SIZE - 10)
-            return;
     }
 
     public boolean screenNeedsUpdate() {
         return true;
+    }
+
+    public int getPC() {
+        return pc;
     }
 }

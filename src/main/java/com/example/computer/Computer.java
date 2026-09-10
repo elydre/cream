@@ -13,9 +13,12 @@ public class Computer {
     }
 
     public void tick() {
-        for (int i = 0; i < 100; i++) {
-            cpu.tick();
+        int cost = 0;
+
+        while (cost < 2000) {
+            cost += cpu.tick();
         }
+        System.out.println("CPU ticked 1000 times. PC: " + cpu.getPC());
     }
 
     public RWMem getMemory() {
