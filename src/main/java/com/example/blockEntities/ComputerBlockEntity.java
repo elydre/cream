@@ -1,7 +1,7 @@
 package com.example.blockEntities;
 
 import com.example.computer.Computer;
-import com.example.computer.Memory;
+import com.example.computer.RWMem;
 import com.example.networking.ComputerScreenPayload;
 
 import java.util.HashSet;
@@ -20,7 +20,7 @@ public class ComputerBlockEntity extends BlockEntity {
 
     private final Set<ServerPlayer> viewers = new HashSet<>();
     private final Computer computer;
-    private final Memory memory;
+    private final RWMem memory;
     private final BlockPos pos;
 
     public ComputerBlockEntity(
@@ -42,7 +42,7 @@ public class ComputerBlockEntity extends BlockEntity {
         byte[] screenData = new byte[80 * 25];
 
         for (int i = 0; i < screenData.length; i++) {
-            screenData[i] = (byte) memory.read(Memory.SCREEN_BASE + i);
+            screenData[i] = (byte) memory.read(RWMem.SCREEN_BASE + i);
         }
 
         ComputerScreenPayload screenPayload =

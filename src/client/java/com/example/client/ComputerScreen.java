@@ -27,7 +27,11 @@ public class ComputerScreen extends Screen {
             StringBuilder line = new StringBuilder();
 
             for (int x = 0; x < 80; x++) {
-                line.append((char) screen[y * 80 + x]);
+                if (screen[y * 80 + x] == 0) {
+                    line.append(' ');
+                } else {
+                    line.append((char) screen[y * 80 + x]);
+                }
             }
 
             graphics.text(
