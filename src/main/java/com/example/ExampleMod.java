@@ -34,11 +34,12 @@ public class ExampleMod implements ModInitializer {
         PayloadTypeRegistry.clientboundPlay().register(
             ComputerScreenPayload.TYPE,
             ComputerScreenPayload.CODEC
-    );
+        );
 
         ModBlocks.initialize();
         ModItems.initialize();
         ModBlockEntities.initialize();
+        ModCreativeTabs.initialize();
 	}
 
 	public static Identifier id(String path) {
