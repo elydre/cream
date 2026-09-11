@@ -1,8 +1,8 @@
 package com.example.items;
 
+import com.example.components.FloppyProgram;
 import com.example.ModComponents;
 import com.example.ModItems;
-import com.example.components.FloppyProgram;
 
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,7 +17,6 @@ public class floppyDisk extends Item {
     }
 
     public static byte[] getProgram(ItemStack stack) {
-
         FloppyProgram program =
                 stack.get(ModComponents.FLOPPY_PROGRAM);
 
@@ -30,11 +29,12 @@ public class floppyDisk extends Item {
 
     public static void setProgram(
             ItemStack stack,
+            String author,
             byte[] program
     ) {
         stack.set(
                 ModComponents.FLOPPY_PROGRAM,
-                new FloppyProgram(program.clone())
+                new FloppyProgram(author, program.clone())
         );
     }
 

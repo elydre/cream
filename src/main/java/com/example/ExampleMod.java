@@ -1,7 +1,7 @@
 package com.example;
 
 import net.fabricmc.api.ModInitializer;
-
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.resources.Identifier;
 
 import org.slf4j.Logger;
@@ -9,6 +9,8 @@ import org.slf4j.LoggerFactory;
 
 import com.example.networking.ComputerScreenPayload;
 import com.example.networking.OpenComputerPayload;
+
+import net.fabricmc.fabric.api.item.v1.ItemComponentTooltipProviderRegistry;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 
 public class ExampleMod implements ModInitializer {
@@ -37,9 +39,15 @@ public class ExampleMod implements ModInitializer {
         );
 
         ModBlocks.initialize();
-        ModItems.initialize();
         ModBlockEntities.initialize();
         ModComponents.initialize();
+        ModItems.initialize();
+
+        ItemComponentTooltipProviderRegistry.addAfter(
+                DataComponents.DAMAGE,
+                ModComponents.FLOPPY_PROGRAM
+        );
+
         ModCreativeTabs.initialize();
     }
 

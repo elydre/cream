@@ -2,5 +2,7 @@
     "creativeTab.aled": "aled",
     "block.aled.aledblock": "Aled Block",
     "block.aled.flash_machine": "Flash Machine",
-    "item.aled.floppy_disk": "Floppy Disk"
+    "item.aled.floppy_disk": "Floppy Disk",
+    "component.aled.floppy_disk.author": "Author: %s",
+    "component.aled.floppy_disk.program_size": "Program Size: %s B"
 }
