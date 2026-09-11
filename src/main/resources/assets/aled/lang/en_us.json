@@ -1,5 +1,6 @@
 {
-    "block.aled.aledblock": "Aled Block",
     "creativeTab.aled": "aled",
+    "block.aled.aledblock": "Aled Block",
+    "block.aled.flash_machine": "Flash Machine",
     "item.aled.floppy_disk": "Floppy Disk"
 }
