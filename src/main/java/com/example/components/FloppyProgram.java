@@ -13,30 +13,28 @@ import net.minecraft.world.item.component.TooltipProvider;
 import java.util.List;
 import java.util.function.Consumer;
 
-public record FloppyProgram(String author, byte[] data) implements TooltipProvider {
-    private static final Codec<byte[]> BYTE_ARRAY_CODEC =
-            Codec.list(Codec.BYTE)
-                    .xmap(
-                            list -> {
-                                byte[] bytes = new byte[list.size()];
+public record FloppyProgram(String author, short[] data) implements TooltipProvider {
+        private static final Codec<short[]> SHORT_ARRAY_CODEC = Codec.list(Codec.SHORT)
+                .xmap(
+                    list -> {
+                        short[] shorts = new short[list.size()];
 
-                                for (int i = 0; i < list.size(); i++) {
-                                    bytes[i] = list.get(i);
-                                }
+                        for (int i = 0; i < list.size(); i++) {
+                            shorts[i] = list.get(i);
+                        }
 
-                                return bytes;
-                            },
-                            bytes -> {
-                                List<Byte> list =
-                                        new java.util.ArrayList<>(bytes.length);
+                        return shorts;
+                    },
+                    shorts -> {
+                        List<Short> list = new java.util.ArrayList<>(shorts.length);
 
-                                for (byte b : bytes) {
-                                    list.add(b);
-                                }
+                        for (short value : shorts) {
+                            list.add(value);
+                        }
 
-                                return list;
-                            }
-                    );
+                        return list;
+                    }
+                );
 
     public static final Codec<FloppyProgram> CODEC =
             RecordCodecBuilder.create(instance ->
@@ -45,7 +43,7 @@ public record FloppyProgram(String author, byte[] data) implements TooltipProvid
                                     .fieldOf("author")
                                     .forGetter(FloppyProgram::author),
 
-                            BYTE_ARRAY_CODEC
+                            SHORT_ARRAY_CODEC
                                     .fieldOf("data")
                                     .forGetter(FloppyProgram::data)
                     ).apply(
@@ -53,10 +51,7 @@ public record FloppyProgram(String author, byte[] data) implements TooltipProvid
                             FloppyProgram::new
                     )
             );
-
-
-
-    public byte[] copyData() {
+        public short[] copyData() {
         return data.clone();
     }
 

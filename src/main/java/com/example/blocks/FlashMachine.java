@@ -1,6 +1,6 @@
 package com.example.blocks;
 
-import com.example.items.floppyDisk;
+import com.example.items.FloppyDisk;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -15,9 +15,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.level.Level;
 
 
-public class flashmachine extends Block {
+public class FlashMachine extends Block {
 
-    public flashmachine(Properties properties) {
+    public FlashMachine(Properties properties) {
         super(properties);
     }
 
@@ -38,22 +38,23 @@ public class flashmachine extends Block {
         if (player instanceof ServerPlayer serverPlayer) {
             // check if the item in player's hand is a floppy disk
 
-            if (itemStack.getItem() instanceof floppyDisk) {
+            if (itemStack.getItem() instanceof FloppyDisk) {
                 // get the data from the floppy disk
-                byte[] data = floppyDisk.getProgram(itemStack);
+                short[] data = FloppyDisk.getProgram(itemStack);
 
                 // do something with the data, e.g., print it to the console
                 System.out.println("Data from floppy disk: ");
                 if (data != null) {
-                    for (byte b : data) {
-                        System.out.print(b + " ");
+                    int sum = 0;
+                    for (short value : data) {
+                        // print each value as unsigned short (0 to 65535)
+                        System.out.print((value & 0xFFFF) + " ");
+                        sum += (value & 0xFFFF);
                     }
                     System.out.println();
+                    System.out.println("Sum: " + sum);
                 } else {
-                    // write a program to the floppy disk if it doesn't have one
-                    byte[] newProgram = {1, 2, 3, 4, 5}; // example program data
-                    floppyDisk.setProgram(itemStack, "hello", newProgram);
-                    System.out.println("Wrote new program to floppy disk.");
+                    System.out.println("No data found on the floppy disk.");
                 }
             } else {
                 // if the item is not a floppy disk, send a message to the player

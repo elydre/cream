@@ -7,8 +7,8 @@ import com.example.ModItems;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
-public class floppyDisk extends Item {
-    public floppyDisk() {
+public class FloppyDisk extends Item {
+    public FloppyDisk() {
         super(new Item.Properties().setId(ModItems.keyOfItem("floppy_disk")).stacksTo(1));
     }
 
@@ -16,7 +16,7 @@ public class floppyDisk extends Item {
         return stack.has(ModComponents.FLOPPY_PROGRAM);
     }
 
-    public static byte[] getProgram(ItemStack stack) {
+    public static short[] getProgram(ItemStack stack) {
         FloppyProgram program =
                 stack.get(ModComponents.FLOPPY_PROGRAM);
 
@@ -30,7 +30,7 @@ public class floppyDisk extends Item {
     public static void setProgram(
             ItemStack stack,
             String author,
-            byte[] program
+            short[] program
     ) {
         stack.set(
                 ModComponents.FLOPPY_PROGRAM,

@@ -2,6 +2,7 @@ package com.example.blockEntities;
 
 import com.example.computer.Computer;
 import com.example.computer.RWMem;
+import com.example.items.FloppyDisk;
 import com.example.networking.ComputerScreenPayload;
 
 import java.util.HashSet;
@@ -12,9 +13,12 @@ import com.example.ModBlockEntities;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 
 public class ComputerBlockEntity extends BlockEntity {
 
@@ -22,6 +26,8 @@ public class ComputerBlockEntity extends BlockEntity {
     private final Computer computer;
     private final RWMem memory;
     private final BlockPos pos;
+
+    private ItemStack floppyDisk = ItemStack.EMPTY;
 
     public ComputerBlockEntity(
             BlockPos pos,
@@ -89,5 +95,55 @@ public class ComputerBlockEntity extends BlockEntity {
 
     public void removeViewer(ServerPlayer player) {
         viewers.remove(player);
+    }
+
+    public boolean hasFloppyDisk() {
+        return !floppyDisk.isEmpty();
+    }
+
+    public short[] getFloppyDiskData() {
+        if (floppyDisk.isEmpty()) {
+            return null;
+        }
+
+        return FloppyDisk.getProgram(floppyDisk);
+    }
+
+    public boolean insertFloppyDisk(ItemStack stack) {
+        if (!floppyDisk.isEmpty()) {
+            return false;
+        }
+
+        if (!(stack.getItem() instanceof FloppyDisk)) {
+            return false;
+        }
+
+        floppyDisk = stack.copyWithCount(1);
+        stack.shrink(1);
+
+        setChanged();
+
+        return true;
+    }
+
+    protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+
+        if (!floppyDisk.isEmpty()) {
+            output.store(
+                    "FloppyDisk",
+                    ItemStack.CODEC,
+                    floppyDisk
+            );
+        }
+    }
+
+    protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+
+        floppyDisk = input.read(
+                "FloppyDisk",
+                ItemStack.CODEC
+        ).orElse(ItemStack.EMPTY);
     }
 }

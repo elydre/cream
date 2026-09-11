@@ -7,7 +7,7 @@
     "item.aled.floppy_disk": "Floppy Disk",
 
     "component.aled.floppy_disk.author": "Author: %s",
-    "component.aled.floppy_disk.program_size": "Program Size: %s B",
+    "component.aled.floppy_disk.program_size": "Size: %s Words",
 
     "command.aled.flash.no_floppy": "Error: No floppy disk in hand.",
     "command.aled.flash.downloading": "Downloading program...",
@@ -15,5 +15,6 @@
     "command.aled.flash.invalid_url": "Error: Invalid URL.",
     "command.aled.flash.download_error": "Error: Failed to download the program.",
     "command.aled.flash.program_too_large": "Error: Program is too large.",
-    "command.aled.flash.success": "Program flashed! Size: %s B."
+    "command.aled.flash.invalid_program_size": "Error: Invalid program size.",
+    "command.aled.flash.success": "Program flashed! Size: %s Words."
 }

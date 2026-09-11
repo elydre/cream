@@ -2,8 +2,8 @@ package com.example;
 
 import java.util.function.Function;
 
-import com.example.blocks.aledblock;
-import com.example.blocks.flashmachine;
+import com.example.blocks.AledBlock;
+import com.example.blocks.FlashMachine;
 
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -33,8 +33,8 @@ public class ModBlocks {
         );
     }
 
-    public static final Block ALED_BLOCK = register("aledblock", aledblock::new);
-    public static final Block FLASH_MACHINE = register("flash_machine", flashmachine::new);
+    public static final Block ALED_BLOCK = register("aledblock", AledBlock::new);
+    public static final Block FLASH_MACHINE = register("flash_machine", FlashMachine::new);
 
     public static ResourceKey<Block> keyOfBlock(String name) {
         return ResourceKey.create(

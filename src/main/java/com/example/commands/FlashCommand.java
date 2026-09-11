@@ -3,7 +3,7 @@ package com.example.commands;
 import com.example.ModComponents;
 import com.example.components.FloppyProgram;
 
-import com.example.items.floppyDisk;
+import com.example.items.FloppyDisk;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 
@@ -92,7 +92,7 @@ public class FlashCommand {
 
     private static boolean isHoldingFloppyDisk(ServerPlayer player) {
         ItemStack stack = player.getMainHandItem();
-        return stack.getItem() instanceof floppyDisk;
+        return stack.getItem() instanceof FloppyDisk;
     }
 
     private static void downloadProgram(
@@ -124,11 +124,21 @@ public class FlashCommand {
             return;
         }
 
-        byte[] program = response.body();
+        byte[] downloadedProgram = response.body();
 
-        if (program.length > MAX_PROGRAM_SIZE) {
+        if (downloadedProgram.length > MAX_PROGRAM_SIZE) {
             sendErrorToPlayer(server, player, "command.aled.flash.program_too_large");
             return;
+        }
+
+        if (downloadedProgram.length % 2 != 0 || downloadedProgram.length == 0) {
+            sendErrorToPlayer(server, player, "command.aled.flash.invalid_program_size");
+            return;
+        }
+
+        short[] program = new short[downloadedProgram.length / 2];
+        for (int i = 0; i < program.length; i++) {
+            program[i] = (short) ((downloadedProgram[i * 2] & 0xFF) | ((downloadedProgram[i * 2 + 1] & 0xFF) << 8));
         }
 
         flashProgram(server, player, program);
@@ -137,12 +147,12 @@ public class FlashCommand {
     private static void flashProgram(
             MinecraftServer server,
             ServerPlayer player,
-            byte[] program
+            short[] program
     ) {
         server.execute(() -> {
             ItemStack currentStack = player.getMainHandItem();
 
-            if (!(currentStack.getItem() instanceof floppyDisk)) {
+            if (!(currentStack.getItem() instanceof FloppyDisk)) {
                 sendErrorToPlayer(server, player, "command.aled.flash.no_floppy");
                 return;
             }
