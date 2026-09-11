@@ -7,6 +7,7 @@ import com.example.networking.OpenComputerPayload;
 import com.mojang.serialization.MapCodec;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
@@ -48,14 +49,11 @@ public class AledBlock extends BaseEntityBlock {
             if (blockEntity instanceof ComputerBlockEntity computer) {
 
                 if (itemStack.getItem() instanceof FloppyDisk) {
-                    if (computer.insertFloppyDisk(itemStack)) {
-                        player.sendSystemMessage(
-                                Component.literal("Disquette insérée")
-                        );
+                    String error = computer.insertFloppyDisk(itemStack);
+                    if (error == null) {
+                        player.sendSystemMessage(Component.translatable("component.aled.floppy_disk.inserted"));
                     } else {
-                        player.sendSystemMessage(
-                                Component.literal("Impossible d'insérer la disquette")
-                        );
+                        player.sendSystemMessage(Component.translatable(error).withStyle(ChatFormatting.RED));
                     }
 
                     return InteractionResult.SUCCESS;

@@ -4,14 +4,14 @@ public class RWMem {
     public static final int SIZE = 65536;
     public static final int SCREEN_BASE = (SIZE - (80 * 25));
 
-    private final char[] data = new char[SIZE];
+    private final short[] data = new short[SIZE];
 
     public int read(int address) {
         return data[address & 0xFFFF];
     }
 
     public void write(int address, int value) {
-        data[address & 0xFFFF] = (char) (value & 0xFFFF);
+        data[address & 0xFFFF] = (short) (value & 0xFFFF);
     }
 
     public void clear() {

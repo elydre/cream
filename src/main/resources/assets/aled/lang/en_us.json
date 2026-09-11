@@ -8,6 +8,9 @@
 
     "component.aled.floppy_disk.author": "Author: %s",
     "component.aled.floppy_disk.program_size": "Size: %s Words",
+    "component.aled.floppy_disk.inserted": "Floppy disk inserted !",
+    "component.aled.floppy_disk.errinsert_already_inserted": "Error: A floppy disk is already inserted.",
+    "component.aled.floppy_disk.errinsert_no_floppy": "Error: No floppy disk in hand.",
 
     "command.aled.flash.no_floppy": "Error: No floppy disk in hand.",
     "command.aled.flash.downloading": "Downloading program...",
@@ -16,5 +19,15 @@
     "command.aled.flash.download_error": "Error: Failed to download the program.",
     "command.aled.flash.program_too_large": "Error: Program is too large.",
     "command.aled.flash.invalid_program_size": "Error: Invalid program size.",
-    "command.aled.flash.success": "Program flashed! Size: %s Words."
+    "command.aled.flash.success": "Program flashed! Size: %s Words.",
+
+    "block.aled.aledblock.errload_empty_floppy": "Error: Floppy disk is empty.",
+    "block.aled.aledblock.errload_magic_number": "Error: Invalid magic number.",
+    "block.aled.aledblock.errload_arch_version": "Error: Unsupported architecture version.",
+    "block.aled.aledblock.errload_too_many_sections": "Error: Too many sections in program file.",
+    "block.aled.aledblock.errload_unrecognized_section": "Error: Unrecognized section type.",
+    "block.aled.aledblock.errload_section_size1": "Error: Bad section size.",
+    "block.aled.aledblock.errload_section_size2": "Error: Section too large for memory.",
+    "block.aled.aledblock.errload_section_size3": "Error: Section exceeds data size.",
+    "block.aled.aledblock.errload_invalid_header": "Error: Invalid program header."
 }

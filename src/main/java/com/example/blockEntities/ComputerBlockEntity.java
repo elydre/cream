@@ -29,15 +29,8 @@ public class ComputerBlockEntity extends BlockEntity {
 
     private ItemStack floppyDisk = ItemStack.EMPTY;
 
-    public ComputerBlockEntity(
-            BlockPos pos,
-            BlockState state
-    ) {
-        super(
-                ModBlockEntities.ALED_BLOCK_E,
-                pos,
-                state
-        );
+    public ComputerBlockEntity(BlockPos pos, BlockState state) {
+        super(ModBlockEntities.ALED_BLOCK_E, pos, state);
 
         computer = new Computer();
         memory = computer.getMemory();
@@ -77,7 +70,7 @@ public class ComputerBlockEntity extends BlockEntity {
 
         computer.computer.tick();
 
-        if (computer.computer.getCpu().screenNeedsUpdate()) {
+        if (computer.computer.screenNeedsUpdate()) {
             computer.updateScreen();
         }
     }
@@ -109,13 +102,13 @@ public class ComputerBlockEntity extends BlockEntity {
         return FloppyDisk.getProgram(floppyDisk);
     }
 
-    public boolean insertFloppyDisk(ItemStack stack) {
+    public String insertFloppyDisk(ItemStack stack) {
         if (!floppyDisk.isEmpty()) {
-            return false;
+            return "component.aled.floppy_disk.errinsert_already_inserted";
         }
 
         if (!(stack.getItem() instanceof FloppyDisk)) {
-            return false;
+            return "component.aled.floppy_disk.errinsert_no_floppy";
         }
 
         floppyDisk = stack.copyWithCount(1);
@@ -123,11 +116,13 @@ public class ComputerBlockEntity extends BlockEntity {
 
         setChanged();
 
-        return true;
+        return computer.loadProgram(getFloppyDiskData());
     }
 
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
+
+        System.out.println("Saving floppy disk data...");
 
         if (!floppyDisk.isEmpty()) {
             output.store(
@@ -140,6 +135,8 @@ public class ComputerBlockEntity extends BlockEntity {
 
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
+
+        System.out.println("Loading floppy disk data...");
 
         floppyDisk = input.read(
                 "FloppyDisk",
