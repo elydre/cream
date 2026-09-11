@@ -49,6 +49,7 @@ public class ExampleMod implements ModInitializer {
         );
 
         ModCreativeTabs.initialize();
+        ModCommands.initialize();
     }
 
     public static Identifier id(String path) {
