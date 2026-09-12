@@ -27,7 +27,7 @@ public class Computer {
         }
 
         int cost = 0;
-        while (cost < 2000) {
+        while (cost < 4000) {
             cost += cpu.tick() + 1;
         }
 
