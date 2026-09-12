@@ -7,7 +7,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 
-public record OpenComputerPayload(BlockPos pos)
+public record ComputerOpenPayload(BlockPos pos)
         implements CustomPacketPayload {
 
     public static final Identifier ID =
@@ -16,14 +16,14 @@ public record OpenComputerPayload(BlockPos pos)
                     "open_computer"
             );
 
-    public static final CustomPacketPayload.Type<OpenComputerPayload> TYPE =
+    public static final CustomPacketPayload.Type<ComputerOpenPayload> TYPE =
             new CustomPacketPayload.Type<>(ID);
 
-    public static final StreamCodec<RegistryFriendlyByteBuf, OpenComputerPayload> CODEC =
+    public static final StreamCodec<RegistryFriendlyByteBuf, ComputerOpenPayload> CODEC =
             StreamCodec.composite(
                     BlockPos.STREAM_CODEC,
-                    OpenComputerPayload::pos,
-                    OpenComputerPayload::new
+                    ComputerOpenPayload::pos,
+                    ComputerOpenPayload::new
             );
 
     @Override

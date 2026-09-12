@@ -83,10 +83,12 @@ public class ComputerBlockEntity extends BlockEntity {
         if (viewers.contains(player)) {
             return;
         }
+        System.out.println("Adding viewer: " + player.getName().getString());
         viewers.add(player);
     }
 
     public void removeViewer(ServerPlayer player) {
+        System.out.println("Removing viewer: " + player.getName().getString());
         viewers.remove(player);
     }
 

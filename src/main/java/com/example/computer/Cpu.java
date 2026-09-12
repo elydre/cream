@@ -1,14 +1,16 @@
 package com.example.computer;
 
 public class Cpu {
-    private final XMem xmem;
+    private final Ports ports;
     private final RWMem rwmem;
+    private final XMem xmem;
     private int pc = 0;
     private int sp = 0;
 
     private boolean halted = true;
 
-    public Cpu(XMem xmem, RWMem rwmem) {
+    public Cpu(Ports ports, XMem xmem, RWMem rwmem) {
+        this.ports = ports;
         this.rwmem = rwmem;
         this.xmem = xmem;
     }
@@ -39,13 +41,6 @@ public class Cpu {
             case 2: rwmem.write(rwmem.read(sp) + addr, value); break;
             default: return; // should not happen
         }
-    }
-
-    private void port_out(int port, int value) {
-    }
-
-    private int port_in(int port) {
-        return 0;
     }
 
     public int tick() {
@@ -142,11 +137,11 @@ public class Cpu {
                     pc += 2;
                 return 1;
             case 0x12: // out
-                port_out(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)));
+                ports.portOut(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 10;
             case 0x13: // in
-                WVAL(xmem.read(pc), source0, port_in(RVAL(source1, xmem.read(pc + 1))));
+                WVAL(xmem.read(pc), source0, ports.portIn(RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
                 return 10;
             case 0x14: // sleep

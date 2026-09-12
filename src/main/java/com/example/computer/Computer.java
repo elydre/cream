@@ -1,6 +1,7 @@
 package com.example.computer;
 
 public class Computer {
+    private final Ports ports;
     private final RWMem rwmem;
     private final XMem xmem;
     private final Cpu cpu;
@@ -14,9 +15,10 @@ public class Computer {
     private final int SECTION_TYPE_DATA = 1;
 
     public Computer() {
+        ports = new Ports();
         rwmem = new RWMem();
         xmem = new XMem();
-        cpu = new Cpu(xmem, rwmem);
+        cpu = new Cpu(ports, xmem, rwmem);
     }
 
     public void tick() {
@@ -29,7 +31,7 @@ public class Computer {
             cost += cpu.tick() + 1;
         }
 
-        System.out.println("CPU ticked 1000 times. PC: " + cpu.getPC());
+        System.out.println("CPU tick. PC: " + cpu.getPC());
     }
 
     public String loadProgram(short[] program) {
@@ -119,7 +121,11 @@ public class Computer {
         return rwmem;
     }
 
+    public void keyPress(int key) {
+        ports.keyPress(key);
+    }
+
     public boolean screenNeedsUpdate() {
-        return true;
+        return ports.doesScreenNeedUpdate();
     }
 }

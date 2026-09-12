@@ -3,7 +3,7 @@ package com.example.blocks;
 import com.example.ModBlockEntities;
 import com.example.blockEntities.ComputerBlockEntity;
 import com.example.items.FloppyDisk;
-import com.example.networking.OpenComputerPayload;
+import com.example.networking.ComputerOpenPayload;
 import com.mojang.serialization.MapCodec;
 
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -63,7 +63,7 @@ public class AledBlock extends BaseEntityBlock {
 
                 ServerPlayNetworking.send(
                         serverPlayer,
-                        new OpenComputerPayload(pos)
+                        new ComputerOpenPayload(pos)
                 );
             }
         }

@@ -1,5 +1,8 @@
 package com.example.client;
 
+import com.example.networking.ComputerClosePayload;
+
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
@@ -48,6 +51,10 @@ public class ComputerScreen extends Screen {
     @Override
     public void onClose() {
         minecraft.gui.setScreen(null);
+
+        ClientPlayNetworking.send(new ComputerClosePayload(computerPos));
+
+        super.onClose();
     }
 
     @Override

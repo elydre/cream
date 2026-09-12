@@ -1,6 +1,6 @@
 package com.example.client;
 
-import com.example.networking.OpenComputerPayload;
+import com.example.networking.ComputerOpenPayload;
 import com.example.networking.ComputerScreenPayload;
 
 import net.fabricmc.api.ClientModInitializer;
@@ -12,7 +12,7 @@ public class ExampleModClient implements ClientModInitializer {
 	public void onInitializeClient() {
 
         ClientPlayNetworking.registerGlobalReceiver(
-                OpenComputerPayload.TYPE,
+                ComputerOpenPayload.TYPE,
                 (payload, context) -> {
                     Minecraft.getInstance().gui.setScreen(
                             new ComputerScreen(payload.pos())
