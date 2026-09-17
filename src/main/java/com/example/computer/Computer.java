@@ -7,7 +7,7 @@ public class Computer {
     private final Cpu cpu;
 
     // Constants for program loading
-    private final int ARCH_VERSION = 1;
+    private final int ARCH_VERSION = 0x0100;
     private final int MAGIC_NUMBER = 0xF057;
     private final int MAX_SECTIONS = 16;
 

@@ -5,6 +5,7 @@ public class Cpu {
     private final RWMem rwmem;
     private final XMem xmem;
     private int pc = 0;
+    private int up = 0;
     private int sp = 0;
 
     private boolean halted = true;
@@ -21,6 +22,7 @@ public class Cpu {
 
     public void reset() {
         pc = 0;
+        up = 0;
         sp = 0;
         halted = false;
     }
@@ -30,6 +32,7 @@ public class Cpu {
             case 0: return rwmem.read(val);
             case 1: return val;
             case 2: return rwmem.read(rwmem.read(sp) + val);
+            case 3: return rwmem.read(rwmem.read(up) + val);
             default: return 0; // should not happen
         }
     }
@@ -39,6 +42,7 @@ public class Cpu {
             case 0: rwmem.write(addr, value); break;
             case 1: break; // cannot write to immediate value
             case 2: rwmem.write(rwmem.read(sp) + addr, value); break;
+            case 3: rwmem.write(rwmem.read(up) + addr, value); break;
             default: return; // should not happen
         }
     }
@@ -144,12 +148,12 @@ public class Cpu {
                 WVAL(xmem.read(pc), source0, ports.portIn(RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
                 return 10;
-            case 0x14: // sleep
-                // todo
+            case 0x14: // ssp
+                sp = RVAL(source0, xmem.read(pc));
                 pc++;
                 return 1;
-            case 0x15: // ssp
-                sp = RVAL(source0, xmem.read(pc));
+            case 0x15: // sup
+                up = RVAL(source0, xmem.read(pc));
                 pc++;
                 return 1;
             case 0x16: // mss
