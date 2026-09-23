@@ -116,47 +116,55 @@ public class Cpu {
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) > RVAL(source1, xmem.read(pc + 1)) ? 1 : 0);
                 pc += 2;
                 return 1;
-            case 0x0D: // and
+            case 0x0D: // lte
+                WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) <= RVAL(source1, xmem.read(pc + 1)) ? 1 : 0);
+                pc += 2;
+                return 1;
+            case 0x0E: // gte
+                WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) >= RVAL(source1, xmem.read(pc + 1)) ? 1 : 0);
+                pc += 2;
+                return 1;
+            case 0x0F: // and
                 WVAL(xmem.read(pc), source0, (RVAL(source0, xmem.read(pc)) != 0) && (RVAL(source1, xmem.read(pc + 1)) != 0) ? 1 : 0);
                 pc += 2;
                 return 1;
-            case 0x0E: // band
+            case 0x10: // band
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) & RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 1;
-            case 0x0F: // bor
+            case 0x11: // bor
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) | RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 1;
-            case 0x10: // jmp
+            case 0x12: // jmp
                 if (RVAL(source1, xmem.read(pc + 1)) == 0)
                     pc = RVAL(source0, xmem.read(pc));
                 else
                     pc += 2;
                 return 1;
-            case 0x11: // jmpr
+            case 0x13: // jmpr
                 if (RVAL(source1, xmem.read(pc + 1)) == 0)
                     pc += RVAL(source0, xmem.read(pc));
                 else
                     pc += 2;
                 return 1;
-            case 0x12: // out
+            case 0x14: // out
                 ports.portOut(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 10;
-            case 0x13: // in
+            case 0x15: // in
                 WVAL(xmem.read(pc), source0, ports.portIn(RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
                 return 10;
-            case 0x14: // ssp
+            case 0x16: // ssp
                 sp = RVAL(source0, xmem.read(pc));
                 pc++;
                 return 1;
-            case 0x15: // sup
+            case 0x17: // sup
                 up = RVAL(source0, xmem.read(pc));
                 pc++;
                 return 1;
-            case 0x16: // mss
+            case 0x18: // mss
             {
                 int dest = RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1));
                 int src  = RVAL(source2, xmem.read(pc + 2)) + RVAL(source3, xmem.read(pc + 3));
@@ -165,17 +173,17 @@ public class Cpu {
                 pc += 4;
                 return 3;
             }
-            case 0x17: // pushs
+            case 0x19: // pushs
                 rwmem.write(sp, rwmem.read(sp) - 1);
                 rwmem.write(rwmem.read(sp), rwmem.read(RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
                 return 3;
-            case 0x18: // pops
+            case 0x1A: // pops
                 rwmem.write(RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1)), rwmem.read(rwmem.read(sp)));
                 rwmem.write(sp, rwmem.read(sp) + 1);
                 pc += 2;
                 return 3;
-            case 0x19: // memset
+            case 0x1B: // memset
             {
                 int addr = RVAL(source0, xmem.read(pc));
                 int val  = RVAL(source1, xmem.read(pc + 1));
@@ -188,7 +196,7 @@ public class Cpu {
                 return 10 + size / 10;
             }
 
-            case 0x1A: // memmov
+            case 0x1C: // memmov
             {
                 int dest = RVAL(source0, xmem.read(pc));
                 int src  = RVAL(source1, xmem.read(pc + 1));
