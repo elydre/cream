@@ -38,10 +38,10 @@ public class ComputerBlockEntity extends BlockEntity {
     }
 
     private void updateScreen() {
-        byte[] screenData = new byte[80 * 25];
+        short[] screenData = new short[80 * 25];
 
         for (int i = 0; i < screenData.length; i++) {
-            screenData[i] = (byte) memory.read(RWMem.SCREEN_BASE + i);
+            screenData[i] = (short) memory.read(RWMem.SCREEN_BASE + i);
         }
 
         ComputerScreenPayload screenPayload =

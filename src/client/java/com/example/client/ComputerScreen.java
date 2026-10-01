@@ -47,6 +47,32 @@ public class ComputerScreen extends Screen {
                 .register(this::onKeyRelease);
     }
 
+    private static int color4bit_to_mc(int color) {
+        int[] colors = {
+            0xFF000000, // black
+            0xFFAA0000, // red
+            0xFF00AA00, // green
+            0xFFAAAA00, // yellow
+            0xFF0000AA, // blue
+            0xFFAA00AA, // magenta
+            0xFF00AAAA, // cyan
+            0xFFAAAAAA, // white
+            0xFF555555, // bright black (gray)
+            0xFFFF5555, // bright red
+            0xFF55FF55, // bright green
+            0xFFFFFF55, // bright yellow
+            0xFF5555FF, // bright blue
+            0xFFFF55FF, // bright magenta
+            0xFF55FFFF, // bright cyan
+            0xFFFFFFFF  // bright white
+        };
+
+        if (color > 15)
+            return 0xFFFFFFFF;
+
+        return colors[color];
+    }
+
     @Override
     public void extractRenderState(
             GuiGraphicsExtractor graphics,
@@ -54,8 +80,7 @@ public class ComputerScreen extends Screen {
             int mouseY,
             float delta
     ) {
-        byte[] screen = ComputerClientState.getScreen(computerPos);
-
+        short[] screen = ComputerClientState.getScreen(computerPos);
 
         // calculate the starting position to center the screen
         int startX = (this.width - 80 * FONT_X) / 2;
@@ -80,6 +105,8 @@ public class ComputerScreen extends Screen {
 
                 int index = y * 80 + x;
                 char character =  (char) (screen[index] & 0xFF);
+                int fgColor = (screen[index] >> 8) & 0x0F;
+                int bgColor = (screen[index] >> 12) & 0x0F;
 
                 if (character == 0) {
                     character = ' ';
@@ -91,12 +118,22 @@ public class ComputerScreen extends Screen {
                                         Style.EMPTY.withFont(TERMINAL_FONT)
                                 );
 
+                if (bgColor != 0) {
+                    graphics.fill(
+                            startX + x * FONT_X,
+                            startY + y * FONT_Y,
+                            startX + (x + 1) * FONT_X,
+                            startY + (y + 1) * FONT_Y,
+                            color4bit_to_mc(bgColor)
+                    );
+                }
+
                 graphics.text(
                         font,
                         text,
                         startX + x * FONT_X,
                         startY + y * FONT_Y,
-                        0xFFFFFFFF,
+                        color4bit_to_mc(fgColor),
                         false
                 );
             }

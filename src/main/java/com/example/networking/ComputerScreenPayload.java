@@ -8,9 +8,11 @@ import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.network.codec.ByteBufCodecs;
 
+import java.util.ArrayList;
+
 public record ComputerScreenPayload(
         BlockPos computerPos,
-        byte[] screen
+        short[] screen
 ) implements CustomPacketPayload {
     public static final Type<ComputerScreenPayload> TYPE =
             new Type<>(
@@ -22,13 +24,28 @@ public record ComputerScreenPayload(
 
     public static final StreamCodec<RegistryFriendlyByteBuf, ComputerScreenPayload> CODEC =
             StreamCodec.composite(
-                    BlockPos.STREAM_CODEC,
-                    ComputerScreenPayload::computerPos,
+                BlockPos.STREAM_CODEC,
+                ComputerScreenPayload::computerPos,
 
-                    ByteBufCodecs.BYTE_ARRAY,
-                    ComputerScreenPayload::screen,
-
-                    ComputerScreenPayload::new
+                ByteBufCodecs.collection(ArrayList::new, ByteBufCodecs.SHORT)
+                    .map(
+                        values -> {
+                            short[] screen = new short[values.size()];
+                            for (int index = 0; index < values.size(); index++) {
+                                screen[index] = values.get(index);
+                            }
+                            return screen;
+                        },
+                        screen -> {
+                            ArrayList<Short> values = new ArrayList<>(screen.length);
+                            for (short value : screen) {
+                                values.add(value);
+                            }
+                            return values;
+                        }
+                    ),
+                ComputerScreenPayload::screen,
+                ComputerScreenPayload::new
             );
 
     @Override
