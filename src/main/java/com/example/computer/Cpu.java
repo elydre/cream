@@ -60,7 +60,7 @@ public class Cpu {
         int source0 = instruction >> 14 & 0x03;
         int source1 = instruction >> 12 & 0x03;
         int source2 = instruction >> 10 & 0x03;
-        int source3 = instruction >> 8 & 0x03;
+        // int source3 = instruction >> 8 & 0x03;
 
         switch (opcode) {
             case 0x00: // nop
@@ -136,54 +136,56 @@ public class Cpu {
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) | RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 1;
-            case 0x12: // jmp
+            case 0x12: // bnot
+                WVAL(xmem.read(pc), source0, ~RVAL(source0, xmem.read(pc)));
+                pc++;
+                return 1;
+            case 0x13: // bshl
+                WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) << RVAL(source1, xmem.read(pc + 1)));
+                pc += 2;
+                return 1;
+            case 0x14: // bshr
+                WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) >> RVAL(source1, xmem.read(pc + 1)));
+                pc += 2;
+                return 1;
+            case 0x15: // jmp
                 if (RVAL(source1, xmem.read(pc + 1)) == 0)
                     pc = RVAL(source0, xmem.read(pc));
                 else
                     pc += 2;
                 return 1;
-            case 0x13: // jmpr
+            case 0x16: // jmpr
                 if (RVAL(source1, xmem.read(pc + 1)) == 0)
                     pc += RVAL(source0, xmem.read(pc));
                 else
                     pc += 2;
                 return 1;
-            case 0x14: // out
+            case 0x17: // out
                 ports.portOut(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 10;
-            case 0x15: // in
+            case 0x18: // in
                 WVAL(xmem.read(pc), source0, ports.portIn(RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
                 return 10;
-            case 0x16: // ssp
+            case 0x19: // ssp
                 sp = RVAL(source0, xmem.read(pc));
                 pc++;
                 return 1;
-            case 0x17: // sup
+            case 0x1A: // sup
                 up = RVAL(source0, xmem.read(pc));
                 pc++;
                 return 1;
-            case 0x18: // mss
-            {
-                int dest = RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1));
-                int src  = RVAL(source2, xmem.read(pc + 2)) + RVAL(source3, xmem.read(pc + 3));
-
-                rwmem.write(dest, rwmem.read(src));
-                pc += 4;
-                return 3;
-            }
-            case 0x19: // pushs
-                rwmem.write(sp, rwmem.read(sp) - 1);
-                rwmem.write(rwmem.read(sp), rwmem.read(RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1))));
+            case 0x1B: // load
+                WVAL(xmem.read(pc), source0, rwmem.read(RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
                 return 3;
-            case 0x1A: // pops
+            case 0x1C: // pops
                 rwmem.write(RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1)), rwmem.read(rwmem.read(sp)));
                 rwmem.write(sp, rwmem.read(sp) + 1);
                 pc += 2;
                 return 3;
-            case 0x1B: // memset
+            case 0x1D: // memset
             {
                 int addr = RVAL(source0, xmem.read(pc));
                 int val  = RVAL(source1, xmem.read(pc + 1));
@@ -195,8 +197,7 @@ public class Cpu {
                 pc += 3;
                 return 10 + size / 10;
             }
-
-            case 0x1C: // memmov
+            case 0x1E: // memmov
             {
                 int dest = RVAL(source0, xmem.read(pc));
                 int src  = RVAL(source1, xmem.read(pc + 1));
@@ -222,6 +223,7 @@ public class Cpu {
                 halted = true;
                 return 0;
             default:
+                System.err.printf("Unknown opcode: 0x%02X at PC: 0x%04X\n", opcode, pc - 1);
                 return 0;
         }
     }

@@ -7,7 +7,7 @@ public class RWMem {
     private final short[] data = new short[SIZE];
 
     public int read(int address) {
-        return data[address & 0xFFFF];
+        return data[address & 0xFFFF] & 0xFFFF;
     }
 
     public void write(int address, int value) {
