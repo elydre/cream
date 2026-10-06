@@ -69,6 +69,7 @@ public class ComputerBlockEntity extends BlockEntity {
         }
 
         computer.computer.tick();
+        computer.setChanged();
 
         if (computer.computer.screenNeedsUpdate()) {
             computer.updateScreen();
@@ -133,6 +134,8 @@ public class ComputerBlockEntity extends BlockEntity {
                     floppyDisk
             );
         }
+
+        computer.save(output.child("Computer"));
     }
 
     protected void loadAdditional(ValueInput input) {
@@ -144,5 +147,7 @@ public class ComputerBlockEntity extends BlockEntity {
                 "FloppyDisk",
                 ItemStack.CODEC
         ).orElse(ItemStack.EMPTY);
+
+        input.child("Computer").ifPresent(computer::load);
     }
 }

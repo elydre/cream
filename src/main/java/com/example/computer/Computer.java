@@ -1,5 +1,8 @@
 package com.example.computer;
 
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+
 public class Computer {
     private final Ports ports;
     private final RWMem rwmem;
@@ -127,5 +130,19 @@ public class Computer {
 
     public boolean screenNeedsUpdate() {
         return ports.doesScreenNeedUpdate();
+    }
+
+    public void save(ValueOutput output) {
+        rwmem.save(output.child("RWMem"));
+        xmem.save(output.child("XMem"));
+        cpu.save(output.child("CPU"));
+        ports.save(output.child("Ports"));
+    }
+
+    public void load(ValueInput input) {
+        rwmem.load(input.childOrEmpty("RWMem"));
+        xmem.load(input.childOrEmpty("XMem"));
+        cpu.load(input.childOrEmpty("CPU"));
+        ports.load(input.childOrEmpty("Ports"));
     }
 }

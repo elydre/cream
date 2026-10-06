@@ -1,5 +1,8 @@
 package com.example.computer;
 
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+
 public class Cpu {
     private final Ports ports;
     private final RWMem rwmem;
@@ -25,6 +28,20 @@ public class Cpu {
         up = 0;
         sp = 0;
         halted = false;
+    }
+
+    public void save(ValueOutput output) {
+        output.putInt("PC", pc);
+        output.putInt("UP", up);
+        output.putInt("SP", sp);
+        output.putBoolean("Halted", halted);
+    }
+
+    public void load(ValueInput input) {
+        pc = input.getIntOr("PC", 0);
+        up = input.getIntOr("UP", 0);
+        sp = input.getIntOr("SP", 0);
+        halted = input.getBooleanOr("Halted", true);
     }
 
     private int RVAL(int source, int val) {

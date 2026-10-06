@@ -1,5 +1,8 @@
 package com.example.computer;
 
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+
 public class Ports {
     // keyboard buffer
     private int[] keyboardBuffer = new int[16];
@@ -97,5 +100,20 @@ public class Ports {
 
     public boolean doesScreenNeedUpdate() {
         return screenNeedsUpdate;
+    }
+
+    public void save(ValueOutput output) {
+        int[] buffer = new int[keyboardBufferSize];
+        System.arraycopy(keyboardBuffer, 0, buffer, 0, keyboardBufferSize);
+        output.putIntArray("KeyboardBuffer", buffer);
+        output.putBoolean("ScreenNeedsUpdate", screenNeedsUpdate);
+    }
+
+    public void load(ValueInput input) {
+        input.getIntArray("KeyboardBuffer").ifPresent(buffer -> {
+            keyboardBufferSize = Math.min(buffer.length, keyboardBuffer.length);
+            System.arraycopy(buffer, 0, keyboardBuffer, 0, keyboardBufferSize);
+        });
+        screenNeedsUpdate = input.getBooleanOr("ScreenNeedsUpdate", false);
     }
 }
