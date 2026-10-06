@@ -143,8 +143,14 @@ public class ComputerScreen extends Screen {
     private void onKeyPress(Screen screen, KeyEvent event) {
         char key = switch (event.key()) {
             case GLFW.GLFW_KEY_BACKSPACE -> '\b';
+            case GLFW.GLFW_KEY_DELETE -> 0x7F;
             case GLFW.GLFW_KEY_ENTER -> '\r';
             case GLFW.GLFW_KEY_TAB -> '\t';
+            case GLFW.GLFW_KEY_ESCAPE -> 0x1B;
+            case GLFW.GLFW_KEY_UP -> 'R';
+            case GLFW.GLFW_KEY_DOWN -> 'Q';
+            case GLFW.GLFW_KEY_LEFT -> 'P';
+            case GLFW.GLFW_KEY_RIGHT -> 'O';
             default -> 0;
         };
 
@@ -152,7 +158,7 @@ public class ComputerScreen extends Screen {
             return;
         }
 
-        for (int i = 1; i <= 2; i++) {
+        for (int i = 3; i <= 4; i++) {
             ClientPlayNetworking.send(
                     new ComputerKeyPayload(
                             computerPos,
