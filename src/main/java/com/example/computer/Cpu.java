@@ -24,6 +24,7 @@ public class Cpu {
     }
 
     public void reset() {
+        ports.clear();
         pc = 0;
         up = 0;
         sp = 0;

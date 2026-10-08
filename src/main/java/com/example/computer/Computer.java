@@ -37,6 +37,13 @@ public class Computer {
         System.out.println("CPU tick. PC: " + cpu.getPC());
     }
 
+    public void fullreset() {
+        cpu.reset();
+        rwmem.clear();
+        xmem.clear();
+        ports.forceScreenUpdate(); // send the empty screen
+    }
+
     public String loadProgram(short[] program) {
         if (program == null) {
             return "block.aled.aledblock.errload_empty_floppy";

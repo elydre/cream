@@ -9,6 +9,11 @@ public class Ports {
     private int keyboardBufferSize = 0;
     public boolean screenNeedsUpdate = false;
 
+    public void clear() {
+        keyboardBufferSize = 0;
+        screenNeedsUpdate = false;
+    }
+
     public void keyPress(int key) {
         if (keyboardBufferSize < keyboardBuffer.length) {
             keyboardBuffer[keyboardBufferSize++] = key;
@@ -100,6 +105,10 @@ public class Ports {
 
     public boolean doesScreenNeedUpdate() {
         return screenNeedsUpdate;
+    }
+
+    public void forceScreenUpdate() {
+        screenNeedsUpdate = true;
     }
 
     public void save(ValueOutput output) {

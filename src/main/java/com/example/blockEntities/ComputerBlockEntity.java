@@ -97,6 +97,19 @@ public class ComputerBlockEntity extends BlockEntity {
         return !floppyDisk.isEmpty();
     }
 
+    public ItemStack ejectFloppyDisk() {
+        if (floppyDisk.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+
+        computer.fullreset();
+
+        ItemStack ejectedDisk = floppyDisk;
+        floppyDisk = ItemStack.EMPTY;
+        setChanged();
+        return ejectedDisk;
+    }
+
     public short[] getFloppyDiskData() {
         if (floppyDisk.isEmpty()) {
             return null;
