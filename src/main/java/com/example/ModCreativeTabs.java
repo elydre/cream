@@ -1,5 +1,7 @@
 package com.example;
 
+import com.example.items.FloppyDisk;
+
 import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -21,6 +23,9 @@ public class ModCreativeTabs {
                 output.accept(ModItems.ALED_BLOCK);
                 output.accept(ModItems.FLASH_MACHINE);
                 output.accept(ModItems.FLOPP_DISK);
+                output.accept(FloppyDisk.createColoredStack(FloppyDisk.PINK_COLOR));
+                output.accept(FloppyDisk.createColoredStack(FloppyDisk.BLUE_COLOR));
+                output.accept(FloppyDisk.createColoredStack(FloppyDisk.YELLOW_COLOR));
             })
             .build();
 

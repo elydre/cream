@@ -8,8 +8,18 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 
 public class FloppyDisk extends Item {
+    public static final String PINK_COLOR = "pink";
+    public static final String BLUE_COLOR = "blue";
+    public static final String YELLOW_COLOR = "yellow";
+
     public FloppyDisk() {
         super(new Item.Properties().setId(ModItems.keyOfItem("floppy_disk")).stacksTo(1));
+    }
+
+    public static ItemStack createColoredStack(String color) {
+        ItemStack stack = new ItemStack(ModItems.FLOPP_DISK);
+        stack.set(ModComponents.FLOPPY_COLOR, color);
+        return stack;
     }
 
     public static boolean hasProgram(ItemStack stack) {

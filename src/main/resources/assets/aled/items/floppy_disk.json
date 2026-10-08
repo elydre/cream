@@ -1,6 +1,34 @@
 {
   "model": {
-    "type": "minecraft:model",
-    "model": "aled:item/floppy_disk"
+    "type": "minecraft:select",
+    "property": "minecraft:component",
+    "component": "aled:floppy_color",
+    "cases": [
+      {
+        "when": "pink",
+        "model": {
+          "type": "minecraft:model",
+          "model": "aled:item/pink_floppy"
+        }
+      },
+      {
+        "when": "blue",
+        "model": {
+          "type": "minecraft:model",
+          "model": "aled:item/blue_floppy"
+        }
+      },
+      {
+        "when": "yellow",
+        "model": {
+          "type": "minecraft:model",
+          "model": "aled:item/yellow_floppy"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "aled:item/floppy_disk"
+    }
   }
 }
