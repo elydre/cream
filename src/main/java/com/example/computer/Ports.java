@@ -7,7 +7,7 @@ public class Ports {
     // keyboard buffer
     private int[] keyboardBuffer = new int[16];
     private int keyboardBufferSize = 0;
-    public boolean screenNeedsUpdate = false;
+    public boolean screenNeedsUpdate = true;
 
     public void clear() {
         keyboardBufferSize = 0;
