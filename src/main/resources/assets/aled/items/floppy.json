@@ -8,27 +8,27 @@
         "when": "pink",
         "model": {
           "type": "minecraft:model",
-          "model": "aled:item/pink_floppy"
+          "model": "aled:item/floppy_pink"
         }
       },
       {
         "when": "blue",
         "model": {
           "type": "minecraft:model",
-          "model": "aled:item/blue_floppy"
+          "model": "aled:item/floppy_blue"
         }
       },
       {
         "when": "yellow",
         "model": {
           "type": "minecraft:model",
-          "model": "aled:item/yellow_floppy"
+          "model": "aled:item/floppy_yellow"
         }
       }
     ],
     "fallback": {
       "type": "minecraft:model",
-      "model": "aled:item/floppy_disk"
+      "model": "aled:item/floppy"
     }
   }
 }

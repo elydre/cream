@@ -4,13 +4,13 @@
     "block.aled.aledblock": "Aled Block",
     "block.aled.flash_machine": "Flash Machine",
 
-    "item.aled.floppy_disk": "Floppy Disk",
+    "item.aled.floppy": "Floppy Disk",
 
-    "component.aled.floppy_disk.author": "Author: %s",
-    "component.aled.floppy_disk.program_size": "Size: %s Words",
-    "component.aled.floppy_disk.inserted": "Floppy disk inserted !",
-    "component.aled.floppy_disk.errinsert_already_inserted": "Error: A floppy disk is already inserted.",
-    "component.aled.floppy_disk.errinsert_no_floppy": "Error: No floppy disk in hand.",
+    "component.aled.floppy.author": "Author: %s",
+    "component.aled.floppy.program_size": "Size: %s Words",
+    "component.aled.floppy.inserted": "Floppy disk inserted !",
+    "component.aled.floppy.errinsert_already_inserted": "Error: A floppy disk is already inserted.",
+    "component.aled.floppy.errinsert_no_floppy": "Error: No floppy disk in hand.",
 
     "command.aled.flash.no_floppy": "Error: No floppy disk in hand.",
     "command.aled.flash.downloading": "Downloading program...",

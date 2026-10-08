@@ -13,7 +13,7 @@ public class FloppyDisk extends Item {
     public static final String YELLOW_COLOR = "yellow";
 
     public FloppyDisk() {
-        super(new Item.Properties().setId(ModItems.keyOfItem("floppy_disk")).stacksTo(1));
+        super(new Item.Properties().setId(ModItems.keyOfItem("floppy")).stacksTo(1));
     }
 
     public static ItemStack createColoredStack(String color) {

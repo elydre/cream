@@ -120,11 +120,11 @@ public class ComputerBlockEntity extends BlockEntity {
 
     public String insertFloppyDisk(ItemStack stack) {
         if (!floppyDisk.isEmpty()) {
-            return "component.aled.floppy_disk.errinsert_already_inserted";
+            return "component.aled.floppy.errinsert_already_inserted";
         }
 
         if (!(stack.getItem() instanceof FloppyDisk)) {
-            return "component.aled.floppy_disk.errinsert_no_floppy";
+            return "component.aled.floppy.errinsert_no_floppy";
         }
 
         floppyDisk = stack.copyWithCount(1);

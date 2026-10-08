@@ -24,7 +24,7 @@ public class ModItems {
         return Registry.register(BuiltInRegistries.ITEM, itemKey, new BlockItem(block, new Item.Properties().setId(itemKey).useBlockDescriptionPrefix()));
     }
 
-    public static final Item FLOPP_DISK = register_item("floppy_disk", FloppyDisk::new);
+    public static final Item FLOPP_DISK = register_item("floppy", FloppyDisk::new);
 
     public static final Item FLASH_MACHINE = register_block("flash_machine", ModBlocks.FLASH_MACHINE);
     public static final Item ALED_BLOCK = register_block("aledblock", ModBlocks.ALED_BLOCK);

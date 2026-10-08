@@ -73,7 +73,7 @@ public class AledBlock extends BaseEntityBlock {
                     ejectFloppyDisk(level, pos, state, computer);
                     String error = computer.insertFloppyDisk(itemStack);
                     if (error == null) {
-                        player.sendSystemMessage(Component.translatable("component.aled.floppy_disk.inserted"));
+                        player.sendSystemMessage(Component.translatable("component.aled.floppy.inserted"));
                     } else {
                         player.sendSystemMessage(Component.translatable(error).withStyle(ChatFormatting.RED));
                         ejectFloppyDisk(level, pos, state, computer);
