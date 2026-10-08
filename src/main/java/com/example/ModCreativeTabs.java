@@ -23,9 +23,18 @@ public class ModCreativeTabs {
                 output.accept(ModItems.ALED_BLOCK);
                 output.accept(ModItems.FLASH_MACHINE);
                 output.accept(ModItems.FLOPP_DISK);
-                output.accept(FloppyDisk.createColoredStack(FloppyDisk.PINK_COLOR));
-                output.accept(FloppyDisk.createColoredStack(FloppyDisk.BLUE_COLOR));
-                output.accept(FloppyDisk.createColoredStack(FloppyDisk.YELLOW_COLOR));
+                output.accept(FloppyDisk.createColoredStack(FloppyDisk.COLOR_PINK));
+                output.accept(FloppyDisk.createColoredStack(FloppyDisk.COLOR_BLUE));
+                output.accept(FloppyDisk.createColoredStack(FloppyDisk.COLOR_YELLOW));
+
+                ItemStack basiliscFloppy = FloppyDisk.createProgramStack(
+                        FloppyDisk.COLOR_BASILISC,
+                        "Basilisc",
+                        "/assets/aled/binaries/basilisc.bin"
+                );
+                if (!basiliscFloppy.isEmpty()) {
+                    output.accept(basiliscFloppy);
+                }
             })
             .build();
 

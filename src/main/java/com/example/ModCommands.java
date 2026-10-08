@@ -1,6 +1,7 @@
 package com.example;
 
 import com.example.commands.FlashCommand;
+import com.example.commands.RenameCommand;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
 
@@ -16,6 +17,11 @@ public class ModCommands {
                             .then(Commands.literal("flash")
                                 .then(Commands.argument("url", StringArgumentType.string())
                                     .executes(FlashCommand::flash)
+                                )
+                            )
+                            .then(Commands.literal("rename")
+                                .then(Commands.argument("name", StringArgumentType.greedyString())
+                                    .executes(RenameCommand::rename)
                                 )
                             )
                     );

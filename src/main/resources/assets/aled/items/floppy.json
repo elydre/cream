@@ -24,6 +24,13 @@
           "type": "minecraft:model",
           "model": "aled:item/floppy_yellow"
         }
+      },
+      {
+        "when": "basilisc",
+        "model": {
+          "type": "minecraft:model",
+          "model": "aled:item/floppy_basilisc"
+        }
       }
     ],
     "fallback": {

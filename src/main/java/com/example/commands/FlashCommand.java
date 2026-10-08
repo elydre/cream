@@ -107,7 +107,7 @@ public class FlashCommand {
 
         HTTP_CLIENT
                 .sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
-                .thenAccept(response -> handleResponse(server, player, response))
+                .thenAccept(response -> handleResponse(server, player, uri, response))
                 .exceptionally(error -> {
                     sendErrorToPlayer(server, player, "command.aled.flash.download_error");
                     return null;
@@ -117,6 +117,7 @@ public class FlashCommand {
     private static void handleResponse(
             MinecraftServer server,
             ServerPlayer player,
+            URI uri,
             HttpResponse<byte[]> response
     ) {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
@@ -141,12 +142,13 @@ public class FlashCommand {
             program[i] = (short) ((downloadedProgram[i * 2] & 0xFF) | ((downloadedProgram[i * 2 + 1] & 0xFF) << 8));
         }
 
-        flashProgram(server, player, program);
+        flashProgram(server, player, uri, program);
     }
 
     private static void flashProgram(
             MinecraftServer server,
             ServerPlayer player,
+            URI uri,
             short[] program
     ) {
         server.execute(() -> {
@@ -157,9 +159,17 @@ public class FlashCommand {
                 return;
             }
 
+            // extract the program name from the URL path
+            String path = uri.getPath();
+            String progname = path.substring(path.lastIndexOf('/') + 1);
+
+            if (progname.isEmpty()) {
+                progname = "hi";
+            }
+
             currentStack.set(
                     ModComponents.FLOPPY_PROGRAM,
-                    new FloppyProgram("URL", program)
+                    new FloppyProgram(progname, program)
             );
 
             player.sendSystemMessage(Component.translatable("command.aled.flash.success", program.length).withStyle(ChatFormatting.GRAY));

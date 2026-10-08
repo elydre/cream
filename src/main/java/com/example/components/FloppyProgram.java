@@ -13,7 +13,7 @@ import net.minecraft.world.item.component.TooltipProvider;
 import java.util.List;
 import java.util.function.Consumer;
 
-public record FloppyProgram(String author, short[] data) implements TooltipProvider {
+public record FloppyProgram(String progname, short[] data) implements TooltipProvider {
         private static final Codec<short[]> SHORT_ARRAY_CODEC = Codec.list(Codec.SHORT)
                 .xmap(
                     list -> {
@@ -40,8 +40,8 @@ public record FloppyProgram(String author, short[] data) implements TooltipProvi
             RecordCodecBuilder.create(instance ->
                     instance.group(
                             Codec.STRING
-                                    .fieldOf("author")
-                                    .forGetter(FloppyProgram::author),
+                                    .fieldOf("progname")
+                                    .forGetter(FloppyProgram::progname),
 
                             SHORT_ARRAY_CODEC
                                     .fieldOf("data")
@@ -64,8 +64,8 @@ public record FloppyProgram(String author, short[] data) implements TooltipProvi
     ) {
         tooltip.accept(
                 Component.translatable(
-                        "component.aled.floppy.author",
-                        author
+                        "component.aled.floppy.program_name",
+                        progname
                 ).withStyle(ChatFormatting.GRAY)
         );
 

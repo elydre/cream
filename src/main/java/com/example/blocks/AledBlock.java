@@ -42,7 +42,7 @@ public class AledBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext context) {
-        return defaultBlockState().setValue(FACING, context.getHorizontalDirection().getOpposite());
+        return defaultBlockState().setValue(FACING, context.getHorizontalDirection());
     }
 
     @Override
@@ -107,7 +107,7 @@ public class AledBlock extends BaseEntityBlock {
     ) {
         ItemStack disk = computer.ejectFloppyDisk();
         if (!disk.isEmpty()) {
-            BlockPos frontPos = pos.relative(state.getValue(FACING));
+            BlockPos frontPos = pos.relative(state.getValue(FACING).getOpposite());
             level.addFreshEntity(new ItemEntity(
                     level,
                 frontPos.getX() + 0.5,
