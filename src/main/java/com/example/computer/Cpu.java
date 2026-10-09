@@ -70,7 +70,7 @@ public class Cpu {
         if (halted) {
             return 100000;
         }
-    
+
         int instruction = xmem.read(pc++);
 
         int opcode = instruction & 0xFF00 >> 8;
@@ -78,7 +78,7 @@ public class Cpu {
         int source0 = instruction >> 14 & 0x03;
         int source1 = instruction >> 12 & 0x03;
         int source2 = instruction >> 10 & 0x03;
-        // int source3 = instruction >> 8 & 0x03;
+        int source3 = instruction >> 8 & 0x03;
 
         switch (opcode) {
             case 0x00: // nop
@@ -207,7 +207,16 @@ public class Cpu {
                 rwmem.write(sp, rwmem.read(sp) + 1);
                 pc += 2;
                 return 3;
-            case 0x1E: // memset
+            case 0x1E: // mss
+            {
+                int dest = RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1));
+                int src  = RVAL(source2, xmem.read(pc + 2)) + RVAL(source3, xmem.read(pc + 3));
+
+                rwmem.write(dest, rwmem.read(src));
+                pc += 4;
+                return 3;
+            }
+            case 0x20: // memset
             {
                 int addr = RVAL(source0, xmem.read(pc));
                 int val  = RVAL(source1, xmem.read(pc + 1));
@@ -219,7 +228,7 @@ public class Cpu {
                 pc += 3;
                 return 10 + size / 10;
             }
-            case 0x1F: // memmov
+            case 0x21: // memmov
             {
                 int dest = RVAL(source0, xmem.read(pc));
                 int src  = RVAL(source1, xmem.read(pc + 1));
