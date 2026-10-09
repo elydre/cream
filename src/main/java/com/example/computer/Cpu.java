@@ -154,56 +154,60 @@ public class Cpu {
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) | RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 1;
-            case 0x12: // bnot
+            case 0x12: // bxor
+                WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) ^ RVAL(source1, xmem.read(pc + 1)));
+                pc += 2;
+                return 1;
+            case 0x13: // bnot
                 WVAL(xmem.read(pc), source0, ~RVAL(source0, xmem.read(pc)));
                 pc++;
                 return 1;
-            case 0x13: // bshl
+            case 0x14: // bshl
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) << RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 1;
-            case 0x14: // bshr
+            case 0x15: // bshr
                 WVAL(xmem.read(pc), source0, RVAL(source0, xmem.read(pc)) >> RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 1;
-            case 0x15: // jmp
+            case 0x16: // jmp
                 if (RVAL(source1, xmem.read(pc + 1)) == 0)
                     pc = RVAL(source0, xmem.read(pc));
                 else
                     pc += 2;
                 return 1;
-            case 0x16: // jmpr
+            case 0x17: // jmpr
                 if (RVAL(source1, xmem.read(pc + 1)) == 0)
                     pc += RVAL(source0, xmem.read(pc));
                 else
                     pc += 2;
                 return 1;
-            case 0x17: // out
+            case 0x18: // out
                 ports.portOut(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
                 return 10;
-            case 0x18: // in
+            case 0x19: // in
                 WVAL(xmem.read(pc), source0, ports.portIn(RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
                 return 10;
-            case 0x19: // ssp
+            case 0x1A: // ssp
                 sp = RVAL(source0, xmem.read(pc));
                 pc++;
                 return 1;
-            case 0x1A: // sup
+            case 0x1B: // sup
                 up = RVAL(source0, xmem.read(pc));
                 pc++;
                 return 1;
-            case 0x1B: // load
+            case 0x1C: // load
                 WVAL(xmem.read(pc), source0, rwmem.read(RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1))));
                 pc += 2;
                 return 3;
-            case 0x1C: // pops
+            case 0x1D: // pops
                 rwmem.write(RVAL(source0, xmem.read(pc)) + RVAL(source1, xmem.read(pc + 1)), rwmem.read(rwmem.read(sp)));
                 rwmem.write(sp, rwmem.read(sp) + 1);
                 pc += 2;
                 return 3;
-            case 0x1D: // memset
+            case 0x1E: // memset
             {
                 int addr = RVAL(source0, xmem.read(pc));
                 int val  = RVAL(source1, xmem.read(pc + 1));
@@ -215,7 +219,7 @@ public class Cpu {
                 pc += 3;
                 return 10 + size / 10;
             }
-            case 0x1E: // memmov
+            case 0x1F: // memmov
             {
                 int dest = RVAL(source0, xmem.read(pc));
                 int src  = RVAL(source1, xmem.read(pc + 1));
