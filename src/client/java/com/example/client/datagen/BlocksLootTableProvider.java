@@ -8,8 +8,8 @@ import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricBlockLootSubProvider;
 import net.minecraft.core.HolderLookup;
 
-public class AledLootTableProvider extends FabricBlockLootSubProvider {
-    public AledLootTableProvider(
+public class BlocksLootTableProvider extends FabricBlockLootSubProvider {
+    public BlocksLootTableProvider(
             FabricPackOutput output,
             CompletableFuture<HolderLookup.Provider> registriesFuture
     ) {
@@ -19,5 +19,6 @@ public class AledLootTableProvider extends FabricBlockLootSubProvider {
     @Override
     public void generate() {
         dropSelf(ModBlocks.ALED_BLOCK);
+        dropSelf(ModBlocks.FLASH_MACHINE);
     }
 }

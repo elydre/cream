@@ -14,23 +14,18 @@ import net.minecraft.world.level.block.Block;
 
 public class ModBlocks {
 
-    private static Block register(
-            String name,
-            Supplier<Block> blockFactory
-    ) {
-        ResourceKey<Block> blockKey = keyOfBlock(name);
+    private static Block register(Supplier<Block> blockFactory) {
 
         Block block = blockFactory.get();
-
         return Registry.register(
                 BuiltInRegistries.BLOCK,
-                blockKey,
+                block.properties().blockId(),
                 block
         );
     }
 
-    public static final Block ALED_BLOCK = register("aledblock", AledBlock::new);
-    public static final Block FLASH_MACHINE = register("flash_machine", FlashMachine::new);
+    public static final Block ALED_BLOCK = register(AledBlock::new);
+    public static final Block FLASH_MACHINE = register(FlashMachine::new);
 
     public static ResourceKey<Block> keyOfBlock(String name) {
         return ResourceKey.create(

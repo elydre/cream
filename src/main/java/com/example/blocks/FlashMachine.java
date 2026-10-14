@@ -19,7 +19,7 @@ import net.minecraft.world.level.Level;
 public class FlashMachine extends Block {
 
     public FlashMachine() {
-        super(Properties.of().strength(2.0f).setId(ModBlocks.keyOfBlock("aledblock")));
+        super(Properties.of().strength(2.0f).setId(ModBlocks.keyOfBlock("flash_machine")));
     }
 
     @Override
