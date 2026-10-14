@@ -1,5 +1,6 @@
 package com.example.blocks;
 
+import com.example.ModBlocks;
 import com.example.items.FloppyDisk;
 
 import net.minecraft.core.BlockPos;
@@ -17,8 +18,8 @@ import net.minecraft.world.level.Level;
 
 public class FlashMachine extends Block {
 
-    public FlashMachine(Properties properties) {
-        super(properties);
+    public FlashMachine() {
+        super(Properties.of().strength(2.0f).setId(ModBlocks.keyOfBlock("aledblock")));
     }
 
     @Override

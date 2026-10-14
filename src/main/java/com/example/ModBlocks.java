@@ -1,6 +1,6 @@
 package com.example;
 
-import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.example.blocks.AledBlock;
 import com.example.blocks.FlashMachine;
@@ -11,20 +11,16 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.state.BlockBehaviour;
 
 public class ModBlocks {
 
     private static Block register(
             String name,
-            Function<BlockBehaviour.Properties, Block> blockFactory
+            Supplier<Block> blockFactory
     ) {
         ResourceKey<Block> blockKey = keyOfBlock(name);
 
-        BlockBehaviour.Properties properties =
-                BlockBehaviour.Properties.of().setId(blockKey);
-
-        Block block = blockFactory.apply(properties);
+        Block block = blockFactory.get();
 
         return Registry.register(
                 BuiltInRegistries.BLOCK,

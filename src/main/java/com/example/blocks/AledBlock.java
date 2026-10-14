@@ -1,6 +1,7 @@
 package com.example.blocks;
 
 import com.example.ModBlockEntities;
+import com.example.ModBlocks;
 import com.example.blockEntities.ComputerBlockEntity;
 import com.example.items.FloppyDisk;
 import com.example.networking.ComputerOpenPayload;
@@ -34,6 +35,10 @@ public class AledBlock extends BaseEntityBlock {
 
     public static final EnumProperty<Direction> FACING =
             BlockStateProperties.HORIZONTAL_FACING;
+
+    public AledBlock() {
+        this(Properties.of().strength(2.0f).setId(ModBlocks.keyOfBlock("aledblock")));
+    }
 
     public AledBlock(Properties properties) {
         super(properties);
