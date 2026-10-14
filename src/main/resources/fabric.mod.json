@@ -20,7 +20,10 @@
 		],
 		"client": [
 			"com.example.client.ExampleModClient"
-		]
+		],
+        "fabric-datagen": [
+            "com.example.client.datagen.ExempleModDatagen"
+        ]
 	},
 	"mixins": [
 		"modid.mixins.json",
