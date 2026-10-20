@@ -31,7 +31,8 @@ public class ExampleModClient implements ClientModInitializer {
 
                         ComputerClientState.updateScreen(
                                 payload.computerPos(),
-                                payload.screen()
+                                payload.screen(),
+                                payload.cursorPosition()
                         );
 
                     });

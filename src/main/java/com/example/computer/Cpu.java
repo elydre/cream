@@ -68,7 +68,7 @@ public class Cpu {
     public int tick() {
         // return the additional "cost" of the instruction executed
         if (halted) {
-            return 100000;
+            return Computer.IPT + 1; // if halted, return a cost that will stop execution for this tick
         }
 
         int instruction = xmem.read(pc++);
@@ -185,6 +185,9 @@ public class Cpu {
             case 0x18: // out
                 ports.portOut(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)));
                 pc += 2;
+                if (ports.isPaused()) {
+                    return Computer.IPT + 1; // pause execution
+                }
                 return 10;
             case 0x19: // in
                 WVAL(xmem.read(pc), source0, ports.portIn(RVAL(source1, xmem.read(pc + 1))));
@@ -252,7 +255,7 @@ public class Cpu {
             }
             case 0xFF: // halt
                 halted = true;
-                return 0;
+                return Computer.IPT + 1; // stop execution
             default:
                 System.err.printf("Unknown opcode: 0x%02X at PC: 0x%04X\n", opcode, pc - 1);
                 return 0;

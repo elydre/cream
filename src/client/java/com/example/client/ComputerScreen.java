@@ -84,14 +84,14 @@ public class ComputerScreen extends Screen {
 
         // calculate the starting position to center the screen
         int startX = (this.width - 80 * FONT_X) / 2;
-        int startY = (this.height - 25 * FONT_Y) / 2;
+        int startY = (this.height - 25 * (FONT_Y+1)) / 2;
 
         // draw a black rectangle
         graphics.fill(
                 startX - SCREEN_BORDER,
                 startY - SCREEN_BORDER,
                 startX + 80 * FONT_X + SCREEN_BORDER,
-                startY + 25 * FONT_Y + SCREEN_BORDER,
+                startY + 25 * (FONT_Y+1) + SCREEN_BORDER,
                 0xFF000000
         );
 
@@ -121,9 +121,9 @@ public class ComputerScreen extends Screen {
                 if (bgColor != 0) {
                     graphics.fill(
                             startX + x * FONT_X,
-                            startY + y * FONT_Y,
+                            startY + y * (FONT_Y+1),
                             startX + (x + 1) * FONT_X,
-                            startY + (y + 1) * FONT_Y,
+                            startY + (y + 1) * (FONT_Y+1),
                             color4bit_to_mc(bgColor)
                     );
                 }
@@ -132,11 +132,26 @@ public class ComputerScreen extends Screen {
                         font,
                         text,
                         startX + x * FONT_X,
-                        startY + y * FONT_Y,
+                        startY + y * (FONT_Y+1),
                         color4bit_to_mc(fgColor),
                         false
                 );
             }
+        }
+
+        int cursorPosition = ComputerClientState.getCursorPosition(computerPos);
+        int cursorX = startX + (cursorPosition % 80) * FONT_X;
+        int cursorY = startY + (cursorPosition / 80) * (FONT_Y + 1);
+        int cursorColor = 0xFFFF0000;
+
+        for (int y = 0; y < FONT_Y; y++) {
+            graphics.fill(
+                    cursorX,
+                    cursorY + y - 1,
+                    cursorX + 1,
+                    cursorY + y,
+                    cursorColor
+            );
         }
     }
 

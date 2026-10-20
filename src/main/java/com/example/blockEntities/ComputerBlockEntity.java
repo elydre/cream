@@ -2,6 +2,7 @@ package com.example.blockEntities;
 
 import com.example.computer.Computer;
 import com.example.computer.RWMem;
+import com.example.blocks.AledBlock;
 import com.example.items.FloppyDisk;
 import com.example.networking.ComputerScreenPayload;
 
@@ -47,7 +48,8 @@ public class ComputerBlockEntity extends BlockEntity {
         ComputerScreenPayload screenPayload =
                 new ComputerScreenPayload(
                         pos,
-                        screenData
+                    screenData,
+                        getComputer().getCursorPosition()
                 );
 
         for (ServerPlayer viewer : viewers) {
@@ -68,7 +70,8 @@ public class ComputerBlockEntity extends BlockEntity {
             return;
         }
 
-        computer.computer.tick();
+        computer.computer.tick(level, pos, state.getValue(AledBlock.FACING));
+        level.updateNeighborsAt(pos, state.getBlock());
         computer.setChanged();
 
         if (computer.computer.screenNeedsUpdate()) {
@@ -78,6 +81,10 @@ public class ComputerBlockEntity extends BlockEntity {
 
     public Computer getComputer() {
         return computer;
+    }
+
+    public int getRedstoneOutput(net.minecraft.core.Direction direction) {
+        return computer.getRedstoneOutput(direction);
     }
 
     public void addViewer(ServerPlayer player) {

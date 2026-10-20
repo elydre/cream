@@ -12,7 +12,8 @@ import java.util.ArrayList;
 
 public record ComputerScreenPayload(
         BlockPos computerPos,
-        short[] screen
+        short[] screen,
+        int cursorPosition
 ) implements CustomPacketPayload {
     public static final Type<ComputerScreenPayload> TYPE =
             new Type<>(
@@ -45,6 +46,8 @@ public record ComputerScreenPayload(
                         }
                     ),
                 ComputerScreenPayload::screen,
+                ByteBufCodecs.VAR_INT,
+                ComputerScreenPayload::cursorPosition,
                 ComputerScreenPayload::new
             );
 

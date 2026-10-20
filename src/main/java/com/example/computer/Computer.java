@@ -1,9 +1,14 @@
 package com.example.computer;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 
 public class Computer {
+    public static final int IPT = 4000; // Instructions per tick
+
     private final Ports ports;
     private final RWMem rwmem;
     private final XMem xmem;
@@ -24,13 +29,19 @@ public class Computer {
         cpu = new Cpu(ports, xmem, rwmem);
     }
 
-    public void tick() {
+    public void tick(Level level, BlockPos blockPos, Direction facing) {
+        ports.updateContext(level, blockPos, facing);
+
         if (cpu.isHalted()) {
             return;
         }
 
+        if (ports.tickPause()) {
+            return;
+        }
+
         int cost = 0;
-        while (cost < 4000) {
+        while (cost < IPT) {
             cost += cpu.tick() + 1;
         }
 
@@ -137,6 +148,14 @@ public class Computer {
 
     public boolean screenNeedsUpdate() {
         return ports.doesScreenNeedUpdate();
+    }
+
+    public int getRedstoneOutput(Direction direction) {
+        return ports.getRedstoneOutput(direction);
+    }
+
+    public int getCursorPosition() {
+        return ports.getCursorPosition();
     }
 
     public void save(ValueOutput output) {

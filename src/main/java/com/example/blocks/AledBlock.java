@@ -29,6 +29,7 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.BlockHitResult;
 
 public class AledBlock extends BaseEntityBlock {
@@ -53,6 +54,25 @@ public class AledBlock extends BaseEntityBlock {
     @Override
     protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
+    }
+
+    @Override
+    public boolean isSignalSource(BlockState state) {
+        return true;
+    }
+
+    @Override
+    public int getSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        BlockEntity blockEntity = level.getBlockEntity(pos);
+        if (blockEntity instanceof ComputerBlockEntity computer) {
+            return computer.getRedstoneOutput(direction);
+        }
+        return 0;
+    }
+
+    @Override
+    public int getDirectSignal(BlockState state, BlockGetter level, BlockPos pos, Direction direction) {
+        return getSignal(state, level, pos, direction);
     }
 
     @Override
