@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "aled:floppy",
+    "minecraft:blue_dye"
+  ],
+  "result": {
+    "id": "aled:floppy",
+    "count": 1,
+    "components": {
+      "aled:floppy_color": "blue"
+    }
+  }
+}

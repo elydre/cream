@@ -17,7 +17,7 @@ public class FloppyDisk extends Item {
     public static final String COLOR_BASILISC = "basilisc";
 
     public FloppyDisk() {
-        super(new Item.Properties().setId(ModItems.keyOfItem("floppy")).stacksTo(1));
+        super(new Item.Properties().setId(ModItems.keyOfItem("floppy")).stacksTo(64));
     }
 
     public static ItemStack createColoredStack(String color) {
