@@ -124,6 +124,22 @@ public class AledBlock extends BaseEntityBlock {
     }
 
     @Override
+    public void playerDestroy(
+            Level level,
+            Player player,
+            BlockPos pos,
+            BlockState state,
+            BlockEntity blockEntity,
+            ItemStack tool
+    ) {
+        super.playerDestroy(level, player, pos, state, blockEntity, tool);
+
+        if (!level.isClientSide() && blockEntity instanceof ComputerBlockEntity computer) {
+            ejectFloppyDisk(level, pos, state, computer);
+        }
+    }
+
+    @Override
     public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
         return new ComputerBlockEntity(pos, state);
     }
