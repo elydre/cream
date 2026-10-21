@@ -5,13 +5,12 @@ import com.example.ModBlocks;
 import com.example.blockEntities.ComputerBlockEntity;
 import com.example.items.FloppyDisk;
 import com.example.networking.ComputerOpenPayload;
-import com.mojang.serialization.MapCodec;
-
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -148,8 +147,8 @@ public class AledBlock extends BaseEntityBlock {
 
     @Override
     public void playerDestroy(
-            Level level,
-            Player player,
+            ServerLevel level,
+            ServerPlayer player,
             BlockPos pos,
             BlockState state,
             BlockEntity blockEntity,
@@ -172,10 +171,5 @@ public class AledBlock extends BaseEntityBlock {
                 Level level, BlockState state, BlockEntityType<T> type)
     {
         return createTickerHelper(type, ModBlockEntities.ALED_BLOCK_E, ComputerBlockEntity::tick);
-    }
-
-    @Override
-    protected MapCodec<? extends BaseEntityBlock> codec() {
-        return simpleCodec(AledBlock::new);
     }
 }

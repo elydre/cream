@@ -4,7 +4,6 @@ import com.example.networking.ComputerClosePayload;
 import com.example.networking.ComputerKeyPayload;
 
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.fabricmc.fabric.api.client.screen.v1.ScreenKeyboardEvents;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.KeyEvent;
@@ -15,7 +14,7 @@ import net.minecraft.network.chat.FontDescription;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 public class ComputerScreen extends Screen {
     private static final int FONT_X = 6;
@@ -38,15 +37,7 @@ public class ComputerScreen extends Screen {
     @Override
     protected void init() {
         super.init();
-
-        ScreenKeyboardEvents.beforeKeyPress(this)
-                .register(this::onKeyPress);
-
-        ScreenKeyboardEvents.beforeCharType(this)
-                .register(this::onCharType);
-
-        ScreenKeyboardEvents.beforeKeyRelease(this)
-                .register(this::onKeyRelease);
+        minecraft.textInputManager().startTextInput(this);
     }
 
     private static int color4bit_to_mc(int color) {
@@ -157,29 +148,36 @@ public class ComputerScreen extends Screen {
         }
     }
 
-    private void onKeyPress(Screen screen, KeyEvent event) {
+    @Override
+    public boolean keyPressed(KeyEvent event) {
         // static variable to save ctrl key state
 
-        if (event.key() == GLFW.GLFW_KEY_LEFT_CONTROL || event.key() == GLFW.GLFW_KEY_RIGHT_CONTROL) {
+        System.out.println("ComputerScreen: keyPressed: " + event.key() + ", ctrlPressed: " + ctrlPressed);
+
+        if (event.key() == InputConstants.KEY_ESCAPE) {
+            onClose();
+            return true;
+        }
+
+        if (event.key() == InputConstants.KEY_LCONTROL || event.key() == InputConstants.KEY_RCONTROL) {
             ctrlPressed = true;
-            return;
+            return true;
         }
 
         char key = switch (event.key()) {
-            case GLFW.GLFW_KEY_BACKSPACE -> '\b';
-            case GLFW.GLFW_KEY_DELETE -> 0x7F;
-            case GLFW.GLFW_KEY_ENTER -> '\r';
-            case GLFW.GLFW_KEY_TAB -> '\t';
-            case GLFW.GLFW_KEY_ESCAPE -> 0x1B;
-            case GLFW.GLFW_KEY_UP -> 'R';
-            case GLFW.GLFW_KEY_DOWN -> 'Q';
-            case GLFW.GLFW_KEY_LEFT -> 'P';
-            case GLFW.GLFW_KEY_RIGHT -> 'O';
+            case InputConstants.KEY_BACKSPACE -> '\b';
+            case InputConstants.KEY_DELETE -> 0x7F;
+            case InputConstants.KEY_RETURN -> '\r';
+            case InputConstants.KEY_TAB -> '\t';
+            case InputConstants.KEY_UP -> 'R';
+            case InputConstants.KEY_DOWN -> 'Q';
+            case InputConstants.KEY_LEFT -> 'P';
+            case InputConstants.KEY_RIGHT -> 'O';
             default -> 0;
         };
 
         if (key == 0) {
-            return;
+            return false;
         }
 
         for (int i = 3; i <= 4; i++) {
@@ -190,23 +188,17 @@ public class ComputerScreen extends Screen {
                     )
             );
         }
+
+        return true;
     }
 
-    private void onKeyRelease(Screen screen, KeyEvent event) {
-        if (event.key() == GLFW.GLFW_KEY_LEFT_CONTROL || event.key() == GLFW.GLFW_KEY_RIGHT_CONTROL) {
-            ctrlPressed = false;
+    @Override
+    public boolean charTyped(CharacterEvent event) {
+        int key = event.codepoint();
+
+        if (key == 0) {
+            return false;
         }
-    }
-
-
-    private void onCharType(Screen screen, CharacterEvent event) {
-        String text = event.codepointAsString();
-
-        if (text.isEmpty()) {
-            return;
-        }
-
-        int key = text.charAt(0);
 
         for (int i = 1; i <= 2; i++) {
             ClientPlayNetworking.send(
@@ -216,10 +208,22 @@ public class ComputerScreen extends Screen {
                     )
             );
         }
+
+        return true;
+    }
+
+    @Override
+    public boolean keyReleased(KeyEvent event) {
+        if (event.key() == InputConstants.KEY_LCONTROL || event.key() == InputConstants.KEY_RCONTROL) {
+            ctrlPressed = false;
+        }
+
+        return true;
     }
 
     @Override
     public void onClose() {
+        minecraft.textInputManager().stopTextInput(this);
         minecraft.gui.setScreen(null);
 
         ClientPlayNetworking.send(new ComputerClosePayload(computerPos));
