@@ -1,9 +1,17 @@
-# Example Mod
+# Cream
 
-## Setup
+A fabric mod that adds a minimalist, retro-style computer to Minecraft, running a custom instruction set!
 
-For setup instructions, please see the [Fabric Documentation page](https://docs.fabricmc.net/develop/getting-started/creating-a-project#setting-up) related to the IDE that you are using.
+Compiled versions and additional information can be found on **[Modrinth](https://modrinth.com/mod/cream-elydre)**.
 
-## License
+The compiler, basilisc operating system and instruction set documentation can be found on this **[GitHub repository](https://github.com/elydre/ancolie)**.
 
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
+## Building
+
+```sh
+# build the mod and run the data generator
+./gradlew build runDataGen
+
+# test the mod in a client instance
+./gradlew runClient
+```
