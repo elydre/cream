@@ -25,6 +25,7 @@ public class Ports {
 
     public void clear() {
         keyboardBufferSize = 0;
+        cursorPosition = 0;
         java.util.Arrays.fill(redstoneOutputs, 0);
         screenNeedsUpdate = false;
     }

@@ -48,8 +48,8 @@ public class Computer {
         System.out.println("CPU tick. PC: " + cpu.getPC());
     }
 
-    public void fullreset() {
-        cpu.reset();
+    public void halt() {
+        cpu.reset(false);
         rwmem.clear();
         xmem.clear();
         ports.forceScreenUpdate(); // send the empty screen
@@ -133,7 +133,7 @@ public class Computer {
             }
         }
 
-        cpu.reset();
+        cpu.reset(true);
 
         return null; // No error
     }

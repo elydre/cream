@@ -109,7 +109,7 @@ public class ComputerBlockEntity extends BlockEntity {
             return ItemStack.EMPTY;
         }
 
-        computer.fullreset();
+        computer.halt();
 
         ItemStack ejectedDisk = floppyDisk;
         floppyDisk = ItemStack.EMPTY;

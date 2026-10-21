@@ -21,6 +21,8 @@ public class ComputerScreen extends Screen {
     private static final int FONT_X = 6;
     private static final int FONT_Y = 10;
     private static final int SCREEN_BORDER = 5;
+    private static boolean ctrlPressed = false;
+
 
     private final BlockPos computerPos;
     private static final FontDescription TERMINAL_FONT =
@@ -156,6 +158,13 @@ public class ComputerScreen extends Screen {
     }
 
     private void onKeyPress(Screen screen, KeyEvent event) {
+        // static variable to save ctrl key state
+
+        if (event.key() == GLFW.GLFW_KEY_LEFT_CONTROL || event.key() == GLFW.GLFW_KEY_RIGHT_CONTROL) {
+            ctrlPressed = true;
+            return;
+        }
+
         char key = switch (event.key()) {
             case GLFW.GLFW_KEY_BACKSPACE -> '\b';
             case GLFW.GLFW_KEY_DELETE -> 0x7F;
@@ -177,11 +186,18 @@ public class ComputerScreen extends Screen {
             ClientPlayNetworking.send(
                     new ComputerKeyPayload(
                             computerPos,
-                            (i << 16) | (key & 0xFFFF)
+                            (i << 16) | (key & 0x7FFF) | (ctrlPressed ? 0x8000 : 0)
                     )
             );
         }
     }
+
+    private void onKeyRelease(Screen screen, KeyEvent event) {
+        if (event.key() == GLFW.GLFW_KEY_LEFT_CONTROL || event.key() == GLFW.GLFW_KEY_RIGHT_CONTROL) {
+            ctrlPressed = false;
+        }
+    }
+
 
     private void onCharType(Screen screen, CharacterEvent event) {
         String text = event.codepointAsString();
@@ -200,10 +216,6 @@ public class ComputerScreen extends Screen {
                     )
             );
         }
-    }
-
-    private void onKeyRelease(Screen screen, KeyEvent event) {
-        // todo
     }
 
     @Override

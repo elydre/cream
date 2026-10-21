@@ -23,12 +23,12 @@ public class Cpu {
         return halted;
     }
 
-    public void reset() {
+    public void reset(boolean restart) {
         ports.clear();
         pc = 0;
         up = 0;
         sp = 0;
-        halted = false;
+        halted = !restart;
     }
 
     public void save(ValueOutput output) {

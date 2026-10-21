@@ -38,7 +38,10 @@ public class AledBlock extends BaseEntityBlock {
             BlockStateProperties.HORIZONTAL_FACING;
 
     public AledBlock() {
-        this(Properties.of().strength(2.0f).setId(ModBlocks.keyOfBlock("aledblock")));
+        this(Properties.of()
+            .strength(2.0f)
+            .isRedstoneConductor((state, level, pos) -> false)
+            .setId(ModBlocks.keyOfBlock("aledblock")));
     }
 
     public AledBlock(Properties properties) {
