@@ -1,0 +1,15 @@
+{
+  "type": "minecraft:crafting_shapeless",
+  "category": "redstone",
+  "ingredients": [
+    "cream:floppy",
+    "minecraft:pink_dye"
+  ],
+  "result": {
+    "id": "cream:floppy",
+    "count": 1,
+    "components": {
+      "cream:floppy_color": "pink"
+    }
+  }
+}

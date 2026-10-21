@@ -13,7 +13,7 @@ public class ModComponents {
             Registry.register(
                     BuiltInRegistries.DATA_COMPONENT_TYPE,
                     Identifier.fromNamespaceAndPath(
-                            ExampleMod.MOD_ID,
+                            CreamMain.MOD_ID,
                             "floppy_color"
                     ),
                     DataComponentType
@@ -26,7 +26,7 @@ public class ModComponents {
             Registry.register(
                     BuiltInRegistries.DATA_COMPONENT_TYPE,
                     Identifier.fromNamespaceAndPath(
-                            ExampleMod.MOD_ID,
+                            CreamMain.MOD_ID,
                             "floppy_program"
                     ),
                     DataComponentType

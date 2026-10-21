@@ -9,7 +9,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 
 import java.util.ArrayList;
 
-import io.github.elydre.cream.ExampleMod;
+import io.github.elydre.cream.CreamMain;
 
 public record ComputerScreenPayload(
         BlockPos computerPos,
@@ -19,7 +19,7 @@ public record ComputerScreenPayload(
     public static final Type<ComputerScreenPayload> TYPE =
             new Type<>(
                     Identifier.fromNamespaceAndPath(
-                            ExampleMod.MOD_ID,
+                            CreamMain.MOD_ID,
                             "computer_screen"
                     )
             );

@@ -2,7 +2,7 @@ package io.github.elydre.cream;
 
 import java.util.function.Supplier;
 
-import io.github.elydre.cream.blocks.AledBlock;
+import io.github.elydre.cream.blocks.BlockComputer;
 import io.github.elydre.cream.blocks.FlashMachine;
 
 import net.minecraft.core.Registry;
@@ -24,14 +24,14 @@ public class ModBlocks {
         );
     }
 
-    public static final Block ALED_BLOCK = register(AledBlock::new);
+    public static final Block ALED_BLOCK = register(BlockComputer::new);
     public static final Block FLASH_MACHINE = register(FlashMachine::new);
 
     public static ResourceKey<Block> keyOfBlock(String name) {
         return ResourceKey.create(
                 Registries.BLOCK,
                 Identifier.fromNamespaceAndPath(
-                        ExampleMod.MOD_ID,
+                        CreamMain.MOD_ID,
                         name
                 )
         );

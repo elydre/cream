@@ -20,14 +20,14 @@ public class RenameCommand {
         try {
             player = source.getPlayerOrException();
         } catch (Exception exception) {
-            source.sendFailure(Component.translatable("command.aled.flash.not_player"));
+            source.sendFailure(Component.translatable("command.cream.flash.not_player"));
             return 0;
         }
 
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof FloppyDisk)) {
             player.sendSystemMessage(
-                    Component.translatable("command.aled.rename.no_floppy")
+                    Component.translatable("command.cream.rename.no_floppy")
                             .withStyle(ChatFormatting.RED)
             );
             return 0;
@@ -36,7 +36,7 @@ public class RenameCommand {
         FloppyProgram program = stack.get(ModComponents.FLOPPY_PROGRAM);
         if (program == null) {
             player.sendSystemMessage(
-                    Component.translatable("command.aled.rename.no_program")
+                    Component.translatable("command.cream.rename.no_program")
                             .withStyle(ChatFormatting.RED)
             );
             return 0;
@@ -49,7 +49,7 @@ public class RenameCommand {
         );
 
         player.sendSystemMessage(
-                Component.translatable("command.aled.rename.success", programName)
+                Component.translatable("command.cream.rename.success", programName)
                         .withStyle(ChatFormatting.GRAY)
         );
         return 1;

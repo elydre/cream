@@ -27,10 +27,10 @@ public class ModItems {
     public static final Item FLOPP_DISK = register_item("floppy", FloppyDisk::new);
 
     public static final Item FLASH_MACHINE = register_block("flash_machine", ModBlocks.FLASH_MACHINE);
-    public static final Item ALED_BLOCK = register_block("aledblock", ModBlocks.ALED_BLOCK);
+    public static final Item ALED_BLOCK = register_block("computer", ModBlocks.ALED_BLOCK);
 
     public static ResourceKey<Item> keyOfItem(String name) {
-        return ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(ExampleMod.MOD_ID, name));
+        return ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(CreamMain.MOD_ID, name));
     }
 
     public static void initialize() {}

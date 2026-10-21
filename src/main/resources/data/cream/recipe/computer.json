@@ -1,0 +1,21 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "redstone",
+  "pattern": [
+    "ICI",
+    "EGE",
+    "IBI"
+  ],
+  "key": {
+    "I": "minecraft:iron_ingot",
+    "G": "minecraft:glass_pane",
+    "C": "minecraft:comparator",
+    "B": "minecraft:copper_bulb",
+    "E": "minecraft:echo_shard"
+
+  },
+  "result": {
+    "id": "cream:computer",
+    "count": 1
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "particle": "cream:block/computer",
+    "all": "cream:block/computer"
+  },
+  "elements": [
+    {
+      "from": [0, 0, 0],
+      "to": [16, 16, 16],
+      "faces": {
+        "north": { "uv": [4, 4, 8, 8],   "texture": "#all" },
+        "east":  { "uv": [0, 4, 4, 8],   "texture": "#all" },
+        "south": { "uv": [12, 4, 16, 8], "texture": "#all" },
+        "west":  { "uv": [8, 4, 12, 8],  "texture": "#all" },
+        "up":    { "uv": [8, 4, 4, 0],   "texture": "#all" },
+        "down":  { "uv": [8, 12, 4, 8],  "texture": "#all" }
+      }
+    }
+  ]
+}

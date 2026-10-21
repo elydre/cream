@@ -46,11 +46,11 @@ public class FlashCommand {
         }
 
         if (!isHoldingFloppyDisk(player)) {
-            sendErrorToPlayer(null, player, "command.aled.flash.no_floppy");
+            sendErrorToPlayer(null, player, "command.cream.flash.no_floppy");
             return 0;
         }
 
-        player.sendSystemMessage(Component.translatable("command.aled.flash.downloading").withStyle(ChatFormatting.GRAY));
+        player.sendSystemMessage(Component.translatable("command.cream.flash.downloading").withStyle(ChatFormatting.GRAY));
         downloadProgram(server, player, uri);
 
         return 1;
@@ -60,7 +60,7 @@ public class FlashCommand {
         try {
             return source.getPlayerOrException();
         } catch (Exception e) {
-            source.sendFailure(Component.translatable("command.aled.flash.not_player"));
+            source.sendFailure(Component.translatable("command.cream.flash.not_player"));
             return null;
         }
     }
@@ -75,14 +75,14 @@ public class FlashCommand {
         try {
             uri = URI.create(url);
         } catch (IllegalArgumentException e) {
-            sendErrorToPlayer(null, player, "command.aled.flash.invalid_url");
+            sendErrorToPlayer(null, player, "command.cream.flash.invalid_url");
             return null;
         }
 
         String scheme = uri.getScheme();
 
         if (!"http".equalsIgnoreCase(scheme) && !"https".equalsIgnoreCase(scheme)) {
-            sendErrorToPlayer(null, player, "command.aled.flash.invalid_url");
+            sendErrorToPlayer(null, player, "command.cream.flash.invalid_url");
             return null;
         }
 
@@ -108,7 +108,7 @@ public class FlashCommand {
                 .sendAsync(request, HttpResponse.BodyHandlers.ofByteArray())
                 .thenAccept(response -> handleResponse(server, player, uri, response))
                 .exceptionally(error -> {
-                    sendErrorToPlayer(server, player, "command.aled.flash.download_error");
+                    sendErrorToPlayer(server, player, "command.cream.flash.download_error");
                     return null;
                 });
     }
@@ -120,19 +120,19 @@ public class FlashCommand {
             HttpResponse<byte[]> response
     ) {
         if (response.statusCode() < 200 || response.statusCode() >= 300) {
-            sendErrorToPlayer(server, player, "command.aled.flash.download_error");
+            sendErrorToPlayer(server, player, "command.cream.flash.download_error");
             return;
         }
 
         byte[] downloadedProgram = response.body();
 
         if (downloadedProgram.length > MAX_PROGRAM_SIZE) {
-            sendErrorToPlayer(server, player, "command.aled.flash.program_too_large");
+            sendErrorToPlayer(server, player, "command.cream.flash.program_too_large");
             return;
         }
 
         if (downloadedProgram.length % 2 != 0 || downloadedProgram.length == 0) {
-            sendErrorToPlayer(server, player, "command.aled.flash.invalid_program_size");
+            sendErrorToPlayer(server, player, "command.cream.flash.invalid_program_size");
             return;
         }
 
@@ -154,7 +154,7 @@ public class FlashCommand {
             ItemStack currentStack = player.getMainHandItem();
 
             if (!(currentStack.getItem() instanceof FloppyDisk)) {
-                sendErrorToPlayer(server, player, "command.aled.flash.no_floppy");
+                sendErrorToPlayer(server, player, "command.cream.flash.no_floppy");
                 return;
             }
 
@@ -171,7 +171,7 @@ public class FlashCommand {
                     new FloppyProgram(progname, program)
             );
 
-            player.sendSystemMessage(Component.translatable("command.aled.flash.success", program.length).withStyle(ChatFormatting.GRAY));
+            player.sendSystemMessage(Component.translatable("command.cream.flash.success", program.length).withStyle(ChatFormatting.GRAY));
         });
     }
 

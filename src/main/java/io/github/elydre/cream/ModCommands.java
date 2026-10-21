@@ -13,7 +13,7 @@ public class ModCommands {
         CommandRegistrationCallback.EVENT.register(
                 (dispatcher, registryAccess, environment) -> {
                     dispatcher.register(
-                        Commands.literal("aled")
+                        Commands.literal("cream")
                             .then(Commands.literal("flash")
                                 .then(Commands.argument("url", StringArgumentType.string())
                                     .executes(FlashCommand::flash)

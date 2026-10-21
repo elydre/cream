@@ -1,11 +1,8 @@
 package io.github.elydre.cream.blocks;
 
 import io.github.elydre.cream.ModBlocks;
-import io.github.elydre.cream.items.FloppyDisk;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.player.Player;
@@ -36,7 +33,7 @@ public class FlashMachine extends Block {
             return InteractionResult.SUCCESS;
         }
 
-        if (player instanceof ServerPlayer serverPlayer) {
+        /*if (player instanceof ServerPlayer serverPlayer) {
             // check if the item in player's hand is a floppy disk
 
             if (itemStack.getItem() instanceof FloppyDisk) {
@@ -62,7 +59,7 @@ public class FlashMachine extends Block {
                 Component message = Component.literal("You need to use a floppy disk on the flash machine.");
                 serverPlayer.sendSystemMessage(message);
             }
-        }
+        }*/
 
         return InteractionResult.SUCCESS;
     }

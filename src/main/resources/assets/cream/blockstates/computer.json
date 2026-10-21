@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=north": { "model": "cream:block/computer", "y": 180 },
+    "facing=east": { "model": "cream:block/computer", "y": 270 },
+    "facing=south": { "model": "cream:block/computer" },
+    "facing=west": { "model": "cream:block/computer", "y": 90 }
+  }
+}

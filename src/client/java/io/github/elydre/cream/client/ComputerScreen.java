@@ -26,11 +26,11 @@ public class ComputerScreen extends Screen {
     private final BlockPos computerPos;
     private static final FontDescription TERMINAL_FONT =
         new FontDescription.Resource(
-                Identifier.fromNamespaceAndPath("aled", "terminal")
+                Identifier.fromNamespaceAndPath("cream", "terminal")
         );
 
     public ComputerScreen(BlockPos computerPos) {
-        super(Component.literal("aledblock"));
+        super(Component.literal("computer"));
         this.computerPos = computerPos;
     }
 
@@ -89,7 +89,6 @@ public class ComputerScreen extends Screen {
         );
 
         if (screen == null) {
-            System.out.println("ComputerScreen: screen is null for computer at " + computerPos);
             return;
         }
 
@@ -151,8 +150,6 @@ public class ComputerScreen extends Screen {
     @Override
     public boolean keyPressed(KeyEvent event) {
         // static variable to save ctrl key state
-
-        System.out.println("ComputerScreen: keyPressed: " + event.key() + ", ctrlPressed: " + ctrlPressed);
 
         if (event.key() == InputConstants.KEY_ESCAPE) {
             onClose();

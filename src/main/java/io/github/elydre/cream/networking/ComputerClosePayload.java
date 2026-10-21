@@ -1,6 +1,6 @@
 package io.github.elydre.cream.networking;
 
-import io.github.elydre.cream.ExampleMod;
+import io.github.elydre.cream.CreamMain;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -13,7 +13,7 @@ public record ComputerClosePayload(
 
     public static final Identifier ID =
             Identifier.fromNamespaceAndPath(
-                    ExampleMod.MOD_ID,
+                    CreamMain.MOD_ID,
                     "close_computer"
             );
 

@@ -1,0 +1,14 @@
+{
+	"required": true,
+	"package": "io.github.elydre.cream.mixin",
+	"compatibilityLevel": "JAVA_25",
+	"mixins": [
+		"CreamMixin"
+	],
+	"injectors": {
+		"defaultRequire": 1
+	},
+	"overwrites": {
+		"requireAnnotations": true
+	}
+}

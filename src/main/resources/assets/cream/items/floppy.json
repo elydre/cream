@@ -1,0 +1,41 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:component",
+    "component": "cream:floppy_color",
+    "cases": [
+      {
+        "when": "pink",
+        "model": {
+          "type": "minecraft:model",
+          "model": "cream:item/floppy_pink"
+        }
+      },
+      {
+        "when": "blue",
+        "model": {
+          "type": "minecraft:model",
+          "model": "cream:item/floppy_blue"
+        }
+      },
+      {
+        "when": "yellow",
+        "model": {
+          "type": "minecraft:model",
+          "model": "cream:item/floppy_yellow"
+        }
+      },
+      {
+        "when": "basilisc",
+        "model": {
+          "type": "minecraft:model",
+          "model": "cream:item/floppy_basilisc"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "cream:item/floppy"
+    }
+  }
+}

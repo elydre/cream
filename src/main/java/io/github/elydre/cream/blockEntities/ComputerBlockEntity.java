@@ -3,7 +3,7 @@ package io.github.elydre.cream.blockEntities;
 import io.github.elydre.cream.computer.Computer;
 import io.github.elydre.cream.computer.RWMem;
 import io.github.elydre.cream.ModBlockEntities;
-import io.github.elydre.cream.blocks.AledBlock;
+import io.github.elydre.cream.blocks.BlockComputer;
 import io.github.elydre.cream.items.FloppyDisk;
 import io.github.elydre.cream.networking.ComputerScreenPayload;
 
@@ -69,7 +69,7 @@ public class ComputerBlockEntity extends BlockEntity {
             return;
         }
 
-        computer.computer.tick(level, pos, state.getValue(AledBlock.FACING));
+        computer.computer.tick(level, pos, state.getValue(BlockComputer.FACING));
         level.updateNeighborsAt(pos, state.getBlock());
         computer.setChanged();
 
@@ -90,12 +90,10 @@ public class ComputerBlockEntity extends BlockEntity {
         if (viewers.contains(player)) {
             return;
         }
-        System.out.println("Adding viewer: " + player.getName().getString());
         viewers.add(player);
     }
 
     public void removeViewer(ServerPlayer player) {
-        System.out.println("Removing viewer: " + player.getName().getString());
         viewers.remove(player);
     }
 
@@ -126,11 +124,11 @@ public class ComputerBlockEntity extends BlockEntity {
 
     public String insertFloppyDisk(ItemStack stack) {
         if (!floppyDisk.isEmpty()) {
-            return "component.aled.floppy.errinsert_already_inserted";
+            return "component.cream.floppy.errinsert_already_inserted";
         }
 
         if (!(stack.getItem() instanceof FloppyDisk)) {
-            return "component.aled.floppy.errinsert_no_floppy";
+            return "component.cream.floppy.errinsert_no_floppy";
         }
 
         floppyDisk = stack.copyWithCount(1);
@@ -143,8 +141,6 @@ public class ComputerBlockEntity extends BlockEntity {
 
     protected void saveAdditional(ValueOutput output) {
         super.saveAdditional(output);
-
-        System.out.println("Saving floppy disk data...");
 
         if (!floppyDisk.isEmpty()) {
             output.store(
@@ -159,8 +155,6 @@ public class ComputerBlockEntity extends BlockEntity {
 
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
-
-        System.out.println("Loading floppy disk data...");
 
         floppyDisk = input.read(
                 "FloppyDisk",

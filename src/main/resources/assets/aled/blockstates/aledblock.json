@@ -1,8 +1,0 @@
-{
-  "variants": {
-    "facing=north": { "model": "aled:block/aledblock", "y": 180 },
-    "facing=east": { "model": "aled:block/aledblock", "y": 270 },
-    "facing=south": { "model": "aled:block/aledblock" },
-    "facing=west": { "model": "aled:block/aledblock", "y": 90 }
-  }
-}

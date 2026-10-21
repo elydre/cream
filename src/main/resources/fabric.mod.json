@@ -1,41 +1,42 @@
 {
-	"schemaVersion": 1,
-	"id": "modid",
-	"version": "${version}",
-	"name": "Example Mod",
-	"description": "This is an example description! Tell everyone what your mod is about!",
-	"authors": [
-		"Me!"
-	],
-	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
-	},
-	"license": "CC0-1.0",
-	"icon": "assets/modid/icon.png",
-	"environment": "*",
-	"entrypoints": {
-		"main": [
-			"io.github.elydre.cream.ExampleMod"
-		],
-		"client": [
-			"io.github.elydre.cream.client.ExampleModClient"
-		],
+    "schemaVersion": 1,
+    "id": "cream",
+    "version": "${version}",
+    "name": "Cream",
+    "description": "A fabric mod that adds a minimalist, retro-style computer to Minecraft, running a custom instruction set!",
+    "authors": [
+        "elydre",
+        "asqel"
+    ],
+    "contact": {
+        "homepage": "https://github.com/elydre/cream",
+        "sources": "https://github.com/elydre/cream"
+    },
+    "license": "CC0-1.0",
+    "icon": "assets/cream/icon.png",
+    "environment": "*",
+    "entrypoints": {
+        "main": [
+            "io.github.elydre.cream.CreamMain"
+        ],
+        "client": [
+            "io.github.elydre.cream.client.CreamMainClient"
+        ],
         "fabric-datagen": [
             "io.github.elydre.cream.client.datagen.ExempleModDatagen"
         ]
-	},
-	"mixins": [
-		"modid.mixins.json",
-		{
-			"config": "modid.client.mixins.json",
-			"environment": "client"
-		}
-	],
-	"depends": {
-		"fabricloader": ">=0.19.5",
-		"minecraft": "~26.3",
-		"java": ">=25",
-		"fabric-api": "*"
-	}
+    },
+    "mixins": [
+        "cream.mixins.json",
+        {
+            "config": "cream.client.mixins.json",
+            "environment": "client"
+        }
+    ],
+    "depends": {
+        "fabricloader": ">=0.19.5",
+        "minecraft": "~26.3",
+        "java": ">=25",
+        "fabric-api": "*"
+    }
 }

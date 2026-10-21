@@ -64,14 +64,14 @@ public record FloppyProgram(String progname, short[] data) implements TooltipPro
     ) {
         tooltip.accept(
                 Component.translatable(
-                        "component.aled.floppy.program_name",
+                        "component.cream.floppy.program_name",
                         progname
                 ).withStyle(ChatFormatting.GRAY)
         );
 
         tooltip.accept(
                 Component.translatable(
-                        "component.aled.floppy.program_size",
+                        "component.cream.floppy.program_size",
                         data.length
                 ).withStyle(ChatFormatting.GRAY)
         );

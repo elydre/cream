@@ -13,12 +13,12 @@ import net.minecraft.world.item.ItemStack;
 
 public class ModCreativeTabs {
     public static final ResourceKey<CreativeModeTab> CHOU_CREATIVE_TAB_KEY = ResourceKey.create(
-            BuiltInRegistries.CREATIVE_MODE_TAB.key(), Identifier.fromNamespaceAndPath(ExampleMod.MOD_ID, "aled")
+            BuiltInRegistries.CREATIVE_MODE_TAB.key(), Identifier.fromNamespaceAndPath(CreamMain.MOD_ID, "cream")
     );
 
     public static final CreativeModeTab CUSTOM_CREATIVE_TAB = FabricCreativeModeTab.builder()
             .icon(() -> new ItemStack(ModItems.FLOPP_DISK))
-            .title(Component.translatable("creativeTab.aled"))
+            .title(Component.translatable("creativeTab.cream"))
             .displayItems((params, output) -> {
                 output.accept(ModItems.ALED_BLOCK);
                 output.accept(ModItems.FLASH_MACHINE);
@@ -30,7 +30,7 @@ public class ModCreativeTabs {
                 ItemStack basiliscFloppy = FloppyDisk.createProgramStack(
                         FloppyDisk.COLOR_BASILISC,
                         "Basilisc",
-                        "/assets/aled/binaries/basilisc.bin"
+                        "/assets/cream/binaries/basilisc.bin"
                 );
                 if (!basiliscFloppy.isEmpty()) {
                     output.accept(basiliscFloppy);

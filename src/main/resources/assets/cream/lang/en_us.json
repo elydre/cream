@@ -1,0 +1,36 @@
+{
+    "creativeTab.cream": "Cream",
+
+    "block.cream.computer": "Cream Computer",
+    "block.cream.flash_machine": "Flash Machine",
+
+    "item.cream.floppy": "Floppy Disk",
+
+    "component.cream.floppy.program_name": "Name: %s",
+    "component.cream.floppy.program_size": "Size: %s Words",
+    "component.cream.floppy.inserted": "Floppy disk inserted !",
+    "component.cream.floppy.errinsert_already_inserted": "Error: A floppy disk is already inserted.",
+    "component.cream.floppy.errinsert_no_floppy": "Error: No floppy disk in hand.",
+
+    "command.cream.flash.no_floppy": "Error: No floppy disk in hand.",
+    "command.cream.rename.no_floppy": "Error: No floppy disk in hand.",
+    "command.cream.rename.no_program": "Error: This floppy has no program.",
+    "command.cream.rename.success": "Program renamed to %s.",
+    "command.cream.flash.downloading": "Downloading program...",
+    "command.cream.flash.not_player": "Error: This command can only be executed by a player.",
+    "command.cream.flash.invalid_url": "Error: Invalid URL.",
+    "command.cream.flash.download_error": "Error: Failed to download the program.",
+    "command.cream.flash.program_too_large": "Error: Program is too large.",
+    "command.cream.flash.invalid_program_size": "Error: Invalid program size.",
+    "command.cream.flash.success": "Program flashed! Size: %s Words.",
+
+    "block.cream.computer.errload_empty_floppy": "Error: Floppy disk is empty.",
+    "block.cream.computer.errload_magic_number": "Error: Invalid magic number.",
+    "block.cream.computer.errload_arch_version": "Error: Unsupported architecture version.",
+    "block.cream.computer.errload_too_many_sections": "Error: Too many sections in program file.",
+    "block.cream.computer.errload_unrecognized_section": "Error: Unrecognized section type.",
+    "block.cream.computer.errload_section_size1": "Error: Bad section size.",
+    "block.cream.computer.errload_section_size2": "Error: Section too large for memory.",
+    "block.cream.computer.errload_section_size3": "Error: Section exceeds data size.",
+    "block.cream.computer.errload_invalid_header": "Error: Invalid program header."
+}

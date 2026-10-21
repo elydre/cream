@@ -14,7 +14,7 @@ public class ModBlockEntities {
             Registry.register(
                     BuiltInRegistries.BLOCK_ENTITY_TYPE,
                     Identifier.fromNamespaceAndPath(
-                            ExampleMod.MOD_ID,
+                            CreamMain.MOD_ID,
                             "computer"
                     ),
                     FabricBlockEntityTypeBuilder
