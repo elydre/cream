@@ -10,7 +10,8 @@ The compiler, basilisc operating system and instruction set documentation can be
 
 ```sh
 # build the mod and run the data generator
-./gradlew build runDataGen
+./gradlew runDatagen
+./gradlew build
 
 # test the mod in a client instance
 ./gradlew runClient

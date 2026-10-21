@@ -1,6 +1,6 @@
 {
 	"required": true,
-	"package": "com.example.client.mixin",
+	"package": "io.github.elydre.cream.client.mixin",
 	"compatibilityLevel": "JAVA_25",
 	"client": [
 		"ExampleClientMixin"

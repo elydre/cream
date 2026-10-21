@@ -16,13 +16,13 @@
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"com.example.ExampleMod"
+			"io.github.elydre.cream.ExampleMod"
 		],
 		"client": [
-			"com.example.client.ExampleModClient"
+			"io.github.elydre.cream.client.ExampleModClient"
 		],
         "fabric-datagen": [
-            "com.example.client.datagen.ExempleModDatagen"
+            "io.github.elydre.cream.client.datagen.ExempleModDatagen"
         ]
 	},
 	"mixins": [
