@@ -3,7 +3,7 @@
     "id": "cream",
     "version": "${version}",
     "name": "Cream",
-    "description": "A fabric mod that adds a minimalist, 16-bits computer to Minecraft, running a custom instruction set!",
+    "description": "A fabric mod that adds a minimalist, 16-bit computer to Minecraft, running a custom instruction set!",
     "authors": [
         "elydre",
         "asqel"

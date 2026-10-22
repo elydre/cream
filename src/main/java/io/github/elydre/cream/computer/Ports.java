@@ -115,9 +115,8 @@ public class Ports {
     public boolean tickPause() {
         if (toWait > 0) {
             toWait--;
-            return true;
         }
-        return false;
+        return toWait > 0;
     }
 
     public boolean isPaused() {
