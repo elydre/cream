@@ -36,5 +36,13 @@ jobs:
         run: |
           VERSION=$(grep '^version=' gradle.properties | cut -d= -f2-)
           MCVERSION=$(grep '^minecraft_version=' gradle.properties | cut -d= -f2-)
+          NOTES=$(cat <<EOF
+          *automatically generated release*
+
+          Minecraft version: $MCVERSION
+
+          This mod requires Fabric Loader and Fabric API to run. More information on [Modrinth](https://modrinth.com/mod/cream-elydre)
+          EOF
+          )
           gh release delete "$VERSION" --yes || true
-          gh release create --prerelease "$VERSION" "build/libs/cream-$VERSION.jar" --title "Cream $VERSION" --notes "*automatically generated release*\n\nMinecraft version: $MCVERSION\n\nThis mod requires Fabric Loader and Fabric API to run. more information on [Modrinth](https://modrinth.com/mod/cream-elydre)"
+          gh release create --prerelease "$VERSION" "build/libs/cream-$VERSION.jar" --title "Cream $VERSION" --notes "$NOTES"
