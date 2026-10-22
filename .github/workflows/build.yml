@@ -22,9 +22,11 @@ jobs:
       - name: make gradle wrapper executable
         run: chmod +x ./gradlew
       - name: build
-        run: ./gradlew build
-      - name: capture build artifacts
-        uses: actions/upload-artifact@v7
-        with:
-          name: Artifacts
-          path: build/libs/
+        run: ./gradlew runDatagen build
+      - name: Upload executable to GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION=$(grep '^version=' gradle.properties | cut -d= -f2-)
+          gh release delete "$VERSION" --yes || true
+          gh release create --prerelease "$VERSION" "/build/libs/cream-$VERSION.jar" --title "Cream $VERSION" --notes "*automatically generated release for version $VERSION*"

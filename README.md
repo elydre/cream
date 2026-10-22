@@ -15,4 +15,13 @@ The compiler, basilisc operating system and instruction set documentation can be
 
 # test the mod in a client instance
 ./gradlew runClient
+
+# find the compiled mod in build/libs
 ```
+
+## Future Plans
+
+- Peripheral blocks
+- Writable disks
+- Interaction with storage blocks (chests, barrels, etc.)
+- Communication between computers
