@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "cream:block/weather_peripheral" }
+  }
+}

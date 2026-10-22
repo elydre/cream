@@ -1,5 +1,7 @@
 package io.github.elydre.cream.computer;
 
+import java.util.List;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
@@ -16,6 +18,7 @@ public class Ports {
     public boolean screenNeedsUpdate = true;
     private int toWait = 0;
     private int cursorPosition = 0;
+    private List<PeripheralDevice> peripherals = List.of();
 
     public void updateContext(Level level, BlockPos blockPos, Direction facing) {
         this.level = level;
@@ -27,6 +30,7 @@ public class Ports {
         keyboardBufferSize = 0;
         cursorPosition = 0;
         java.util.Arrays.fill(redstoneOutputs, 0);
+        peripherals = List.of();
         screenNeedsUpdate = false;
     }
 
@@ -70,6 +74,9 @@ public class Ports {
 
             case 0x1030:
                 return level == null ? 0 : (int) level.getOverworldClockTime();
+
+            case 0x1FFF:
+                return indexPeripherals();
 
             default:
                 // unknown port
@@ -144,6 +151,51 @@ public class Ports {
 
         Direction direction = directionForPort(port);
         return level.getSignal(blockPos.relative(direction), direction) & 0xF;
+    }
+
+    public int portXIn(int dev, int port) {
+        if (level == null || blockPos == null) {
+            return 0;
+        }
+
+        PeripheralDevice peripheral = getPeripheral(dev);
+        if (peripheral == null) {
+            return 0;
+        }
+
+        return port == 0 ? peripheral.getPeripheralType() : peripheral.read(port);
+    }
+
+    public void portXOut(int dev, int port, int value) {
+        if (level == null || blockPos == null) {
+            return;
+        }
+
+        PeripheralDevice peripheral = getPeripheral(dev);
+        if (peripheral == null) {
+            return;
+        }
+
+        peripheral.write(port, value);
+    }
+
+    private int indexPeripherals() {
+        if (level == null || blockPos == null) {
+            peripherals = List.of();
+            return 0;
+        }
+
+        peripherals = List.copyOf(PeripheralNetwork.findAll(level, blockPos));
+        return peripherals.size();
+    }
+
+    private PeripheralDevice getPeripheral(int dev) {
+        if (dev < 0 || dev >= peripherals.size()) {
+            return null;
+        }
+
+        PeripheralDevice peripheral = peripherals.get(dev);
+        return peripheral.isAvailable() ? peripheral : null;
     }
 
     private Direction directionForPort(int port) {

@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "cream:block/weather_peripheral",
+    "particle": "cream:block/weather_peripheral"
+  }
+}

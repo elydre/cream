@@ -19,5 +19,7 @@ public class BlocksLootTableProvider extends FabricBlockLootSubProvider {
     public void generate() {
         dropSelf(ModBlocks.ALED_BLOCK);
         dropSelf(ModBlocks.FLASH_MACHINE);
+        dropSelf(ModBlocks.CABLE);
+        dropSelf(ModBlocks.WEATHER_PERIPHERAL);
     }
 }

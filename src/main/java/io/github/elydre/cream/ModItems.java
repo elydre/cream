@@ -28,6 +28,8 @@ public class ModItems {
 
     public static final Item FLASH_MACHINE = register_block("flash_machine", ModBlocks.FLASH_MACHINE);
     public static final Item ALED_BLOCK = register_block("computer", ModBlocks.ALED_BLOCK);
+    public static final Item CABLE = register_block("cable", ModBlocks.CABLE);
+    public static final Item WEATHER_PERIPHERAL = register_block("weather_peripheral", ModBlocks.WEATHER_PERIPHERAL);
 
     public static ResourceKey<Item> keyOfItem(String name) {
         return ResourceKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(CreamMain.MOD_ID, name));
