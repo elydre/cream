@@ -29,4 +29,4 @@ jobs:
         run: |
           VERSION=$(grep '^version=' gradle.properties | cut -d= -f2-)
           gh release delete "$VERSION" --yes || true
-          gh release create --prerelease "$VERSION" "/build/libs/cream-$VERSION.jar" --title "Cream $VERSION" --notes "*automatically generated release for version $VERSION*"
+          gh release create --prerelease "$VERSION" "build/libs/cream-$VERSION.jar" --title "Cream $VERSION" --notes "*automatically generated release for version $VERSION*"
