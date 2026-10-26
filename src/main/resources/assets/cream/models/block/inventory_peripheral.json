@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "cream:block/inventory_peripheral",
+    "particle": "cream:block/inventory_peripheral"
+  }
+}

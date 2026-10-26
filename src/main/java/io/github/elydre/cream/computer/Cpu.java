@@ -254,11 +254,11 @@ public class Cpu {
                 return 10 + size / 20;
             }
             case 0x22: // xout
-                ports.portXOut(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)), RVAL(source3, xmem.read(pc + 2)));
+                ports.portXOut(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)), RVAL(source2, xmem.read(pc + 2)));
                 pc += 3;
                 return 10;
-            case 0x23: // in
-                WVAL(xmem.read(pc), source0, ports.portXIn(RVAL(source1, xmem.read(pc + 1)), RVAL(source3, xmem.read(pc + 2))));
+            case 0x23: // xin
+                WVAL(xmem.read(pc), source0, ports.portXIn(RVAL(source1, xmem.read(pc + 1)), RVAL(source2, xmem.read(pc + 2))));
                 pc += 3;
                 return 10;
             case 0xFF: // halt

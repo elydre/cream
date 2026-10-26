@@ -23,8 +23,8 @@ public class Computer {
     private final int SECTION_TYPE_DATA = 1;
 
     public Computer() {
-        ports = new Ports();
         rwmem = new RWMem();
+        ports = new Ports(rwmem);
         xmem = new XMem();
         cpu = new Cpu(ports, xmem, rwmem);
     }

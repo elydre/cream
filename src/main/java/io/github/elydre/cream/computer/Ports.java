@@ -19,6 +19,11 @@ public class Ports {
     private int toWait = 0;
     private int cursorPosition = 0;
     private List<PeripheralDevice> peripherals = List.of();
+    private final RWMem memory;
+
+    public Ports(RWMem memory) {
+        this.memory = memory;
+    }
 
     public void updateContext(Level level, BlockPos blockPos, Direction facing) {
         this.level = level;
@@ -154,6 +159,8 @@ public class Ports {
     }
 
     public int portXIn(int dev, int port) {
+        System.out.println("portXIn: dev=" + dev + ", port=" + port);
+
         if (level == null || blockPos == null) {
             return 0;
         }
@@ -163,10 +170,13 @@ public class Ports {
             return 0;
         }
 
+        peripheral.updateContext(memory, this::getPeripheral);
         return port == 0 ? peripheral.getPeripheralType() : peripheral.read(port);
     }
 
     public void portXOut(int dev, int port, int value) {
+        System.out.println("portXOut: dev=" + dev + ", port=" + port + ", value=" + value);
+
         if (level == null || blockPos == null) {
             return;
         }
@@ -176,6 +186,7 @@ public class Ports {
             return;
         }
 
+        peripheral.updateContext(memory, this::getPeripheral);
         peripheral.write(port, value);
     }
 

@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "cream:block/inventory_peripheral"
+  }
+}

@@ -5,6 +5,7 @@ import java.util.function.Supplier;
 import io.github.elydre.cream.blocks.BlockComputer;
 import io.github.elydre.cream.blocks.CableBlock;
 import io.github.elydre.cream.blocks.FlashMachine;
+import io.github.elydre.cream.blocks.InventoryPeripheralBlock;
 import io.github.elydre.cream.blocks.WeatherPeripheralBlock;
 
 import net.minecraft.core.Registry;
@@ -30,6 +31,7 @@ public class ModBlocks {
     public static final Block FLASH_MACHINE = register(FlashMachine::new);
     public static final Block CABLE = register(CableBlock::new);
     public static final Block WEATHER_PERIPHERAL = register(WeatherPeripheralBlock::new);
+    public static final Block INVENTORY_PERIPHERAL = register(InventoryPeripheralBlock::new);
 
     public static ResourceKey<Block> keyOfBlock(String name) {
         return ResourceKey.create(

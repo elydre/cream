@@ -24,6 +24,7 @@ public class ModCreativeTabs {
                 output.accept(ModItems.FLASH_MACHINE);
                 output.accept(ModItems.CABLE);
                 output.accept(ModItems.WEATHER_PERIPHERAL);
+                output.accept(ModItems.INVENTORY_PERIPHERAL);
                 output.accept(ModItems.FLOPP_DISK);
                 output.accept(FloppyDisk.createColoredStack(FloppyDisk.COLOR_PINK));
                 output.accept(FloppyDisk.createColoredStack(FloppyDisk.COLOR_BLUE));
