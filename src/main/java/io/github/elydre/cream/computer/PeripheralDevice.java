@@ -24,6 +24,7 @@ public interface PeripheralDevice {
                 && level.getBlockEntity(blockEntity.getBlockPos()) == blockEntity;
     }
 
-    default void write(int port, int value) {
+    default int write(int port, int value) {
+        return 0;
     }
 }

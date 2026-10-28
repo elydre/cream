@@ -256,6 +256,9 @@ public class Cpu {
             case 0x22: // xout
                 ports.portXOut(RVAL(source0, xmem.read(pc)), RVAL(source1, xmem.read(pc + 1)), RVAL(source2, xmem.read(pc + 2)));
                 pc += 3;
+                if (ports.isPaused()) {
+                    return Computer.IPT + 1; // pause execution
+                }
                 return 10;
             case 0x23: // xin
                 WVAL(xmem.read(pc), source0, ports.portXIn(RVAL(source1, xmem.read(pc + 1)), RVAL(source2, xmem.read(pc + 2))));

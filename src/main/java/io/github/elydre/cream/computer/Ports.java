@@ -187,7 +187,7 @@ public class Ports {
         }
 
         peripheral.updateContext(memory, this::getPeripheral);
-        peripheral.write(port, value);
+        toWait = peripheral.write(port, value);
     }
 
     private int indexPeripherals() {

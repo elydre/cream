@@ -53,15 +53,18 @@ public class InventoryPeripheralBlockEntity extends BlockEntity implements Perip
     }
 
     @Override
-    public void write(int port, int value) {
+    public int write(int port, int value) {
         switch (port) {
             case 2 -> memoryAddress = value;
             case 0x10 -> setCursor(value);
-            case 0x20 -> setTarget(value);
-            case 0x30 -> transfer(value);
+            case 0x30 -> {
+                transfer(value);
+                return 1;
+            }
             default -> {
             }
         }
+        return 0;
     }
 
     private Container getInventory() {
@@ -113,13 +116,16 @@ public class InventoryPeripheralBlockEntity extends BlockEntity implements Perip
         return written;
     }
 
-    private void setTarget(int device) {
-        targetDevice = peripheralResolver == null ? null : peripheralResolver.apply(device);
-    }
-
-    private void transfer(int amount) {
+    private void transfer(int device) {
         lastTransfer = 0;
-        if (amount <= 0 || targetDevice == null || !targetDevice.isAvailable() || targetDevice == this
+        
+        if (memory == null || peripheralResolver == null) {
+            return;
+        }
+
+        targetDevice = peripheralResolver.apply(device);
+
+        if (targetDevice == null || !targetDevice.isAvailable() || targetDevice == this
                 || !(targetDevice instanceof InventoryPeripheralBlockEntity target)) {
             return;
         }
@@ -147,7 +153,7 @@ public class InventoryPeripheralBlockEntity extends BlockEntity implements Perip
             return;
         }
 
-        int moved = Math.min(amount, Math.min(source.getCount(), freeSpace));
+        int moved = Math.min(1, Math.min(source.getCount(), freeSpace));
         if (moved <= 0) {
             return;
         }
