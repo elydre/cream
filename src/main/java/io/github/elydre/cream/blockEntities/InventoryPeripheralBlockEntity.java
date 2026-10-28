@@ -11,6 +11,7 @@ import net.minecraft.core.Direction;
 import net.minecraft.world.Container;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -74,8 +75,16 @@ public class InventoryPeripheralBlockEntity extends BlockEntity implements Perip
         }
 
         for (Direction direction : Direction.values()) {
-            BlockEntity blockEntity = level.getBlockEntity(worldPosition.relative(direction));
+            BlockPos adjacentPos = worldPosition.relative(direction);
+            BlockState adjacentState = level.getBlockState(adjacentPos);
+            BlockEntity blockEntity = level.getBlockEntity(adjacentPos);
             if (blockEntity instanceof Container container) {
+                if (adjacentState.getBlock() instanceof ChestBlock chestBlock) {
+                    Container combined = ChestBlock.getContainer(chestBlock, adjacentState, level, adjacentPos, false);
+                    if (combined != null) {
+                        return combined;
+                    }
+                }
                 return container;
             }
         }
