@@ -59,6 +59,9 @@ tasks.named("sourcesJar") {
 }
 
 jar {
+	dependsOn("runDatagen")
+	from("src/main/generated")
+
 	def projectName = project.name
 	inputs.property "projectName", projectName
 
