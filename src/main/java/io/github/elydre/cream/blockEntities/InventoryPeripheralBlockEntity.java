@@ -14,6 +14,7 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.ChestBlock;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import io.github.elydre.cream.blocks.InventoryPeripheralBlock;
 
 public class InventoryPeripheralBlockEntity extends BlockEntity implements PeripheralDevice {
     public static final int TYPE = 2;
@@ -74,19 +75,18 @@ public class InventoryPeripheralBlockEntity extends BlockEntity implements Perip
             return null;
         }
 
-        for (Direction direction : Direction.values()) {
-            BlockPos adjacentPos = worldPosition.relative(direction);
-            BlockState adjacentState = level.getBlockState(adjacentPos);
-            BlockEntity blockEntity = level.getBlockEntity(adjacentPos);
-            if (blockEntity instanceof Container container) {
-                if (adjacentState.getBlock() instanceof ChestBlock chestBlock) {
-                    Container combined = ChestBlock.getContainer(chestBlock, adjacentState, level, adjacentPos, false);
-                    if (combined != null) {
-                        return combined;
-                    }
+        Direction facing = getBlockState().getValue(InventoryPeripheralBlock.FACING);
+        BlockPos adjacentPos = worldPosition.relative(facing);
+        BlockState adjacentState = level.getBlockState(adjacentPos);
+        BlockEntity blockEntity = level.getBlockEntity(adjacentPos);
+        if (blockEntity instanceof Container container) {
+            if (adjacentState.getBlock() instanceof ChestBlock chestBlock) {
+                Container combined = ChestBlock.getContainer(chestBlock, adjacentState, level, adjacentPos, false);
+                if (combined != null) {
+                    return combined;
                 }
-                return container;
             }
+            return container;
         }
         return null;
     }
