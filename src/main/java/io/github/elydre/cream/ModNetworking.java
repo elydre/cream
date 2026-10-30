@@ -41,8 +41,9 @@ public class ModNetworking {
 
                 context.server().execute(() -> {
 
-                    if (!(player.level().getBlockEntity(payload.computerPos())
-                            instanceof ComputerBlockEntity computer)) {
+                        if (!(player.level().getBlockEntity(payload.computerPos())
+                            instanceof ComputerBlockEntity computer)
+                            || !computer.hasViewer(player)) {
                         return;
                     }
 

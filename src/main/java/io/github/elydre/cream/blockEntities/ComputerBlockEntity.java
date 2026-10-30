@@ -91,10 +91,15 @@ public class ComputerBlockEntity extends BlockEntity {
             return;
         }
         viewers.add(player);
+        updateScreen();
     }
 
     public void removeViewer(ServerPlayer player) {
         viewers.remove(player);
+    }
+
+    public boolean hasViewer(ServerPlayer player) {
+        return viewers.contains(player);
     }
 
     public boolean hasFloppyDisk() {

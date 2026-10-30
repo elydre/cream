@@ -8,6 +8,7 @@
     "block.cream.inventory_peripheral": "Inventory Peripheral",
 
     "item.cream.floppy": "Floppy Disk",
+    "item.cream.pocket_terminal": "Pocket Terminal",
 
     "component.cream.floppy.program_name": "Name: %s",
     "component.cream.floppy.program_size": "Size: %s Words",

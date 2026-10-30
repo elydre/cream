@@ -1,6 +1,7 @@
 package io.github.elydre.cream;
 
 import io.github.elydre.cream.items.FloppyDisk;
+import io.github.elydre.cream.items.PocketTerminal;
 
 import com.google.common.base.Supplier;
 
@@ -25,6 +26,7 @@ public class ModItems {
     }
 
     public static final Item FLOPP_DISK = register_item("floppy", FloppyDisk::new);
+    public static final Item POCKET_TERMINAL = register_item("pocket_terminal", PocketTerminal::new);
 
     public static final Item FLASH_MACHINE = register_block("flash_machine", ModBlocks.FLASH_MACHINE);
     public static final Item ALED_BLOCK = register_block("computer", ModBlocks.ALED_BLOCK);

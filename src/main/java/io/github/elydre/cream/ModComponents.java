@@ -3,6 +3,7 @@ package io.github.elydre.cream;
 import io.github.elydre.cream.components.FloppyProgram;
 
 import net.minecraft.core.Registry;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.component.DataComponentType;
 import net.minecraft.resources.Identifier;
@@ -32,6 +33,19 @@ public class ModComponents {
                     DataComponentType
                             .<FloppyProgram>builder()
                             .persistent(FloppyProgram.CODEC)
+                            .build()
+            );
+
+    public static final DataComponentType<BlockPos> POCKET_TERMINAL_COMPUTER =
+            Registry.register(
+                    BuiltInRegistries.DATA_COMPONENT_TYPE,
+                    Identifier.fromNamespaceAndPath(
+                            CreamMain.MOD_ID,
+                            "pocket_terminal_computer"
+                    ),
+                    DataComponentType
+                            .<BlockPos>builder()
+                            .persistent(BlockPos.CODEC)
                             .build()
             );
 
