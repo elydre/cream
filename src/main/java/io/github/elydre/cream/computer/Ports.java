@@ -1,6 +1,8 @@
 package io.github.elydre.cream.computer;
 
 import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -19,7 +21,9 @@ public class Ports {
     private int toWait = 0;
     private int cursorPosition = 0;
     private List<PeripheralDevice> peripherals = List.of();
+    private final Set<Integer> disconnectedPeripherals = new HashSet<>();
     private final RWMem memory;
+    private long checkedCableVersion = -1L;
 
     public Ports(RWMem memory) {
         this.memory = memory;
@@ -36,6 +40,8 @@ public class Ports {
         cursorPosition = 0;
         java.util.Arrays.fill(redstoneOutputs, 0);
         peripherals = List.of();
+        disconnectedPeripherals.clear();
+        checkedCableVersion = -1L;
         screenNeedsUpdate = false;
     }
 
@@ -159,8 +165,6 @@ public class Ports {
     }
 
     public int portXIn(int dev, int port) {
-        System.out.println("portXIn: dev=" + dev + ", port=" + port);
-
         if (level == null || blockPos == null) {
             return 0;
         }
@@ -175,8 +179,6 @@ public class Ports {
     }
 
     public void portXOut(int dev, int port, int value) {
-        System.out.println("portXOut: dev=" + dev + ", port=" + port + ", value=" + value);
-
         if (level == null || blockPos == null) {
             return;
         }
@@ -197,6 +199,8 @@ public class Ports {
         }
 
         peripherals = List.copyOf(PeripheralNetwork.findAll(level, blockPos));
+        disconnectedPeripherals.clear();
+        checkedCableVersion = PeripheralNetwork.cableVersion(level);
         return peripherals.size();
     }
 
@@ -205,8 +209,35 @@ public class Ports {
             return null;
         }
 
+        refreshDisconnectedPeripherals();
+        if (disconnectedPeripherals.contains(dev)) {
+            return null;
+        }
+
         PeripheralDevice peripheral = peripherals.get(dev);
-        return peripheral.isAvailable() ? peripheral : null;
+        if (!peripheral.isAvailable()) {
+            disconnectedPeripherals.add(dev);
+            return null;
+        }
+        return peripheral;
+    }
+
+    private void refreshDisconnectedPeripherals() {
+        long cableVersion = PeripheralNetwork.cableVersion(level);
+        if (cableVersion == checkedCableVersion) {
+            return;
+        }
+
+        System.out.println("Cable version changed, refreshing disconnected peripherals");
+
+        for (int index = 0; index < peripherals.size(); index++) {
+            PeripheralDevice peripheral = peripherals.get(index);
+            if (!peripheral.isAvailable()
+                    || !PeripheralNetwork.isConnected(level, blockPos, peripheral)) {
+                disconnectedPeripherals.add(index);
+            }
+        }
+        checkedCableVersion = cableVersion;
     }
 
     private Direction directionForPort(int port) {
