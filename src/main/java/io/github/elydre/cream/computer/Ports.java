@@ -165,6 +165,10 @@ public class Ports {
         return screenNeedsUpdate;
     }
 
+    public void acknowledgeScreenUpdate() {
+        screenNeedsUpdate = false;
+    }
+
     public void forceScreenUpdate() {
         screenNeedsUpdate = true;
     }

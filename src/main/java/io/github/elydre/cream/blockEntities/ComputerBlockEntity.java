@@ -23,6 +23,7 @@ import net.minecraft.world.level.storage.ValueOutput;
 public class ComputerBlockEntity extends BlockEntity {
 
     private final Set<ServerPlayer> viewers = new HashSet<>();
+    private final short[] screenData = new short[80 * 25];
     private final Computer computer;
     private final RWMem memory;
     private final BlockPos pos;
@@ -38,25 +39,27 @@ public class ComputerBlockEntity extends BlockEntity {
     }
 
     private void updateScreen() {
-        short[] screenData = new short[80 * 25];
-
         for (int i = 0; i < screenData.length; i++) {
             screenData[i] = (short) memory.read(RWMem.SCREEN_BASE + i);
         }
 
-        ComputerScreenPayload screenPayload =
-                new ComputerScreenPayload(
-                        pos,
-                    screenData,
-                        getComputer().getCursorPosition()
-                );
+        ComputerScreenPayload screenPayload = new ComputerScreenPayload(
+                pos,
+                screenData,
+                getComputer().getCursorPosition()
+        );
 
         for (ServerPlayer viewer : viewers) {
-            ServerPlayNetworking.send(
-                    viewer,
-                    screenPayload
-            );
+            ServerPlayNetworking.send(viewer, screenPayload);
         }
+    }
+
+    public void sendCurrentScreen(ServerPlayer viewer) {
+        ServerPlayNetworking.send(viewer, new ComputerScreenPayload(
+                pos,
+                screenData,
+                getComputer().getCursorPosition()
+        ));
     }
 
     public static void tick(
@@ -75,6 +78,7 @@ public class ComputerBlockEntity extends BlockEntity {
 
         if (computer.computer.screenNeedsUpdate()) {
             computer.updateScreen();
+            computer.computer.acknowledgeScreenUpdate();
         }
     }
 
@@ -150,16 +154,28 @@ public class ComputerBlockEntity extends BlockEntity {
             );
         }
 
+        int[] savedScreenData = new int[screenData.length];
+        for (int i = 0; i < screenData.length; i++) {
+            savedScreenData[i] = screenData[i];
+        }
+
+        output.putIntArray("ScreenData", savedScreenData);
+
         computer.save(output.child("Computer"));
     }
 
     protected void loadAdditional(ValueInput input) {
         super.loadAdditional(input);
 
-        floppyDisk = input.read(
-                "FloppyDisk",
-                ItemStack.CODEC
-        ).orElse(ItemStack.EMPTY);
+        floppyDisk = input.read("FloppyDisk", ItemStack.CODEC).orElse(ItemStack.EMPTY);
+
+        input.getIntArray("ScreenData").ifPresent(savedScreenData -> {
+            if (savedScreenData.length == screenData.length) {
+                for (int i = 0; i < screenData.length; i++) {
+                    screenData[i] = (short) savedScreenData[i];
+                }
+            }
+        });
 
         input.child("Computer").ifPresent(computer::load);
     }

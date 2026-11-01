@@ -148,6 +148,10 @@ public class Computer {
         return ports.doesScreenNeedUpdate();
     }
 
+    public void acknowledgeScreenUpdate() {
+        ports.acknowledgeScreenUpdate();
+    }
+
     public int getRedstoneOutput(Direction direction) {
         return ports.getRedstoneOutput(direction);
     }

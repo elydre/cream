@@ -120,6 +120,7 @@ public class BlockComputer extends BaseEntityBlock {
                         serverPlayer,
                         new ComputerOpenPayload(pos)
                 );
+                computer.sendCurrentScreen(serverPlayer);
             }
         }
 
