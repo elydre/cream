@@ -12,7 +12,7 @@
         "homepage": "https://github.com/elydre/cream",
         "sources": "https://github.com/elydre/cream"
     },
-    "license": "GPL-3.0",
+    "license": "GPL-3.0-only",
     "icon": "assets/cream/icon.png",
     "environment": "*",
     "entrypoints": {
